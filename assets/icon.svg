@@ -1,0 +1,7 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1024" height="1024" fill="#1a1a2e"/>
+  <circle cx="350" cy="512" r="180" fill="#e94560"/>
+  <circle cx="674" cy="512" r="180" fill="#e94560"/>
+  <path d="M512 350 C512 350 580 512 512 674 C444 512 512 350 512 350" fill="#1a1a2e"/>
+  <text x="512" y="880" font-family="Arial" font-size="120" fill="white" text-anchor="middle">BLEND</text>
+</svg>

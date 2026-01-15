@@ -1,6 +1,10 @@
 {
   "name": "block-merge-arena",
   "version": "1.0.0",
+  "description": "Competitive block puzzle game with gem merging, daily tournaments, and social features. Built with Expo & React Native.",
+  "author": "Block Merge Arena Team",
+  "license": "MIT",
+  "private": true,
   "main": "index.ts",
   "scripts": {
     "start": "expo start",

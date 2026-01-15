@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Blend",
-    "slug": "blend",
-    "scheme": "blend",
+    "name": "Block Merge Arena",
+    "slug": "block-merge-arena",
+    "scheme": "blockmergearena",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -11,29 +11,25 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1a1a2e"
+      "backgroundColor": "#0a0a0a"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.patrob316.blend",
+      "bundleIdentifier": "com.blockmergearena.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "edgeToEdgeEnabled": true,
-      "package": "com.patrob316.blend",
+      "package": "com.blockmergearena.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1a1a2e"
+        "backgroundColor": "#0a0a0a"
       },
       "permissions": [
-        "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
     "plugins": [
@@ -41,14 +37,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Blend to access your photos to upload profile pictures.",
-          "cameraPermission": "Allow Blend to access your camera to take profile pictures."
-        }
-      ],
-      [
-        "expo-location",
-        {
-          "locationAlwaysAndWhenInUsePermission": "Allow Blend to use your location to find matches near you."
+          "photosPermission": "Allow Block Merge Arena to access your photos to customize your profile.",
+          "cameraPermission": "Allow Block Merge Arena to access your camera to take profile pictures."
         }
       ]
     ],

@@ -170,6 +170,28 @@ export default function HomeScreen() {
               </View>
             </Pressable>
           </Link>
+
+          {/* Friends */}
+          <Link href="/friends" asChild>
+            <Pressable className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
+              <View className="flex-row items-center justify-center">
+                <Text className="text-xl font-bold text-gray-300 mr-2">👥</Text>
+                <Text className="text-xl font-bold text-gray-300">Friends</Text>
+              </View>
+            </Pressable>
+          </Link>
+
+          {/* Share / TikTok */}
+          <Link href="/share" asChild>
+            <Pressable className="bg-gradient-to-r from-pink-600 to-purple-600 p-[2px] rounded-2xl active:scale-95">
+              <View className="bg-black rounded-2xl px-8 py-4">
+                <View className="flex-row items-center justify-center">
+                  <Text className="text-xl font-bold text-white mr-2">🎵</Text>
+                  <Text className="text-xl font-bold text-white">Share & TikTok</Text>
+                </View>
+              </View>
+            </Pressable>
+          </Link>
         </View>
 
         {/* Features */}

@@ -337,7 +337,7 @@ export default function TournamentScreen() {
     if (replayRecorder && replayRecorder.isRecording()) {
       replayRecorder.recordMove(
         selectedPiece,
-        { x: col, y: row },
+        { row, col },
         newScore,
         linesCleared,
         newMultiplier

@@ -204,9 +204,9 @@ export function getColorsOnBoard(board: GameBoard): BlockColor[] {
 }
 
 /**
- * Use a power-up (decrement uses)
+ * Consume a power-up (decrement uses)
  */
-export function usePowerUp(powerUp: PowerUp): PowerUp {
+export function consumePowerUp(powerUp: PowerUp): PowerUp {
   return {
     ...powerUp,
     uses: Math.max(0, powerUp.uses - 1)

@@ -23,7 +23,7 @@ import {
   applyTarget,
   applyColorBomb,
   getColorsOnBoard,
-  usePowerUp,
+  consumePowerUp,
   canUsePowerUp
 } from '@/lib/game/powerups';
 import { saveScore } from '@/lib/utils/leaderboard';
@@ -87,7 +87,7 @@ export default function GameScreen() {
 
         // Use power-up
         const newPowerUps = [...powerUps];
-        newPowerUps[index] = usePowerUp(powerUp);
+        newPowerUps[index] = consumePowerUp(powerUp);
         setPowerUps(newPowerUps);
       }
     } else {
@@ -110,7 +110,7 @@ export default function GameScreen() {
 
     // Use power-up
     const newPowerUps = [...powerUps];
-    newPowerUps[activePowerUp.index] = usePowerUp(powerUps[activePowerUp.index]);
+    newPowerUps[activePowerUp.index] = consumePowerUp(powerUps[activePowerUp.index]);
     setPowerUps(newPowerUps);
 
     setShowColorSelector(false);
@@ -131,7 +131,7 @@ export default function GameScreen() {
 
       // Use power-up
       const newPowerUps = [...powerUps];
-      newPowerUps[activePowerUp.index] = usePowerUp(powerUps[activePowerUp.index]);
+      newPowerUps[activePowerUp.index] = consumePowerUp(powerUps[activePowerUp.index]);
       setPowerUps(newPowerUps);
 
       setActivePowerUp(null);
@@ -152,7 +152,7 @@ export default function GameScreen() {
 
       // Use power-up
       const newPowerUps = [...powerUps];
-      newPowerUps[activePowerUp.index] = usePowerUp(powerUps[activePowerUp.index]);
+      newPowerUps[activePowerUp.index] = consumePowerUp(powerUps[activePowerUp.index]);
       setPowerUps(newPowerUps);
 
       setActivePowerUp(null);

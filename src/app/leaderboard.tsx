@@ -75,10 +75,6 @@ export default function LeaderboardScreen() {
     return mode === 'tournament' ? '🏆' : '🎮';
   };
 
-  const getModeColor = (mode: string): string => {
-    return mode === 'tournament' ? 'text-purple-400' : 'text-blue-400';
-  };
-
   const getRankColor = (rank: number): string => {
     if (rank === 1) return 'text-yellow-400';
     if (rank === 2) return 'text-gray-300';

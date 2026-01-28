@@ -173,7 +173,7 @@ export async function canClaimDailyXPBonus(): Promise<boolean> {
       lastClaimDate.getMonth() !== today.getMonth() ||
       lastClaimDate.getFullYear() !== today.getFullYear()
     );
-  } catch (error) {
+  } catch {
     return true;
   }
 }

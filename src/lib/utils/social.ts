@@ -4,7 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Share, Linking, Platform } from 'react-native';
 import type {
   ShareableHighlight,
-  ShareContent,
   ShareResult,
   SharePlatform,
   RecordingConfig,

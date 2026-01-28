@@ -1,6 +1,6 @@
 // Share Screen - View and share game highlights to social media
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, Alert, Linking } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -10,7 +10,6 @@ import {
   saveRecordingConfig,
   getSocialStats,
   shareToPlatform,
-  shareGeneric,
   isTikTokInstalled,
 } from '@/lib/utils/social';
 import type { ShareableHighlight, RecordingConfig, SocialStats, SharePlatform } from '@/lib/types/social';

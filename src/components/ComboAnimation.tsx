@@ -10,7 +10,6 @@ import Animated, {
   Easing,
   runOnJS
 } from 'react-native-reanimated';
-import { cn } from '@/lib/cn';
 
 interface ComboAnimationProps {
   points: number;

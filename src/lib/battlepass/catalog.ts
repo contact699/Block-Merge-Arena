@@ -1,7 +1,7 @@
 // Battle Pass Rewards Catalog
 
-import type { BattlePass, BattlePassLevel, BattlePassReward } from '@/lib/types/battlepass';
-import { MAX_LEVEL, getXPForLevel, BATTLE_PASS_DURATION } from '@/lib/types/battlepass';
+import type { BattlePass, BattlePassLevel } from '@/lib/types/battlepass';
+import { getXPForLevel, BATTLE_PASS_DURATION } from '@/lib/types/battlepass';
 
 /**
  * Create default battle pass with all 30 levels

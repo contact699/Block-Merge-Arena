@@ -11,11 +11,8 @@ import {
   where,
   orderBy,
   limit,
-  Timestamp,
-  serverTimestamp,
   increment,
   updateDoc,
-  writeBatch,
 } from 'firebase/firestore';
 import type {
   FirebaseScore,

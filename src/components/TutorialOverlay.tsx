@@ -1,7 +1,6 @@
 // Tutorial Overlay Component
 import { useState, useEffect } from 'react';
 import { View, Text, Pressable, Modal } from 'react-native';
-import { BlurView } from 'expo-blur';
 import type { TutorialStep } from '@/lib/types/tutorial';
 
 interface TutorialOverlayProps {

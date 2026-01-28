@@ -10,7 +10,6 @@ import { GemCounter } from '@/components/GemDisplay';
 import { ComboAnimation, LineClearEffect, GemMergeEffect } from '@/components/ComboAnimation';
 import { TournamentTimer, TournamentInfo } from '@/components/TournamentTimer';
 import { createEmptyBoard, canPlacePiece, placePiece, clearLines, hasValidMoves } from '@/lib/game/board';
-import { generatePieces } from '@/lib/game/pieces';
 import {
   generateGemsFromClearedCells,
   placeGemsOnBoard,
@@ -19,12 +18,11 @@ import {
   calculateTotalMultiplier
 } from '@/lib/game/merge';
 import {
-  createDailyTournament,
   generateTournamentPieces,
   getDailySeed,
   getTodayDateString
 } from '@/lib/utils/tournament';
-import { saveScore } from '@/lib/utils/leaderboard';
+import { saveScore, getGameStats } from '@/lib/utils/leaderboard';
 import {
   getTournamentStandings,
   isConfigured as isFirebaseConfigured,
@@ -34,8 +32,8 @@ import {
 import { ReplayRecorder } from '@/lib/game/replay-recorder';
 import { rewardCoinsForScore } from '@/lib/utils/currency';
 import { checkAchievements } from '@/lib/utils/achievements';
-import { getGameStats } from '@/lib/utils/leaderboard';
-import { updateRankAfterTournament, getRankInfo } from '@/lib/utils/ranks';
+
+import { updateRankAfterTournament } from '@/lib/utils/ranks';
 import { awardTournamentXP } from '@/lib/utils/battlepass';
 import { getPlayerSquadData, updateMemberScore } from '@/lib/utils/squad';
 import type { GameBoard as GameBoardType, GamePiece, Gem } from '@/lib/types/game';
@@ -272,7 +270,6 @@ export default function TournamentScreen() {
     // Clear any complete lines
     const { newBoard: clearedBoard, clearedCells } = clearLines(newBoard);
 
-    let newGems = gems;
     let newMultiplier = multiplier;
 
     if (clearedCells.length > 0) {
@@ -291,7 +288,6 @@ export default function TournamentScreen() {
 
       // Merge adjacent same-color gems
       const mergedGems = mergeGems(allGems);
-      newGems = mergedGems;
 
       // Check for large merged gems
       const largeGems = mergedGems.filter((g: Gem) => g.size !== 'small');

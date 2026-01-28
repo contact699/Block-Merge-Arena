@@ -13,8 +13,6 @@ import {
   getFriendLeaderboard,
   getFriendActivities,
   sendChallenge,
-  shareReplayWithFriend,
-  blockUser,
   getPendingRequestCount,
   getPendingChallengeCount,
 } from '@/lib/utils/friends';
@@ -24,9 +22,6 @@ import { getTopScores } from '@/lib/utils/leaderboard';
 import type {
   PlayerFriendData,
   Friend,
-  FriendRequest,
-  FriendChallenge,
-  SharedReplay,
   FriendActivity,
 } from '@/lib/types/friends';
 
@@ -37,7 +32,7 @@ export default function FriendsScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('friends');
   const [loading, setLoading] = useState<boolean>(true);
   const [friendData, setFriendData] = useState<PlayerFriendData | null>(null);
-  const [friendLeaderboard, setFriendLeaderboard] = useState<Array<Friend & { position: number }>>([]);
+  const [, setFriendLeaderboard] = useState<(Friend & { position: number })[]>([]);
   const [activities, setActivities] = useState<FriendActivity[]>([]);
   const [userId, setUserId] = useState<string>('');
   const [displayName, setDisplayName] = useState<string>('');

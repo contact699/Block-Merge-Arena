@@ -4,7 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type {
   Squad,
   SquadMember,
-  SquadRole,
   PlayerSquadData,
   SquadInvite,
   SquadActivity,
@@ -190,14 +189,13 @@ export async function joinSquad(
     return { success: false, error: 'This squad is private. You need an invite to join.' };
   }
 
+  // Get player rank (also used for requirements check)
+  const rankData = await getPlayerRankData();
+
   // Check requirements
   if (squad.requirements) {
-    const rankData = await getPlayerRankData();
-    // Would check minRank and minScore here if implemented
+    // Would check minRank and minScore here if implemented using rankData
   }
-
-  // Get player rank
-  const rankData = await getPlayerRankData();
   const rankInfo = getRankInfo(rankData.currentRank);
 
   // Add member

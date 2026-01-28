@@ -10,8 +10,8 @@ import {
   getTutorialStats,
   resetTutorialProgress,
 } from '@/lib/utils/tutorial';
-import type { TutorialFlow } from '@/lib/types/tutorial';
-import type { TutorialProgress } from '@/lib/types/tutorial';
+import type { TutorialFlow, TutorialProgress } from '@/lib/types/tutorial';
+
 
 export default function TutorialsScreen() {
   const router = useRouter();

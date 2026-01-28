@@ -1,5 +1,5 @@
 // Welcome Screen - First-time user onboarding
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -7,11 +7,8 @@ import { TutorialOverlay } from '@/components/TutorialOverlay';
 import { WELCOME_TUTORIAL } from '@/lib/tutorial/catalog';
 import {
   completeStep,
-  completeTutorial,
   skipTutorial,
-  getTutorialProgress,
 } from '@/lib/utils/tutorial';
-import type { TutorialStep } from '@/lib/types/tutorial';
 
 export default function WelcomeScreen() {
   const router = useRouter();

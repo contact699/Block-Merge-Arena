@@ -12,7 +12,6 @@ import type {
 import {
   DEFAULT_PLAYER_FRIEND_DATA,
   MAX_FRIENDS,
-  MAX_PENDING_REQUESTS,
   FRIEND_CODE_LENGTH,
   CHALLENGE_EXPIRY_DAYS,
   REQUEST_EXPIRY_DAYS,
@@ -209,9 +208,9 @@ export async function sendFriendRequestByCode(
     return { success: false, error: 'Cannot add yourself as a friend' };
   }
 
-  // Get target user's display name
-  const toData = await getPlayerFriendData(toUserId);
-  
+  // Get target user's display name - calling getPlayerFriendData to ensure data exists
+  await getPlayerFriendData(toUserId);
+
   // We don't have their display name stored, use a placeholder
   const toDisplayName = `Player${toUserId.substring(0, 6)}`;
 
@@ -539,8 +538,8 @@ export async function completeChallenge(
     
     await savePlayerFriendData(userId, userData);
 
-    // Add activity for challenger
-    const challengerData = await getPlayerFriendData(challenge.challengerId);
+    // Add activity for challenger - calling getPlayerFriendData to ensure data exists
+    await getPlayerFriendData(challenge.challengerId);
     await addFriendActivity({
       id: generateId(),
       userId,
@@ -662,7 +661,7 @@ export async function getFriendActivities(userId: string): Promise<FriendActivit
  */
 export async function getFriendLeaderboard(
   userId: string
-): Promise<Array<Friend & { position: number }>> {
+): Promise<(Friend & { position: number })[]> {
   try {
     const userData = await getPlayerFriendData(userId);
     

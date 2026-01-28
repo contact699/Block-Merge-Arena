@@ -1,5 +1,5 @@
 // Replay System Types
-import type { GamePiece, Position } from './game';
+import type { Position } from './game';
 
 /**
  * A single move in a replay

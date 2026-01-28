@@ -1,5 +1,5 @@
 // Daily Tournament System - Seeded Piece Generation
-import type { GamePiece, BlockShapeType } from '@/lib/types/game';
+import type { GamePiece } from '@/lib/types/game';
 import { generatePieceByType, getAllShapeTypes } from '@/lib/game/pieces';
 
 /**

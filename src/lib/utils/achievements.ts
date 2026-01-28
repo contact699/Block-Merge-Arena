@@ -1,6 +1,6 @@
 // Achievements System - Storage & Management
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { Achievement, AchievementProgress, AchievementUnlock } from '@/lib/types/achievements';
+import type { Achievement, AchievementUnlock } from '@/lib/types/achievements';
 import { addCurrency } from './currency';
 
 const ACHIEVEMENTS_KEY = '@block_merge_arena:achievements';

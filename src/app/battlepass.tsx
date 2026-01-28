@@ -20,7 +20,7 @@ export default function BattlePassScreen() {
   const router = useRouter();
   const [battlePass, setBattlePass] = useState<BattlePass | null>(null);
   const [playerData, setPlayerData] = useState<PlayerBattlePassData | null>(null);
-  const [currency, setCurrency] = useState<Currency>({ gems: 0, coins: 0 });
+  const [, setCurrency] = useState<Currency>({ gems: 0, coins: 0 });
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {

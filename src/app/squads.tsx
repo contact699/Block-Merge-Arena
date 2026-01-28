@@ -12,8 +12,6 @@ import {
   leaveSquad,
   acceptSquadInvite,
   declineSquadInvite,
-  getSquadLeaderboard,
-  searchSquads,
   getSquadActivities,
 } from '@/lib/utils/squad';
 import { getOrCreateUser } from '@/lib/firebase';
@@ -38,7 +36,7 @@ export default function SquadsScreen() {
   const [squadName, setSquadName] = useState<string>('');
   const [squadTag, setSquadTag] = useState<string>('');
   const [squadDescription, setSquadDescription] = useState<string>('');
-  const [squadIcon, setSquadIcon] = useState<string>('🛡️');
+  const [squadIcon] = useState<string>('🛡️');
   const [isPublic, setIsPublic] = useState<boolean>(true);
 
   // Search

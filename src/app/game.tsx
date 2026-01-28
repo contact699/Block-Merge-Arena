@@ -168,7 +168,6 @@ export default function GameScreen() {
     // Clear any complete lines
     const { newBoard: clearedBoard, clearedCells } = clearLines(newBoard);
 
-    let newGems = gems;
     let newMultiplier = multiplier;
 
     if (clearedCells.length > 0) {
@@ -189,7 +188,6 @@ export default function GameScreen() {
 
       // Merge adjacent same-color gems
       const mergedGems = mergeGems(allGems);
-      newGems = mergedGems;
 
       // Check for large merged gems and show animation
       const largeGems = mergedGems.filter((g: Gem) => g.size !== 'small');

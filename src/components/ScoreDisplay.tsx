@@ -1,7 +1,6 @@
 // ScoreDisplay Component
 import React from 'react';
 import { View, Text } from 'react-native';
-import { cn } from '@/lib/cn';
 
 interface ScoreDisplayProps {
   score: number;

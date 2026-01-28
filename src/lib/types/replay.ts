@@ -71,8 +71,8 @@ export interface CompactMove {
   t: number; // timestamp
   p: string; // pieceId
   st: string; // shapeType
-  x: number; // position.x
-  y: number; // position.y
+  r: number; // position.row
+  c: number; // position.col
   sc: number; // score
   lc: number; // linesCleared
   mp: number; // multiplier

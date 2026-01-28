@@ -33,7 +33,7 @@ export function ReplayPlayer({
   const [currentScore, setCurrentScore] = useState<number>(0);
   const [currentMultiplier, setCurrentMultiplier] = useState<number>(1);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Playback loop
   useEffect(() => {

@@ -41,7 +41,7 @@ export const WELCOME_TUTORIAL: TutorialFlow = {
       description: 'Join daily tournaments where everyone gets the same pieces. Prove you\'re the best strategist!',
       position: 'center',
       action: 'tap',
-      nextStep: null,
+      nextStep: undefined,
     },
   ],
   rewards: {
@@ -91,7 +91,7 @@ export const BASIC_GAMEPLAY_TUTORIAL: TutorialFlow = {
       description: 'Keep placing pieces until the board is full. The game ends when no more pieces can fit!',
       position: 'center',
       action: 'tap',
-      nextStep: null,
+      nextStep: undefined,
     },
   ],
   rewards: {
@@ -138,7 +138,7 @@ export const GEM_MERGE_TUTORIAL: TutorialFlow = {
       description: 'Should you clear now, or wait to merge more gems first? Master this decision to dominate!',
       position: 'center',
       action: 'tap',
-      nextStep: null,
+      nextStep: undefined,
     },
   ],
   rewards: {
@@ -202,7 +202,7 @@ export const POWERUPS_TUTORIAL: TutorialFlow = {
       description: 'Win power-ups from tournaments, achievements, and the shop!',
       position: 'center',
       action: 'tap',
-      nextStep: null,
+      nextStep: undefined,
     },
   ],
   rewards: {
@@ -249,7 +249,7 @@ export const TOURNAMENT_TUTORIAL: TutorialFlow = {
       description: 'Earn rewards, unlock achievements, and see your name on the global leaderboard!',
       position: 'center',
       action: 'tap',
-      nextStep: null,
+      nextStep: undefined,
     },
   ],
   rewards: {

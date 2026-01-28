@@ -17,7 +17,8 @@
       "Bash(findstr:*)",
       "Bash(npx eas build --profile preview --platform android)",
       "Bash(npx eas:*)",
-      "WebFetch(domain:job-logs.eascdn.net)"
+      "WebFetch(domain:job-logs.eascdn.net)",
+      "Bash(npx expo install:*)"
     ]
   }
 }

@@ -41,7 +41,11 @@
           "photosPermission": "Allow Block Merge Arena to access your photos to customize your profile.",
           "cameraPermission": "Allow Block Merge Arena to access your camera to take profile pictures."
         }
-      ]
+      ],
+      "expo-asset",
+      "expo-video",
+      "expo-web-browser",
+      "react-native-edge-to-edge"
     ],
     "experiments": {
       "typedRoutes": true

@@ -83,7 +83,7 @@ export function ReplayPlayer({
     };
 
     // Place piece on board
-    const newBoard = placePiece(board, piece, move.position);
+    const newBoard = placePiece(board, piece, move.position.row, move.position.col);
     setBoard(newBoard);
     setCurrentScore(move.score);
     setCurrentMultiplier(move.multiplier);

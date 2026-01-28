@@ -2,7 +2,7 @@
 import type { BlockShapeType, GamePiece, Position, BlockColor } from '@/lib/types/game';
 
 // Define all block shapes as position arrays
-const BLOCK_SHAPES: Record<BlockShapeType, Position[]> = {
+export const BLOCK_SHAPES: Record<BlockShapeType, Position[]> = {
   // Straight lines (I pieces)
   I2: [{ row: 0, col: 0 }, { row: 0, col: 1 }],
   I3: [{ row: 0, col: 0 }, { row: 0, col: 1 }, { row: 0, col: 2 }],

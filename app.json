@@ -29,7 +29,8 @@
       },
       "permissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "plugins": [
@@ -48,7 +49,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "a35aaee1-ed70-4d65-9c7f-122e88c025ff"
+        "projectId": "9831f375-2d0e-4d06-8411-81d3358707c0"
       }
     },
     "owner": "patrob316"

@@ -14,7 +14,10 @@
       "Skill(superpowers:subagent-driven-development)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(npx eas build --profile preview --platform android)",
+      "Bash(npx eas:*)",
+      "WebFetch(domain:job-logs.eascdn.net)"
     ]
   }
 }

@@ -48,6 +48,7 @@ export function ReplayPlayer({
         }
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playbackState.isPlaying, playbackState.isPaused, playbackState.currentMoveIndex, playbackState.playbackSpeed]);
 
   const playNextMove = (): void => {

@@ -37,6 +37,7 @@ export default function LeaderboardScreen() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, leaderboardMode]);
 
   const loadData = async (): Promise<void> => {

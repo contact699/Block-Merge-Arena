@@ -12,6 +12,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     checkFirstTime();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkFirstTime = async (): Promise<void> => {

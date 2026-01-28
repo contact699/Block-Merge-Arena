@@ -47,6 +47,7 @@ export function ComboAnimation({ points, multiplier, onComplete }: ComboAnimatio
         }
       })
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -130,6 +131,7 @@ export function LineClearEffect({ linesCleared, onComplete }: LineClearEffectPro
         }
       })
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -191,6 +193,7 @@ export function GemMergeEffect({ gemCount, gemSize, color, onComplete }: GemMerg
         }
       })
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({

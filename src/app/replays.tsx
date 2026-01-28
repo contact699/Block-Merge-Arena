@@ -34,6 +34,7 @@ export default function ReplaysScreen() {
 
   useEffect(() => {
     filterReplays();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, replays]);
 
   const loadReplays = async (): Promise<void> => {

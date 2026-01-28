@@ -23,6 +23,7 @@ export default function AchievementsScreen() {
 
   useEffect(() => {
     filterAchievements();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, achievements]);
 
   const loadAchievements = async (): Promise<void> => {

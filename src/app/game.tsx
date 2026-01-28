@@ -353,7 +353,7 @@ export default function GameScreen() {
         {showColorSelector && (
           <ColorSelector
             colors={getColorsOnBoard(board)}
-            onColorSelect={handleColorSelect}
+            onColorSelect={(color: string) => handleColorSelect(color as BlockColor)}
             onCancel={() => {
               setShowColorSelector(false);
               setActivePowerUp(null);

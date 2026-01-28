@@ -64,7 +64,7 @@ export function getXPForLevel(level: number): number {
   const baseXP = 500;
   const increment = 100;
   return Array.from({ length: level - 1 })
-    .reduce((total, _, index) => total + baseXP + (index * increment), 0);
+    .reduce<number>((total, _, index) => total + baseXP + (index * increment), 0);
 }
 
 /**

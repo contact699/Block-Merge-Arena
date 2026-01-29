@@ -1,7 +1,7 @@
-diff --git a/build/PlatformUtils.js b/build/PlatformUtils.js
-index 6ca80e091a336ebcd89b6360ee913b20c6ea31dc..e68403669fc6d81f39472ac8d9c21892c4c0e29b 100644
---- a/build/PlatformUtils.js
-+++ b/build/PlatformUtils.js
+diff --git a/node_modules/expo-asset/build/PlatformUtils.js b/node_modules/expo-asset/build/PlatformUtils.js
+index 6ca80e0..e684036 100644
+--- a/node_modules/expo-asset/build/PlatformUtils.js
++++ b/node_modules/expo-asset/build/PlatformUtils.js
 @@ -1,7 +1,7 @@
  import Constants from 'expo-constants';
  import { requireNativeModule, requireOptionalNativeModule } from 'expo-modules-core';

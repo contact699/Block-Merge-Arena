@@ -49,3 +49,6 @@ expo-start.log
 # Archives
 *.tar.gz
 *.zip
+
+# Maestro E2E test reports
+.maestro/reports/

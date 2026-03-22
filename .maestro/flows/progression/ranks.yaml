@@ -1,0 +1,25 @@
+appId: com.blockmergearena.app
+name: Ranks Screen
+---
+- launchApp
+
+- extendedWaitUntil:
+    visible:
+      text: "Block Merge"
+    timeout: 10000
+
+- scroll
+- tapOn:
+    id: "ranks-button"
+- assertVisible:
+    id: "ranks-screen"
+- assertVisible:
+    text: "← Back"
+
+- tapOn:
+    id: "show-all-ranks-button"
+
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"

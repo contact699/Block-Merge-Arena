@@ -1,0 +1,42 @@
+appId: com.blockmergearena.app
+name: Tournament Mode
+---
+- launchApp
+
+- extendedWaitUntil:
+    visible:
+      text: "Block Merge"
+    timeout: 10000
+
+- tapOn:
+    id: "tournament-button"
+- assertVisible:
+    id: "tournament-screen"
+- assertVisible:
+    text: "← Back"
+
+- assertVisible:
+    id: "start-tournament-button"
+
+- tapOn:
+    id: "start-tournament-button"
+
+- extendedWaitUntil:
+    visible:
+      id: "game-board"
+    timeout: 5000
+
+- assertVisible:
+    id: "game-board"
+- assertVisible:
+    text: "Select a piece below, then tap the board to place it"
+
+- tapOn:
+    id: "cell-0-0"
+- tapOn:
+    id: "cell-2-2"
+
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"

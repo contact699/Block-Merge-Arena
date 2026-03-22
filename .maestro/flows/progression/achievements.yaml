@@ -1,0 +1,21 @@
+appId: com.blockmergearena.app
+name: Achievements Screen
+---
+- launchApp
+
+- extendedWaitUntil:
+    visible:
+      text: "Block Merge"
+    timeout: 10000
+
+- tapOn:
+    id: "achievements-button"
+- assertVisible:
+    id: "achievements-screen"
+- assertVisible:
+    text: "← Back"
+
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"

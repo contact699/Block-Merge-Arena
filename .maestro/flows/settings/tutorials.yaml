@@ -1,0 +1,21 @@
+appId: com.blockmergearena.app
+name: Tutorials Screen
+---
+- launchApp
+
+- extendedWaitUntil:
+    visible:
+      text: "Block Merge"
+    timeout: 10000
+
+- tapOn:
+    id: "tutorials-button"
+- assertVisible:
+    id: "tutorials-screen"
+- assertVisible:
+    text: "← Back"
+
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"

@@ -1,0 +1,32 @@
+appId: com.blockmergearena.app
+name: Shop Screen
+---
+- launchApp
+
+- extendedWaitUntil:
+    visible:
+      text: "Block Merge"
+    timeout: 10000
+
+- tapOn:
+    id: "shop-button"
+- assertVisible:
+    id: "shop-screen"
+- assertVisible:
+    text: "Shop"
+- assertVisible:
+    text: "Customize your experience"
+
+- tapOn:
+    id: "themes-tab"
+- tapOn:
+    id: "blocks-tab"
+- tapOn:
+    id: "gems-tab"
+- tapOn:
+    id: "themes-tab"
+
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"

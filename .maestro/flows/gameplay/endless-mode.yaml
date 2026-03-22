@@ -1,0 +1,38 @@
+appId: com.blockmergearena.app
+name: Endless Mode Gameplay
+---
+- launchApp
+
+- extendedWaitUntil:
+    visible:
+      text: "Block Merge"
+    timeout: 10000
+
+- tapOn:
+    id: "endless-mode-button"
+- assertVisible:
+    id: "game-screen"
+- assertVisible:
+    id: "game-board"
+- assertVisible:
+    text: "Block Merge Arena"
+- assertVisible:
+    text: "Select a piece below, then tap the board to place it"
+
+# Try tapping some board cells
+- tapOn:
+    id: "cell-0-0"
+- tapOn:
+    id: "cell-1-1"
+- tapOn:
+    id: "cell-2-2"
+- tapOn:
+    id: "cell-3-3"
+
+# Verify game is still running
+- assertVisible:
+    text: "Block Merge Arena"
+
+- back
+- assertVisible:
+    id: "home-screen"

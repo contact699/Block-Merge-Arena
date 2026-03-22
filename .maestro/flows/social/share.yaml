@@ -1,0 +1,20 @@
+appId: com.blockmergearena.app
+name: Share Screen
+---
+- launchApp
+
+- extendedWaitUntil:
+    visible:
+      text: "Block Merge"
+    timeout: 10000
+
+- scroll
+- tapOn:
+    id: "share-button"
+- assertVisible:
+    id: "share-screen"
+
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"

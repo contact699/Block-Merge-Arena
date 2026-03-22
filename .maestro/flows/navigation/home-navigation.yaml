@@ -1,0 +1,150 @@
+appId: com.blockmergearena.app
+name: Home Screen Navigation
+---
+- launchApp
+
+- extendedWaitUntil:
+    visible:
+      text: "Block Merge"
+    timeout: 10000
+
+- assertVisible:
+    id: "home-screen"
+- assertVisible:
+    text: "Block Merge"
+- assertVisible:
+    text: "Arena"
+
+# 1. Settings
+- tapOn:
+    id: "settings-button"
+- assertVisible:
+    id: "settings-screen"
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"
+
+# 2. Endless Mode
+- tapOn:
+    id: "endless-mode-button"
+- assertVisible:
+    id: "game-screen"
+- back
+- assertVisible:
+    id: "home-screen"
+
+# 3. Tournament
+- tapOn:
+    id: "tournament-button"
+- assertVisible:
+    id: "tournament-screen"
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"
+
+# 4. Leaderboard
+- tapOn:
+    id: "leaderboard-button"
+- assertVisible:
+    id: "leaderboard-screen"
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"
+
+# 5. Replays
+- tapOn:
+    id: "replays-button"
+- assertVisible:
+    id: "replays-screen"
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"
+
+# 6. Shop
+- tapOn:
+    id: "shop-button"
+- assertVisible:
+    id: "shop-screen"
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"
+
+# 7. Achievements
+- tapOn:
+    id: "achievements-button"
+- assertVisible:
+    id: "achievements-screen"
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"
+
+# 8. Tutorials
+- tapOn:
+    id: "tutorials-button"
+- assertVisible:
+    id: "tutorials-screen"
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"
+
+# 9. Ranks (scroll needed)
+- scroll
+- tapOn:
+    id: "ranks-button"
+- assertVisible:
+    id: "ranks-screen"
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"
+
+# 10. Battle Pass (scroll needed)
+- scroll
+- tapOn:
+    id: "battlepass-button"
+- assertVisible:
+    id: "battlepass-screen"
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"
+
+# 11. Squads (scroll needed)
+- scroll
+- tapOn:
+    id: "squads-button"
+- assertVisible:
+    id: "squads-screen"
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"
+
+# 12. Friends (scroll needed)
+- scroll
+- tapOn:
+    id: "friends-button"
+- assertVisible:
+    id: "friends-screen"
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"
+
+# 13. Share (scroll needed)
+- scroll
+- tapOn:
+    id: "share-button"
+- assertVisible:
+    id: "share-screen"
+- tapOn:
+    id: "back-button"
+- assertVisible:
+    id: "home-screen"

@@ -1,0 +1,39 @@
+appId: com.blockmergearena.app
+name: Welcome Onboarding
+---
+- launchApp
+
+- extendedWaitUntil:
+    visible:
+      id: "welcome-screen"
+    timeout: 10000
+
+- assertVisible:
+    text: "Block Merge"
+- assertVisible:
+    text: "Arena"
+- assertVisible:
+    text: "Strategic Gameplay"
+- assertVisible:
+    text: "Merge for Multipliers"
+- assertVisible:
+    text: "Daily Tournaments"
+
+- tapOn:
+    text: "Next"
+- tapOn:
+    text: "Next"
+- tapOn:
+    text: "Next"
+- tapOn:
+    text: "Next"
+
+- extendedWaitUntil:
+    visible:
+      text: "Welcome Complete!"
+    timeout: 5000
+- tapOn:
+    id: "lets-play-button"
+
+- assertVisible:
+    id: "home-screen"

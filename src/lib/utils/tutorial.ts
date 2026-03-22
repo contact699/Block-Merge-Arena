@@ -44,10 +44,12 @@ export async function isTutorialCompleted(tutorialId: string): Promise<boolean> 
 }
 
 /**
- * Check if user has completed welcome tutorial
+ * Check if user has completed or skipped welcome tutorial
  */
 export async function hasCompletedWelcome(): Promise<boolean> {
-  return await isTutorialCompleted('welcome');
+  const progress = await getTutorialProgress();
+  return progress.completedTutorials.includes('welcome') ||
+    progress.skippedTutorials.includes('welcome');
 }
 
 /**

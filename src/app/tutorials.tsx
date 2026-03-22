@@ -152,11 +152,11 @@ export default function TutorialsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView testID="tutorials-screen" className="flex-1 bg-black">
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }}>
         {/* Header */}
         <View className="px-6 pt-4 pb-6 border-b border-gray-800">
-          <Pressable onPress={() => router.back()}>
+          <Pressable testID="back-button" onPress={() => router.back()}>
             <Text className="text-purple-400 text-base font-semibold">← Back</Text>
           </Pressable>
 

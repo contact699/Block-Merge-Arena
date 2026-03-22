@@ -73,6 +73,7 @@ export function GameBoard({ board, onCellPress, highlightedCells = [] }: GameBoa
             return (
               <Pressable
                 key={`cell-${rowIndex}-${colIndex}`}
+                testID={`cell-${rowIndex}-${colIndex}`}
                 onPress={() => onCellPress?.(rowIndex, colIndex)}
                 className={cn(
                   'rounded-lg items-center justify-center',

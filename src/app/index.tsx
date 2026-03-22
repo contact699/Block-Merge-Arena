@@ -34,11 +34,11 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView testID="home-screen" className="flex-1 bg-black">
       {/* Settings Button - Top Right */}
       <View className="absolute top-4 right-6 z-10">
         <Link href="/settings" asChild>
-          <Pressable className="bg-gray-900 border border-gray-700 rounded-full p-3 active:scale-95">
+          <Pressable testID="settings-button" className="bg-gray-900 border border-gray-700 rounded-full p-3 active:scale-95">
             <Text className="text-2xl">⚙️</Text>
           </Pressable>
         </Link>
@@ -62,7 +62,7 @@ export default function HomeScreen() {
         <View className="w-full max-w-sm space-y-4">
           {/* Tournament Mode */}
           <Link href="/tournament" asChild>
-            <Pressable className="bg-gradient-to-r from-purple-600 to-pink-600 p-[2px] rounded-2xl active:scale-95">
+            <Pressable testID="tournament-button" className="bg-gradient-to-r from-purple-600 to-pink-600 p-[2px] rounded-2xl active:scale-95">
               <View className="bg-black rounded-2xl px-8 py-6">
                 <View className="flex-row items-center justify-between mb-2">
                   <Text className="text-2xl font-bold text-white">🏆 Tournament</Text>
@@ -82,7 +82,7 @@ export default function HomeScreen() {
 
           {/* Endless Mode */}
           <Link href="/game" asChild>
-            <Pressable className="border-2 border-purple-500 rounded-2xl px-8 py-6 active:scale-95">
+            <Pressable testID="endless-mode-button" className="border-2 border-purple-500 rounded-2xl px-8 py-6 active:scale-95">
               <Text className="text-2xl font-bold text-white mb-2">
                 🎮 Endless Mode
               </Text>
@@ -94,7 +94,7 @@ export default function HomeScreen() {
 
           {/* Leaderboard */}
           <Link href="/leaderboard" asChild>
-            <Pressable className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
+            <Pressable testID="leaderboard-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
               <View className="flex-row items-center justify-center">
                 <Text className="text-xl font-bold text-gray-300 mr-2">🏅</Text>
                 <Text className="text-xl font-bold text-gray-300">Leaderboard</Text>
@@ -104,7 +104,7 @@ export default function HomeScreen() {
 
           {/* Replays */}
           <Link href="/replays" asChild>
-            <Pressable className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
+            <Pressable testID="replays-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
               <View className="flex-row items-center justify-center">
                 <Text className="text-xl font-bold text-gray-300 mr-2">👻</Text>
                 <Text className="text-xl font-bold text-gray-300">Replays</Text>
@@ -114,7 +114,7 @@ export default function HomeScreen() {
 
           {/* Shop */}
           <Link href="/shop" asChild>
-            <Pressable className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
+            <Pressable testID="shop-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
               <View className="flex-row items-center justify-center">
                 <Text className="text-xl font-bold text-gray-300 mr-2">🛒</Text>
                 <Text className="text-xl font-bold text-gray-300">Shop</Text>
@@ -124,7 +124,7 @@ export default function HomeScreen() {
 
           {/* Achievements */}
           <Link href="/achievements" asChild>
-            <Pressable className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
+            <Pressable testID="achievements-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
               <View className="flex-row items-center justify-center">
                 <Text className="text-xl font-bold text-gray-300 mr-2">🏆</Text>
                 <Text className="text-xl font-bold text-gray-300">Achievements</Text>
@@ -134,7 +134,7 @@ export default function HomeScreen() {
 
           {/* Tutorials */}
           <Link href="/tutorials" asChild>
-            <Pressable className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
+            <Pressable testID="tutorials-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
               <View className="flex-row items-center justify-center">
                 <Text className="text-xl font-bold text-gray-300 mr-2">📚</Text>
                 <Text className="text-xl font-bold text-gray-300">Tutorials</Text>
@@ -144,7 +144,7 @@ export default function HomeScreen() {
 
           {/* Ranked */}
           <Link href="/ranks" asChild>
-            <Pressable className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
+            <Pressable testID="ranks-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
               <View className="flex-row items-center justify-center">
                 <Text className="text-xl font-bold text-gray-300 mr-2">🏅</Text>
                 <Text className="text-xl font-bold text-gray-300">Ranked</Text>
@@ -154,7 +154,7 @@ export default function HomeScreen() {
 
           {/* Battle Pass */}
           <Link href="/battlepass" asChild>
-            <Pressable className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
+            <Pressable testID="battlepass-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
               <View className="flex-row items-center justify-center">
                 <Text className="text-xl font-bold text-gray-300 mr-2">🎫</Text>
                 <Text className="text-xl font-bold text-gray-300">Battle Pass</Text>
@@ -164,7 +164,7 @@ export default function HomeScreen() {
 
           {/* Squads */}
           <Link href="/squads" asChild>
-            <Pressable className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
+            <Pressable testID="squads-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
               <View className="flex-row items-center justify-center">
                 <Text className="text-xl font-bold text-gray-300 mr-2">🛡️</Text>
                 <Text className="text-xl font-bold text-gray-300">Squads</Text>
@@ -174,7 +174,7 @@ export default function HomeScreen() {
 
           {/* Friends */}
           <Link href="/friends" asChild>
-            <Pressable className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
+            <Pressable testID="friends-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
               <View className="flex-row items-center justify-center">
                 <Text className="text-xl font-bold text-gray-300 mr-2">👥</Text>
                 <Text className="text-xl font-bold text-gray-300">Friends</Text>
@@ -184,7 +184,7 @@ export default function HomeScreen() {
 
           {/* Share / TikTok */}
           <Link href="/share" asChild>
-            <Pressable className="bg-gradient-to-r from-pink-600 to-purple-600 p-[2px] rounded-2xl active:scale-95">
+            <Pressable testID="share-button" className="bg-gradient-to-r from-pink-600 to-purple-600 p-[2px] rounded-2xl active:scale-95">
               <View className="bg-black rounded-2xl px-8 py-4">
                 <View className="flex-row items-center justify-center">
                   <Text className="text-xl font-bold text-white mr-2">🎵</Text>

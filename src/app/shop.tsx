@@ -281,10 +281,10 @@ export default function ShopScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView testID="shop-screen" className="flex-1 bg-black">
       {/* Header */}
       <View className="px-6 pt-4 pb-4 border-b border-gray-800">
-        <Pressable onPress={() => router.back()}>
+        <Pressable testID="back-button" onPress={() => router.back()}>
           <Text className="text-purple-400 text-base font-semibold">← Back</Text>
         </Pressable>
 
@@ -314,6 +314,7 @@ export default function ShopScreen() {
       <View className="px-6 pt-4 pb-2">
         <View className="flex-row gap-2">
           <Pressable
+            testID="themes-tab"
             onPress={() => setActiveTab('themes')}
             className={`flex-1 py-3 rounded-xl ${
               activeTab === 'themes' ? 'bg-purple-500' : 'bg-gray-800'
@@ -329,6 +330,7 @@ export default function ShopScreen() {
           </Pressable>
 
           <Pressable
+            testID="blocks-tab"
             onPress={() => setActiveTab('blocks')}
             className={`flex-1 py-3 rounded-xl ${
               activeTab === 'blocks' ? 'bg-purple-500' : 'bg-gray-800'
@@ -344,6 +346,7 @@ export default function ShopScreen() {
           </Pressable>
 
           <Pressable
+            testID="gems-tab"
             onPress={() => setActiveTab('gems')}
             className={`flex-1 py-3 rounded-xl ${
               activeTab === 'gems' ? 'bg-purple-500' : 'bg-gray-800'

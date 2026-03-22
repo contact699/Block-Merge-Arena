@@ -47,7 +47,7 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView testID="welcome-screen" className="flex-1 bg-black">
       <View className="flex-1 items-center justify-center p-6">
         {/* Logo/Branding */}
         <View className="items-center mb-8">
@@ -149,6 +149,7 @@ export default function WelcomeScreen() {
 
             {/* Finish Button */}
             <Pressable
+              testID="lets-play-button"
               onPress={handleFinish}
               className="bg-purple-500 rounded-xl py-4 active:scale-95"
             >

@@ -516,11 +516,11 @@ export default function SquadsScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView testID="squads-screen" className="flex-1 bg-black">
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }}>
         {/* Header */}
         <View className="px-6 pt-4 pb-6 border-b border-gray-800">
-          <Pressable onPress={() => router.back()}>
+          <Pressable testID="back-button" onPress={() => router.back()}>
             <Text className="text-purple-400 text-base font-semibold">← Back</Text>
           </Pressable>
 
@@ -532,6 +532,7 @@ export default function SquadsScreen() {
         <View className="px-6 mt-6">
           <View className="flex-row bg-gray-900 rounded-xl p-1">
             <Pressable
+              testID="my-squad-tab"
               onPress={() => setActiveTab('my_squad')}
               className={`flex-1 py-2 rounded-lg ${
                 activeTab === 'my_squad' ? 'bg-purple-500' : ''
@@ -547,6 +548,7 @@ export default function SquadsScreen() {
             </Pressable>
 
             <Pressable
+              testID="discover-tab"
               onPress={() => setActiveTab('discover')}
               className={`flex-1 py-2 rounded-lg ${
                 activeTab === 'discover' ? 'bg-purple-500' : ''
@@ -562,6 +564,7 @@ export default function SquadsScreen() {
             </Pressable>
 
             <Pressable
+              testID="squad-leaderboard-tab"
               onPress={() => setActiveTab('leaderboard')}
               className={`flex-1 py-2 rounded-lg ${
                 activeTab === 'leaderboard' ? 'bg-purple-500' : ''
@@ -577,6 +580,7 @@ export default function SquadsScreen() {
             </Pressable>
 
             <Pressable
+              testID="invites-tab"
               onPress={() => setActiveTab('invites')}
               className={`flex-1 py-2 rounded-lg ${
                 activeTab === 'invites' ? 'bg-purple-500' : ''

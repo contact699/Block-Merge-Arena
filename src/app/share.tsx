@@ -122,7 +122,7 @@ export default function ShareScreen() {
   const renderHeader = () => (
     <View className="mb-6">
       <View className="flex-row items-center justify-between mb-4">
-        <Pressable onPress={() => router.back()} className="p-2">
+        <Pressable testID="back-button" onPress={() => router.back()} className="p-2">
           <Text className="text-2xl">←</Text>
         </Pressable>
         <Text className="text-2xl font-bold text-white">Share & TikTok</Text>
@@ -344,7 +344,7 @@ export default function ShareScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-950">
+    <SafeAreaView testID="share-screen" className="flex-1 bg-gray-950">
       <ScrollView className="flex-1 px-4 pt-4">
         {renderHeader()}
 

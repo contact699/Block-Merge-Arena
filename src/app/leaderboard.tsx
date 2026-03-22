@@ -84,11 +84,11 @@ export default function LeaderboardScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView testID="leaderboard-screen" className="flex-1 bg-black">
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }}>
         {/* Header */}
         <View className="px-6 pt-4 pb-6">
-          <Pressable onPress={() => router.back()}>
+          <Pressable testID="back-button" onPress={() => router.back()}>
             <Text className="text-purple-400 text-base font-semibold">← Back</Text>
           </Pressable>
 
@@ -173,6 +173,7 @@ export default function LeaderboardScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View className="flex-row gap-2">
               <Pressable
+                testID="all-time-tab"
                 onPress={() => setActiveTab('all')}
                 className={`px-4 py-2 rounded-full ${
                   activeTab === 'all' ? 'bg-purple-500' : 'bg-gray-800'
@@ -186,6 +187,7 @@ export default function LeaderboardScreen() {
               </Pressable>
 
               <Pressable
+                testID="endless-tab"
                 onPress={() => setActiveTab('endless')}
                 className={`px-4 py-2 rounded-full ${
                   activeTab === 'endless' ? 'bg-purple-500' : 'bg-gray-800'
@@ -199,6 +201,7 @@ export default function LeaderboardScreen() {
               </Pressable>
 
               <Pressable
+                testID="tournament-tab"
                 onPress={() => setActiveTab('tournament')}
                 className={`px-4 py-2 rounded-full ${
                   activeTab === 'tournament' ? 'bg-purple-500' : 'bg-gray-800'
@@ -212,6 +215,7 @@ export default function LeaderboardScreen() {
               </Pressable>
 
               <Pressable
+                testID="recent-tab"
                 onPress={() => setActiveTab('recent')}
                 className={`px-4 py-2 rounded-full ${
                   activeTab === 'recent' ? 'bg-purple-500' : 'bg-gray-800'

@@ -251,7 +251,7 @@ export default function GameScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView testID="game-screen" className="flex-1 bg-black">
       {/* Animations Overlay */}
       {showCombo && (
         <ComboAnimation
@@ -285,7 +285,7 @@ export default function GameScreen() {
             Block Merge Arena
           </Text>
           {gameOver && (
-            <View className="mt-4 bg-red-500/20 border border-red-500 rounded-xl p-4">
+            <View testID="game-over-banner" className="mt-4 bg-red-500/20 border border-red-500 rounded-xl p-4">
               <Text className="text-red-400 text-center text-lg font-bold">
                 Game Over!
               </Text>
@@ -363,6 +363,7 @@ export default function GameScreen() {
         {gameOver && (
           <View className="px-6">
             <Pressable
+              testID="new-game-button"
               onPress={startNewGame}
               className="bg-purple-500 rounded-xl py-4 px-8"
             >

@@ -86,11 +86,11 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView testID="settings-screen" className="flex-1 bg-black">
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }}>
         {/* Header */}
         <View className="px-6 pt-4 pb-6 border-b border-gray-800">
-          <Pressable onPress={() => router.back()}>
+          <Pressable testID="back-button" onPress={() => router.back()}>
             <Text className="text-purple-400 text-base font-semibold">← Back</Text>
           </Pressable>
 
@@ -105,6 +105,7 @@ export default function SettingsScreen() {
           <View className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
             <Text className="text-gray-400 text-sm mb-2">Display Name</Text>
             <TextInput
+              testID="display-name-input"
               value={displayNameInput}
               onChangeText={setDisplayNameInput}
               placeholder="Enter your name"
@@ -304,12 +305,13 @@ export default function SettingsScreen() {
         {/* Action Buttons */}
         <View className="px-6 mt-6 gap-3">
           {/* Save Button */}
-          <Pressable onPress={handleSave} className="bg-purple-500 rounded-xl py-4">
+          <Pressable testID="save-button" onPress={handleSave} className="bg-purple-500 rounded-xl py-4">
             <Text className="text-white text-center text-lg font-bold">Save Changes</Text>
           </Pressable>
 
           {/* Reset Button */}
           <Pressable
+            testID="reset-button"
             onPress={handleReset}
             className="bg-gray-800 border border-gray-700 rounded-xl py-4"
           >

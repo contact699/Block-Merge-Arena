@@ -430,7 +430,7 @@ export default function TournamentScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView testID="tournament-screen" className="flex-1 bg-black">
       {/* Animations Overlay */}
       {showCombo && (
         <ComboAnimation
@@ -457,7 +457,7 @@ export default function TournamentScreen() {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }}>
         {/* Back Button */}
         <View className="px-6 pt-4">
-          <Pressable onPress={() => router.back()}>
+          <Pressable testID="back-button" onPress={() => router.back()}>
             <Text className="text-purple-400 text-base font-semibold">← Back</Text>
           </Pressable>
         </View>
@@ -471,6 +471,7 @@ export default function TournamentScreen() {
         {isFirebaseAvailable && !tournamentStarted && (
           <View className="px-6 mt-4">
             <Pressable
+              testID="view-standings-button"
               onPress={toggleStandings}
               className="bg-gray-900 border border-purple-500 rounded-xl py-3 px-4"
             >
@@ -828,6 +829,7 @@ export default function TournamentScreen() {
         {!tournamentStarted && (
           <View className="px-6 mt-6">
             <Pressable
+              testID="start-tournament-button"
               onPress={startTournament}
               className="bg-purple-500 rounded-xl py-4 px-8"
             >

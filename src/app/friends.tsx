@@ -206,11 +206,11 @@ export default function FriendsScreen() {
   const renderHeader = () => (
     <View className="mb-6">
       <View className="flex-row items-center justify-between mb-4">
-        <Pressable onPress={() => router.back()} className="p-2">
+        <Pressable testID="back-button" onPress={() => router.back()} className="p-2">
           <Text className="text-2xl">←</Text>
         </Pressable>
         <Text className="text-2xl font-bold text-white">Friends</Text>
-        <Pressable onPress={() => setShowAddFriend(true)} className="p-2">
+        <Pressable testID="add-friend-button" onPress={() => setShowAddFriend(true)} className="p-2">
           <Text className="text-2xl">➕</Text>
         </Pressable>
       </View>
@@ -566,6 +566,7 @@ export default function FriendsScreen() {
 
           <Text className="text-gray-400 mb-2">Friend Code</Text>
           <TextInput
+            testID="friend-code-input"
             value={friendCodeInput}
             onChangeText={(text) => setFriendCodeInput(text.toUpperCase())}
             placeholder="Enter 8-character code"
@@ -586,6 +587,7 @@ export default function FriendsScreen() {
           />
 
           <Pressable
+            testID="send-request-button"
             onPress={handleAddFriend}
             className="bg-purple-600 py-4 rounded-xl items-center"
           >
@@ -641,7 +643,7 @@ export default function FriendsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-950">
+    <SafeAreaView testID="friends-screen" className="flex-1 bg-gray-950">
       <ScrollView className="flex-1 px-4 pt-4">
         {renderHeader()}
 

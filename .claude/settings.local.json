@@ -19,7 +19,14 @@
       "Bash(npx eas:*)",
       "WebFetch(domain:job-logs.eascdn.net)",
       "Bash(npx expo install:*)",
-      "Bash(npx expo prebuild:*)"
+      "Bash(npx expo prebuild:*)",
+      "Bash(npx expo-doctor)",
+      "WebFetch(domain:expo.dev)",
+      "Bash(dir:*)",
+      "Bash(npx patch-package:*)",
+      "Bash(del \"C:\\\\Users\\\\computer\\\\Block-Merge-Arena\\\\patches\\\\expo-asset@11.1.5.patch\")",
+      "Bash(timeout:*)",
+      "Bash(./gradlew assembleRelease:*)"
     ]
   }
 }

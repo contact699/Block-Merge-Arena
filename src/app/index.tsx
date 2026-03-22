@@ -184,7 +184,7 @@ export default function HomeScreen() {
 
           {/* Share / TikTok */}
           <Link href="/share" asChild>
-            <Pressable testID="share-button" className="bg-gradient-to-r from-pink-600 to-purple-600 p-[2px] rounded-2xl active:scale-95">
+            <Pressable testID="share-button" accessibilityLabel="Share and TikTok" className="bg-gradient-to-r from-pink-600 to-purple-600 p-[2px] rounded-2xl active:scale-95">
               <View className="bg-black rounded-2xl px-8 py-4">
                 <View className="flex-row items-center justify-center">
                   <Text className="text-xl font-bold text-white mr-2">🎵</Text>

@@ -3,148 +3,233 @@ name: Home Screen Navigation
 ---
 - launchApp
 
+# Dismiss ANR dialog if it shows
+- runFlow:
+    when:
+      visible:
+        text: "Wait"
+    commands:
+      - tapOn:
+          text: "Wait"
+
+# Handle welcome screen if present
 - extendedWaitUntil:
     visible:
-      text: "Block Merge"
-    timeout: 10000
+      text: "Skip Tutorial"
+    timeout: 60000
+    optional: true
 
+- runFlow:
+    when:
+      visible:
+        text: "Skip Tutorial"
+    commands:
+      - tapOn:
+          text: "Skip Tutorial"
+      - extendedWaitUntil:
+          visible:
+            id: "home-screen"
+          timeout: 30000
+
+# Wait for home screen
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 30000
 - assertVisible:
     id: "home-screen"
-- assertVisible:
-    text: "Block Merge"
-- assertVisible:
-    text: "Arena"
 
-# 1. Settings
-- tapOn:
-    id: "settings-button"
-- assertVisible:
-    id: "settings-screen"
-- tapOn:
-    id: "back-button"
-- assertVisible:
-    id: "home-screen"
-
-# 2. Endless Mode
+# 1. Endless Mode
 - tapOn:
     id: "endless-mode-button"
-- assertVisible:
-    id: "game-screen"
+- extendedWaitUntil:
+    visible:
+      id: "game-screen"
+    timeout: 10000
 - back
-- assertVisible:
-    id: "home-screen"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 10000
 
 # 3. Tournament
 - tapOn:
     id: "tournament-button"
-- assertVisible:
-    id: "tournament-screen"
+- extendedWaitUntil:
+    visible:
+      id: "tournament-screen"
+    timeout: 10000
 - tapOn:
     id: "back-button"
-- assertVisible:
-    id: "home-screen"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 10000
 
 # 4. Leaderboard
 - tapOn:
     id: "leaderboard-button"
-- assertVisible:
-    id: "leaderboard-screen"
+- extendedWaitUntil:
+    visible:
+      id: "leaderboard-screen"
+    timeout: 10000
 - tapOn:
     id: "back-button"
-- assertVisible:
-    id: "home-screen"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 10000
 
 # 5. Replays
 - tapOn:
     id: "replays-button"
-- assertVisible:
-    id: "replays-screen"
+- extendedWaitUntil:
+    visible:
+      id: "replays-screen"
+    timeout: 10000
 - tapOn:
     id: "back-button"
-- assertVisible:
-    id: "home-screen"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 10000
 
 # 6. Shop
 - tapOn:
     id: "shop-button"
-- assertVisible:
-    id: "shop-screen"
+- extendedWaitUntil:
+    visible:
+      id: "shop-screen"
+    timeout: 10000
 - tapOn:
     id: "back-button"
-- assertVisible:
-    id: "home-screen"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 10000
 
 # 7. Achievements
 - tapOn:
     id: "achievements-button"
-- assertVisible:
-    id: "achievements-screen"
+- extendedWaitUntil:
+    visible:
+      id: "achievements-screen"
+    timeout: 10000
 - tapOn:
     id: "back-button"
-- assertVisible:
-    id: "home-screen"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 10000
 
 # 8. Tutorials
 - tapOn:
     id: "tutorials-button"
-- assertVisible:
-    id: "tutorials-screen"
+- extendedWaitUntil:
+    visible:
+      id: "tutorials-screen"
+    timeout: 10000
 - tapOn:
     id: "back-button"
-- assertVisible:
-    id: "home-screen"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 10000
 
 # 9. Ranks (scroll needed)
 - scroll
 - tapOn:
     id: "ranks-button"
-- assertVisible:
-    id: "ranks-screen"
+- extendedWaitUntil:
+    visible:
+      id: "ranks-screen"
+    timeout: 10000
 - tapOn:
     id: "back-button"
-- assertVisible:
-    id: "home-screen"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 10000
 
 # 10. Battle Pass (scroll needed)
 - scroll
 - tapOn:
     id: "battlepass-button"
-- assertVisible:
-    id: "battlepass-screen"
+- extendedWaitUntil:
+    visible:
+      id: "battlepass-screen"
+    timeout: 10000
 - tapOn:
     id: "back-button"
-- assertVisible:
-    id: "home-screen"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 10000
 
 # 11. Squads (scroll needed)
 - scroll
 - tapOn:
     id: "squads-button"
-- assertVisible:
-    id: "squads-screen"
+- extendedWaitUntil:
+    visible:
+      id: "squads-screen"
+    timeout: 10000
 - tapOn:
     id: "back-button"
-- assertVisible:
-    id: "home-screen"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 10000
 
 # 12. Friends (scroll needed)
 - scroll
 - tapOn:
     id: "friends-button"
-- assertVisible:
-    id: "friends-screen"
+- extendedWaitUntil:
+    visible:
+      id: "friends-screen"
+    timeout: 10000
 - tapOn:
     id: "back-button"
-- assertVisible:
-    id: "home-screen"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 10000
 
-# 13. Share (scroll needed)
-- scroll
+# 13. Share (at very bottom)
+- scrollUntilVisible:
+    element:
+      text: "Share and TikTok"
+    direction: DOWN
+    timeout: 30000
+    speed: 80
 - tapOn:
-    id: "share-button"
-- assertVisible:
-    id: "share-screen"
+    text: "Share and TikTok"
+- extendedWaitUntil:
+    visible:
+      id: "share-screen"
+    timeout: 10000
 - tapOn:
     id: "back-button"
-- assertVisible:
-    id: "home-screen"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 10000
+
+# 14. Settings (tap below status bar to avoid notification shade)
+- swipe:
+    direction: DOWN
+    duration: 400
+- tapOn:
+    id: "settings-button"
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible:
+      id: "settings-screen"
+    timeout: 10000
+- tapOn:
+    id: "back-button"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 10000

@@ -7,185 +7,80 @@ const ACHIEVEMENTS_KEY = '@block_merge_arena:achievements';
 const UNLOCKS_KEY = '@block_merge_arena:achievement_unlocks';
 
 /**
- * Default achievements catalog
+ * Slim achievements catalog — six tasteful badges.
  */
 export const DEFAULT_ACHIEVEMENTS: Achievement[] = [
-  // Score Achievements
   {
-    id: 'score_1k',
-    name: 'Getting Started',
-    description: 'Score 1,000 points in a single game',
-    category: 'score',
+    id: 'first-merge',
+    name: 'First Merge',
+    description: 'Merge two gems for the first time',
+    category: 'special',
     rarity: 'common',
-    icon: '🎯',
-    requirement: 1000,
+    icon: '✨',
+    requirement: 1,
     currentProgress: 0,
     completed: false,
-    rewards: { coins: 50 },
+    rewards: {},
   },
   {
-    id: 'score_5k',
-    name: 'Rising Star',
-    description: 'Score 5,000 points in a single game',
-    category: 'score',
-    rarity: 'common',
-    icon: '⭐',
-    requirement: 5000,
-    currentProgress: 0,
-    completed: false,
-    rewards: { coins: 100 },
-  },
-  {
-    id: 'score_10k',
-    name: 'Expert Player',
-    description: 'Score 10,000 points in a single game',
-    category: 'score',
-    rarity: 'rare',
-    icon: '🌟',
-    requirement: 10000,
-    currentProgress: 0,
-    completed: false,
-    rewards: { coins: 200, gems: 10 },
-  },
-  {
-    id: 'score_25k',
-    name: 'Master',
-    description: 'Score 25,000 points in a single game',
-    category: 'score',
-    rarity: 'epic',
-    icon: '💫',
-    requirement: 25000,
-    currentProgress: 0,
-    completed: false,
-    rewards: { coins: 500, gems: 25 },
-  },
-  {
-    id: 'score_50k',
-    name: 'Legend',
-    description: 'Score 50,000 points in a single game',
-    category: 'score',
-    rarity: 'legendary',
-    icon: '👑',
-    requirement: 50000,
-    currentProgress: 0,
-    completed: false,
-    rewards: { coins: 1000, gems: 50 },
-  },
-
-  // Games Played
-  {
-    id: 'games_10',
-    name: 'Enthusiast',
-    description: 'Play 10 games',
-    category: 'games',
-    rarity: 'common',
-    icon: '🎮',
-    requirement: 10,
-    currentProgress: 0,
-    completed: false,
-    rewards: { coins: 100 },
-  },
-  {
-    id: 'games_50',
-    name: 'Dedicated',
-    description: 'Play 50 games',
-    category: 'games',
-    rarity: 'rare',
-    icon: '🕹️',
-    requirement: 50,
-    currentProgress: 0,
-    completed: false,
-    rewards: { coins: 300, gems: 15 },
-  },
-  {
-    id: 'games_100',
-    name: 'Addicted',
-    description: 'Play 100 games',
-    category: 'games',
-    rarity: 'epic',
-    icon: '🎲',
-    requirement: 100,
-    currentProgress: 0,
-    completed: false,
-    rewards: { coins: 500, gems: 30 },
-  },
-
-  // Combos
-  {
-    id: 'combo_5x',
-    name: 'Combo King',
-    description: 'Achieve a 5x multiplier',
+    id: 'five-cluster',
+    name: 'Five-Cluster',
+    description: 'Land a ×5 multiplier',
     category: 'combos',
     rarity: 'rare',
     icon: '🔥',
     requirement: 5,
     currentProgress: 0,
     completed: false,
-    rewards: { coins: 250, gems: 15 },
+    rewards: {},
   },
   {
-    id: 'combo_10x',
-    name: 'Combo God',
-    description: 'Achieve a 10x multiplier',
-    category: 'combos',
-    rarity: 'legendary',
-    icon: '⚡',
-    requirement: 10,
+    id: 'first-daily',
+    name: 'Daily Debut',
+    description: 'Complete your first daily run',
+    category: 'tournament',
+    rarity: 'common',
+    icon: '📅',
+    requirement: 1,
     currentProgress: 0,
     completed: false,
-    rewards: { coins: 1000, gems: 75 },
+    rewards: {},
   },
-
-  // Tournament
   {
-    id: 'tournament_win',
-    name: 'Tournament Winner',
-    description: 'Win a daily tournament',
+    id: 'streak-7',
+    name: 'A Week Steady',
+    description: 'Play the daily seven days in a row',
+    category: 'tournament',
+    rarity: 'rare',
+    icon: '🏅',
+    requirement: 7,
+    currentProgress: 0,
+    completed: false,
+    rewards: {},
+  },
+  {
+    id: 'sub-three',
+    name: 'Quick Hand',
+    description: 'Finish a run in under three minutes',
+    category: 'special',
+    rarity: 'rare',
+    icon: '⏱️',
+    requirement: 1,
+    currentProgress: 0,
+    completed: false,
+    rewards: {},
+  },
+  {
+    id: 'centurion',
+    name: 'Centurion',
+    description: 'Play one hundred dailies',
     category: 'tournament',
     rarity: 'epic',
     icon: '🏆',
-    requirement: 1,
+    requirement: 100,
     currentProgress: 0,
     completed: false,
-    rewards: { coins: 500, gems: 50 },
-  },
-  {
-    id: 'tournament_top10',
-    name: 'Top 10',
-    description: 'Finish in top 10 in a tournament',
-    category: 'tournament',
-    rarity: 'rare',
-    icon: '🥈',
-    requirement: 1,
-    currentProgress: 0,
-    completed: false,
-    rewards: { coins: 200, gems: 20 },
-  },
-
-  // Special
-  {
-    id: 'first_game',
-    name: 'First Steps',
-    description: 'Complete your first game',
-    category: 'special',
-    rarity: 'common',
-    icon: '👶',
-    requirement: 1,
-    currentProgress: 0,
-    completed: false,
-    rewards: { coins: 50 },
-  },
-  {
-    id: 'perfect_clear',
-    name: 'Perfect Clear',
-    description: 'Clear the entire board',
-    category: 'special',
-    rarity: 'legendary',
-    icon: '✨',
-    requirement: 1,
-    currentProgress: 0,
-    completed: false,
-    rewards: { coins: 1500, gems: 100 },
+    rewards: {},
   },
 ];
 
@@ -275,50 +170,54 @@ export async function checkAchievements(data: {
 }): Promise<Achievement[]> {
   const unlockedAchievements: Achievement[] = [];
 
-  // Score achievements
-  if (data.score !== undefined) {
-    const scoreAchievements = ['score_1k', 'score_5k', 'score_10k', 'score_25k', 'score_50k'];
-    for (const id of scoreAchievements) {
-      const unlocked = await updateAchievementProgress(id, data.score);
-      if (unlocked) unlockedAchievements.push(unlocked);
-    }
-  }
+  // TODO(phase-2): rewrite achievement grants for the slim catalog
+  // The old grants below referenced IDs that no longer exist and have been
+  // commented out. Wire new grant logic once Phase 2 defines the events.
 
-  // Games played
-  if (data.gamesPlayed !== undefined) {
-    const gamesAchievements = ['games_10', 'games_50', 'games_100', 'first_game'];
-    for (const id of gamesAchievements) {
-      const unlocked = await updateAchievementProgress(id, data.gamesPlayed);
-      if (unlocked) unlockedAchievements.push(unlocked);
-    }
-  }
+  // // Score achievements
+  // if (data.score !== undefined) {
+  //   const scoreAchievements = ['score_1k', 'score_5k', 'score_10k', 'score_25k', 'score_50k'];
+  //   for (const id of scoreAchievements) {
+  //     const unlocked = await updateAchievementProgress(id, data.score);
+  //     if (unlocked) unlockedAchievements.push(unlocked);
+  //   }
+  // }
 
-  // Multiplier/Combo
-  if (data.multiplier !== undefined) {
-    const comboAchievements = ['combo_5x', 'combo_10x'];
-    for (const id of comboAchievements) {
-      const unlocked = await updateAchievementProgress(id, data.multiplier);
-      if (unlocked) unlockedAchievements.push(unlocked);
-    }
-  }
+  // // Games played
+  // if (data.gamesPlayed !== undefined) {
+  //   const gamesAchievements = ['games_10', 'games_50', 'games_100', 'first_game'];
+  //   for (const id of gamesAchievements) {
+  //     const unlocked = await updateAchievementProgress(id, data.gamesPlayed);
+  //     if (unlocked) unlockedAchievements.push(unlocked);
+  //   }
+  // }
 
-  // Tournament rank
-  if (data.tournamentRank !== undefined) {
-    if (data.tournamentRank === 1) {
-      const unlocked = await updateAchievementProgress('tournament_win', 1);
-      if (unlocked) unlockedAchievements.push(unlocked);
-    }
-    if (data.tournamentRank <= 10) {
-      const unlocked = await updateAchievementProgress('tournament_top10', 1);
-      if (unlocked) unlockedAchievements.push(unlocked);
-    }
-  }
+  // // Multiplier/Combo
+  // if (data.multiplier !== undefined) {
+  //   const comboAchievements = ['combo_5x', 'combo_10x'];
+  //   for (const id of comboAchievements) {
+  //     const unlocked = await updateAchievementProgress(id, data.multiplier);
+  //     if (unlocked) unlockedAchievements.push(unlocked);
+  //   }
+  // }
 
-  // Perfect clear
-  if (data.perfectClear) {
-    const unlocked = await updateAchievementProgress('perfect_clear', 1);
-    if (unlocked) unlockedAchievements.push(unlocked);
-  }
+  // // Tournament rank
+  // if (data.tournamentRank !== undefined) {
+  //   if (data.tournamentRank === 1) {
+  //     const unlocked = await updateAchievementProgress('tournament_win', 1);
+  //     if (unlocked) unlockedAchievements.push(unlocked);
+  //   }
+  //   if (data.tournamentRank <= 10) {
+  //     const unlocked = await updateAchievementProgress('tournament_top10', 1);
+  //     if (unlocked) unlockedAchievements.push(unlocked);
+  //   }
+  // }
+
+  // // Perfect clear
+  // if (data.perfectClear) {
+  //   const unlocked = await updateAchievementProgress('perfect_clear', 1);
+  //   if (unlocked) unlockedAchievements.push(unlocked);
+  // }
 
   return unlockedAchievements;
 }

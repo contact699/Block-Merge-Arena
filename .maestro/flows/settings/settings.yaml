@@ -38,7 +38,7 @@ name: Settings Screen
 - assertVisible:
     id: "reset-button"
 - assertVisible:
-    text: "Block Merge Arena v1.0.0"
+    text: "Block Merge v1.0.0"
 
 - scroll up
 - tapOn:

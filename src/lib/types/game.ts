@@ -1,4 +1,4 @@
-// Block Merge Arena - Game Type Definitions
+// Block Merge - Game Type Definitions
 
 export type BlockColor = 'red' | 'blue' | 'green' | 'yellow' | 'purple' | 'orange';
 

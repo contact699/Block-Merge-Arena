@@ -96,12 +96,12 @@ export const HASHTAGS = {
 export const CAPTION_TEMPLATES = {
   combo: [
     '🔥 {combo}x COMBO! Can you beat this? 🎮',
-    'Just pulled off a {combo}x combo in Block Merge Arena! 💎',
+    'Just pulled off a {combo}x combo in Block Merge! 💎',
     'This {multiplier}x multiplier is INSANE 🤯 #{hashtag}',
   ],
   highScore: [
     '🏆 NEW HIGH SCORE: {score} points! Who can beat it?',
-    'Just hit {score} in Block Merge Arena! 🎯 Challenge me!',
+    'Just hit {score} in Block Merge! 🎯 Challenge me!',
     '{score} points?! I\'m on fire! 🔥 #{hashtag}',
   ],
   tournament: [
@@ -111,6 +111,6 @@ export const CAPTION_TEMPLATES = {
   ],
   rankUp: [
     '📈 Just ranked up to {rank}! The grind is real 💪',
-    'NEW RANK: {rank}! Block Merge Arena is addictive 🎮',
+    'NEW RANK: {rank}! Block Merge is addictive 🎮',
   ],
 };

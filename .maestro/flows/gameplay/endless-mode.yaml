@@ -15,7 +15,7 @@ name: Endless Mode Gameplay
 - assertVisible:
     id: "game-board"
 - assertVisible:
-    text: "Block Merge Arena"
+    text: "Block Merge"
 - assertVisible:
     text: "Select a piece below, then tap the board to place it"
 
@@ -31,7 +31,7 @@ name: Endless Mode Gameplay
 
 # Verify game is still running
 - assertVisible:
-    text: "Block Merge Arena"
+    text: "Block Merge"
 
 - back
 - assertVisible:

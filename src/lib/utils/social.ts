@@ -16,9 +16,9 @@ import {
   CAPTION_TEMPLATES,
 } from '@/lib/types/social';
 
-const HIGHLIGHTS_KEY = '@block_merge_arena:highlights';
-const RECORDING_CONFIG_KEY = '@block_merge_arena:recording_config';
-const SOCIAL_STATS_KEY = '@block_merge_arena:social_stats';
+const HIGHLIGHTS_KEY = '@block_merge:highlights';
+const RECORDING_CONFIG_KEY = '@block_merge:recording_config';
+const SOCIAL_STATS_KEY = '@block_merge:social_stats';
 
 /**
  * Generate unique highlight ID
@@ -408,7 +408,7 @@ export async function shareGeneric(highlight: ShareableHighlight): Promise<Share
       message += `\n\n👻 Watch my replay: ${highlight.replayCode}`;
     }
     
-    message += '\n\n🎮 Play Block Merge Arena!';
+    message += '\n\n🎮 Play Block Merge!';
     
     const result = await Share.share({
       message,
@@ -577,7 +577,7 @@ export async function getGameOverShareContent(
     highlight = await saveHighlight({
       type: 'high_score',
       title: 'Great Game!',
-      description: `Scored ${score.toLocaleString()} points in Block Merge Arena!`,
+      description: `Scored ${score.toLocaleString()} points in Block Merge!`,
       score,
       timestamp: Date.now(),
       replayCode,

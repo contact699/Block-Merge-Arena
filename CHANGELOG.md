@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Block Merge Arena will be documented in this file.
+All notable changes to Block Merge will be documented in this file.
 
 ## [1.0.0] - 2026-01-15 - Initial Release 🎉
 
@@ -126,4 +126,4 @@ All notable changes to Block Merge Arena will be documented in this file.
 
 ---
 
-**Block Merge Arena v1.0.0 - Ready for Launch! 🚀**
+**Block Merge v1.0.0 - Ready for Launch! 🚀**

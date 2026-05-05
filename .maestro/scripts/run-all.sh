@@ -1,12 +1,12 @@
 #!/bin/bash
-# Run all Maestro E2E tests for Block Merge Arena
+# Run all Maestro E2E tests for Block Merge
 # Usage: ./run-all.sh
 
 set -e
 
 FLOWS_DIR="$(dirname "$0")/../flows"
 
-echo "=== Block Merge Arena E2E Tests ==="
+echo "=== Block Merge E2E Tests ==="
 echo ""
 
 # Run all flows

@@ -323,7 +323,7 @@ export default function SettingsScreen() {
         <View className="px-6 mt-6 mb-4">
           <View className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
             <Text className="text-gray-500 text-xs text-center">
-              Block Merge Arena v1.0.0
+              Block Merge v1.0.0
             </Text>
             <Text className="text-gray-600 text-xs text-center mt-1">
               Made for Gen Z puzzle lovers 🎮

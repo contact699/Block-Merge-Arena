@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Block Merge Arena",
-    "slug": "block-merge-arena",
-    "scheme": "blockmergearena",
+    "name": "Block Merge",
+    "slug": "block-merge",
+    "scheme": "blockmerge",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -30,6 +30,9 @@
       "permissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.RECORD_AUDIO"
       ]
     },
@@ -38,8 +41,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Block Merge Arena to access your photos to customize your profile.",
-          "cameraPermission": "Allow Block Merge Arena to access your camera to take profile pictures."
+          "photosPermission": "Allow Block Merge to access your photos to customize your profile.",
+          "cameraPermission": "Allow Block Merge to access your camera to take profile pictures."
         }
       ],
       "expo-asset",
@@ -56,6 +59,12 @@
         "projectId": "9831f375-2d0e-4d06-8411-81d3358707c0"
       }
     },
-    "owner": "patrob316"
+    "owner": "patrob316",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9831f375-2d0e-4d06-8411-81d3358707c0"
+    }
   }
 }

@@ -1,20 +1,15 @@
-// Welcome Screen — Tactile Console redesign.
-import { useState } from 'react';
+// Welcome Screen — Phase 1 stub. Phase 2 replaces this with the silent-demo onboarding.
 import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { TutorialOverlay } from '@/components/TutorialOverlay';
-import { WELCOME_TUTORIAL } from '@/lib/tutorial/catalog';
-import { completeStep, skipTutorial } from '@/lib/utils/tutorial';
 import { colors, fontWeight } from '@/lib/design/tokens';
 import { TactileCell } from '@/components/design/TactileCell';
 import { TactileButton } from '@/components/design/TactileButton';
 import { Pill } from '@/components/design/Pill';
+import { markWelcomeComplete } from '@/lib/utils/tutorial';
 
 function IntroBoardPreview() {
-  // Renders a small 8x8 dark board with a hand-crafted "intro" layout —
-  // mirrors the design's makeIntroBoard() so the welcome screen feels alive.
-  const layout: (keyof typeof BOARD_FIXTURE)[][] = (() => {
+  const layout: string[][] = (() => {
     const grid: string[][] = Array.from({ length: 8 }, () => Array(8).fill(''));
     const set = (r: number, c: number, col: string) => (grid[r][c] = col);
     set(2, 2, 'ember'); set(2, 3, 'ember');
@@ -22,7 +17,7 @@ function IntroBoardPreview() {
     set(4, 4, 'mustard'); set(5, 4, 'mustard');
     set(5, 5, 'forest'); set(5, 6, 'forest');
     set(6, 1, 'plum'); set(6, 2, 'plum');
-    return grid as (keyof typeof BOARD_FIXTURE)[][];
+    return grid;
   })();
 
   const boardSize = 240;
@@ -79,48 +74,16 @@ function IntroBoardPreview() {
   );
 }
 
-const BOARD_FIXTURE = {
-  ember: 1,
-  cobalt: 1,
-  forest: 1,
-  mustard: 1,
-  plum: 1,
-};
-
 export default function WelcomeScreen() {
   const router = useRouter();
-  const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
-  const [showRewards, setShowRewards] = useState<boolean>(false);
-  const [earnedCoins, setEarnedCoins] = useState<number>(0);
-  const [earnedGems, setEarnedGems] = useState<number>(0);
 
-  const currentStep = WELCOME_TUTORIAL.steps[currentStepIndex];
-  const totalSteps = WELCOME_TUTORIAL.steps.length;
-
-  const handleNext = async (): Promise<void> => {
-    const result = await completeStep(currentStep.id);
-    if (result.tutorialComplete) {
-      setEarnedCoins(WELCOME_TUTORIAL.rewards?.coins || 0);
-      setEarnedGems(WELCOME_TUTORIAL.rewards?.gems || 0);
-      setShowRewards(true);
-    } else if (result.nextStep) {
-      const nextIndex = WELCOME_TUTORIAL.steps.findIndex((s) => s.id === result.nextStep);
-      if (nextIndex !== -1) setCurrentStepIndex(nextIndex);
-    }
-  };
-
-  const handleSkip = async (): Promise<void> => {
-    await skipTutorial(WELCOME_TUTORIAL.id);
-    router.replace('/');
-  };
-
-  const handleFinish = (): void => {
+  const handleStart = async (): Promise<void> => {
+    await markWelcomeComplete();
     router.replace('/');
   };
 
   return (
     <SafeAreaView testID="welcome-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
-      {/* Ambient ember blob */}
       <View
         pointerEvents="none"
         style={{
@@ -181,7 +144,6 @@ export default function WelcomeScreen() {
         <View style={{ alignItems: 'center', marginTop: 28 }}>
           <View style={{ position: 'relative' }}>
             <IntroBoardPreview />
-            {/* Multiplier badge */}
             <View
               style={{
                 position: 'absolute',
@@ -206,124 +168,17 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={{ marginTop: 'auto', gap: 10 }}>
-          <TactileButton
-            variant="primary"
-            onPress={() => {
-              // Move into the tutorial flow if available, otherwise finish.
-              if (totalSteps > 0) {
-                // The TutorialOverlay below drives state; nothing to do here.
-              }
-            }}
-          >
+          <TactileButton testID="lets-play-button" variant="primary" onPress={handleStart}>
             Start playing
           </TactileButton>
-          <Pressable onPress={handleSkip} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, alignItems: 'center', paddingVertical: 12 })}>
+          <Pressable
+            onPress={handleStart}
+            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, alignItems: 'center', paddingVertical: 12 })}
+          >
             <Text style={{ color: colors.inkSoft, fontWeight: fontWeight.semibold }}>I have an account</Text>
           </Pressable>
         </View>
       </View>
-
-      {/* Tutorial Overlay */}
-      {!showRewards && (
-        <TutorialOverlay
-          step={currentStep}
-          onNext={handleNext}
-          onSkip={handleSkip}
-          totalSteps={totalSteps}
-          currentStepIndex={currentStepIndex}
-        />
-      )}
-
-      {/* Rewards Modal */}
-      {showRewards && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(22,20,15,0.78)',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 24,
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: colors.paper,
-              borderRadius: 20,
-              padding: 24,
-              width: '100%',
-              maxWidth: 360,
-              borderWidth: 1,
-              borderColor: 'rgba(22,20,15,0.1)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 24 },
-              shadowOpacity: 0.4,
-              shadowRadius: 40,
-              elevation: 14,
-            }}
-          >
-            <Pill variant="ember" style={{ alignSelf: 'flex-start' }}>WELCOME</Pill>
-            <Text
-              style={{
-                marginTop: 14,
-                fontSize: 28,
-                fontWeight: fontWeight.black,
-                color: colors.ink,
-                letterSpacing: -1,
-              }}
-            >
-              You're in.
-            </Text>
-            <Text style={{ color: colors.inkSoft, marginTop: 6, fontSize: 14 }}>
-              A starter bonus to get you going.
-            </Text>
-
-            <View
-              style={{
-                marginTop: 18,
-                marginBottom: 18,
-                backgroundColor: 'rgba(22,20,15,0.05)',
-                borderRadius: 14,
-                padding: 16,
-                flexDirection: 'row',
-                justifyContent: 'space-around',
-              }}
-            >
-              {earnedCoins > 0 && (
-                <View style={{ alignItems: 'center' }}>
-                  <Text style={{ color: colors.mustard, fontSize: 28, fontWeight: fontWeight.black }}>
-                    {earnedCoins}
-                  </Text>
-                  <Text style={{ color: colors.inkSoft, fontSize: 11, marginTop: 4, letterSpacing: 1.4 }}>
-                    COINS
-                  </Text>
-                </View>
-              )}
-              {earnedGems > 0 && (
-                <View style={{ alignItems: 'center' }}>
-                  <Text style={{ color: colors.plum, fontSize: 28, fontWeight: fontWeight.black }}>
-                    {earnedGems}
-                  </Text>
-                  <Text style={{ color: colors.inkSoft, fontSize: 11, marginTop: 4, letterSpacing: 1.4 }}>
-                    GEMS
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            <TactileButton
-              testID="lets-play-button"
-              onPress={handleFinish}
-              variant="primary"
-            >
-              Let's play
-            </TactileButton>
-          </View>
-        </View>
-      )}
     </SafeAreaView>
   );
 }

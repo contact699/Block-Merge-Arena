@@ -33,12 +33,8 @@ import { ReplayRecorder } from '@/lib/game/replay-recorder';
 import { rewardCoinsForScore } from '@/lib/utils/currency';
 import { checkAchievements } from '@/lib/utils/achievements';
 
-import { updateRankAfterTournament } from '@/lib/utils/ranks';
-import { awardTournamentXP } from '@/lib/utils/battlepass';
-import { getPlayerSquadData, updateMemberScore } from '@/lib/utils/squad';
 import type { GameBoard as GameBoardType, GamePiece, Gem } from '@/lib/types/game';
 import type { Achievement } from '@/lib/types/achievements';
-import type { RankInfo } from '@/lib/types/ranks';
 
 export default function TournamentScreen() {
   const router = useRouter();
@@ -79,28 +75,6 @@ export default function TournamentScreen() {
   const [maxMultiplierReached, setMaxMultiplierReached] = useState<number>(1);
   const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([]);
 
-  // Rank tracking
-  const [rankChange, setRankChange] = useState<{
-    oldRank: RankInfo;
-    newRank: RankInfo;
-    ratingChange: number;
-    rankUp: boolean;
-    rankDown: boolean;
-    rewards?: { coins?: number; gems?: number };
-  } | null>(null);
-
-  // Battle Pass XP
-  const [bpXPEarned, setBpXPEarned] = useState<{
-    totalXP: number;
-    baseXP: number;
-    scoreXP: number;
-    comboXP: number;
-    dailyXP: number;
-    oldLevel: number;
-    newLevel: number;
-    leveledUp: boolean;
-  } | null>(null);
-
   // Initialize with tournament pieces
   useEffect(() => {
     const tournamentPieces = generateTournamentPieces(seed, 3);
@@ -123,8 +97,6 @@ export default function TournamentScreen() {
     setMaxMultiplierReached(1);
     setUnlockedAchievements([]);
     setEarnedCoins(0);
-    setRankChange(null);
-    setBpXPEarned(null);
 
     // Initialize and start replay recording
     const userId = await getOrCreateUser();
@@ -174,56 +146,11 @@ export default function TournamentScreen() {
       console.log('🏆 Achievements unlocked:', achievementsUnlocked.map((a: Achievement) => a.name).join(', '));
     }
 
-    // Award Battle Pass XP
-    const bpXP = await awardTournamentXP(score, maxMultiplierReached);
-    setBpXPEarned({
-      totalXP: bpXP.totalXP,
-      baseXP: bpXP.baseXP,
-      scoreXP: bpXP.scoreXP,
-      comboXP: bpXP.comboXP,
-      dailyXP: bpXP.dailyXP,
-      oldLevel: bpXP.levelProgress.oldLevel,
-      newLevel: bpXP.levelProgress.newLevel,
-      leveledUp: bpXP.levelProgress.leveledUp,
-    });
-    console.log(`🎫 Battle Pass XP earned: ${bpXP.totalXP}`);
-
-    // Update squad score
-    const userId = await getOrCreateUser();
-    const playerSquadData = await getPlayerSquadData(userId);
-    if (playerSquadData.currentSquadId) {
-      await updateMemberScore(userId, playerSquadData.currentSquadId, score);
-      console.log('🛡️ Squad score updated:', score);
-    }
-
     // Load standings after game ends
     if (isFirebaseAvailable) {
       setTimeout(async () => {
         await loadStandings();
         setShowStandings(true);
-
-        // Check tournament rank achievements and update rank after standings load
-        const currentUserId = await getOrCreateUser();
-        const userEntry = standings.find((e: TournamentEntry) => e.userId === currentUserId);
-        if (userEntry && userEntry.rank) {
-          // Update rank based on tournament performance
-          const rankResult = await updateRankAfterTournament(
-            userEntry.rank,
-            standings.length,
-            score
-          );
-          setRankChange(rankResult);
-          console.log(`📊 Rank ${rankResult.rankUp ? 'UP' : rankResult.rankDown ? 'DOWN' : 'updated'}: ${rankResult.oldRank.displayName} → ${rankResult.newRank.displayName}`);
-
-          // Check tournament rank achievements
-          const rankAchievements = await checkAchievements({
-            tournamentRank: userEntry.rank,
-          });
-          if (rankAchievements.length > 0) {
-            setUnlockedAchievements((prev: Achievement[]) => [...prev, ...rankAchievements]);
-            console.log('🏆 Rank achievements unlocked:', rankAchievements.map((a: Achievement) => a.name).join(', '));
-          }
-        }
       }, 2000); // Wait 2 seconds for score to propagate
     }
   };
@@ -401,29 +328,6 @@ export default function TournamentScreen() {
         setTimeout(async () => {
           await loadStandings();
           setShowStandings(true);
-
-          // Check tournament rank achievements and update rank after standings load
-          const currentUserId = await getOrCreateUser();
-          const userEntry = standings.find((e: TournamentEntry) => e.userId === currentUserId);
-          if (userEntry && userEntry.rank) {
-            // Update rank based on tournament performance
-            const rankResult = await updateRankAfterTournament(
-              userEntry.rank,
-              standings.length,
-              newScore
-            );
-            setRankChange(rankResult);
-            console.log(`📊 Rank ${rankResult.rankUp ? 'UP' : rankResult.rankDown ? 'DOWN' : 'updated'}: ${rankResult.oldRank.displayName} → ${rankResult.newRank.displayName}`);
-
-            // Check tournament rank achievements
-            const rankAchievements = await checkAchievements({
-              tournamentRank: userEntry.rank,
-            });
-            if (rankAchievements.length > 0) {
-              setUnlockedAchievements((prev: Achievement[]) => [...prev, ...rankAchievements]);
-              console.log('🏆 Rank achievements unlocked:', rankAchievements.map((a: Achievement) => a.name).join(', '));
-            }
-          }
         }, 2000); // Wait 2 seconds for score to propagate
       }
     }
@@ -620,121 +524,6 @@ export default function TournamentScreen() {
                   <Text className="text-gray-500 text-center text-xs mt-2">
                     Share this code to let others watch your run!
                   </Text>
-                </View>
-              )}
-
-              {/* Rank Change */}
-              {rankChange && (
-                <View className="mt-4 pt-3 border-t border-purple-500/30">
-                  <Text className="text-gray-400 text-center text-xs mb-2">
-                    📊 Rank Update
-                  </Text>
-                  <View
-                    className={`rounded-lg p-3 border ${
-                      rankChange.rankUp
-                        ? 'bg-green-500/20 border-green-500'
-                        : rankChange.rankDown
-                        ? 'bg-red-500/20 border-red-500'
-                        : 'bg-gray-800 border-gray-700'
-                    }`}
-                  >
-                    <View className="flex-row items-center justify-center gap-2 mb-2">
-                      <View className="items-center">
-                        <Text className="text-2xl">{rankChange.oldRank.icon}</Text>
-                        <Text className="text-white text-xs font-bold mt-1">
-                          {rankChange.oldRank.displayName}
-                        </Text>
-                      </View>
-
-                      <Text className="text-white text-xl mx-2">→</Text>
-
-                      <View className="items-center">
-                        <Text className="text-2xl">{rankChange.newRank.icon}</Text>
-                        <Text className="text-white text-xs font-bold mt-1">
-                          {rankChange.newRank.displayName}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <Text
-                      className={`text-center text-sm font-bold ${
-                        rankChange.ratingChange > 0 ? 'text-green-400' : 'text-red-400'
-                      }`}
-                    >
-                      {rankChange.ratingChange > 0 ? '+' : ''}
-                      {rankChange.ratingChange} Rating
-                    </Text>
-
-                    {rankChange.rewards && (rankChange.rewards.coins || rankChange.rewards.gems) && (
-                      <View className="flex-row items-center justify-center gap-3 mt-2 pt-2 border-t border-gray-700">
-                        <Text className="text-gray-400 text-xs">Rank Up Rewards:</Text>
-                        {rankChange.rewards.coins && (
-                          <Text className="text-yellow-400 text-xs font-semibold">
-                            +{rankChange.rewards.coins} 🪙
-                          </Text>
-                        )}
-                        {rankChange.rewards.gems && (
-                          <Text className="text-purple-400 text-xs font-semibold">
-                            +{rankChange.rewards.gems} 💎
-                          </Text>
-                        )}
-                      </View>
-                    )}
-                  </View>
-                </View>
-              )}
-
-              {/* Battle Pass XP */}
-              {bpXPEarned && (
-                <View className="mt-4 pt-3 border-t border-purple-500/30">
-                  <Text className="text-gray-400 text-center text-xs mb-2">
-                    🎫 Battle Pass XP
-                  </Text>
-                  <View className="bg-blue-500/20 border border-blue-500 rounded-lg p-3">
-                    <View className="items-center mb-2">
-                      <Text className="text-blue-400 text-2xl font-black">
-                        +{bpXPEarned.totalXP} XP
-                      </Text>
-                      {bpXPEarned.leveledUp && (
-                        <View className="bg-yellow-500/20 border border-yellow-600 rounded-full px-3 py-1 mt-2">
-                          <Text className="text-yellow-400 text-xs font-bold">
-                            🎉 Level {bpXPEarned.oldLevel} → {bpXPEarned.newLevel}!
-                          </Text>
-                        </View>
-                      )}
-                      {!bpXPEarned.leveledUp && (
-                        <Text className="text-gray-400 text-xs mt-1">
-                          Battle Pass Level {bpXPEarned.newLevel}
-                        </Text>
-                      )}
-                    </View>
-
-                    <View className="flex-row items-center justify-center gap-2 flex-wrap">
-                      <Text className="text-gray-400 text-xs">
-                        Base: +{bpXPEarned.baseXP}
-                      </Text>
-                      <Text className="text-gray-500">•</Text>
-                      <Text className="text-gray-400 text-xs">
-                        Score: +{bpXPEarned.scoreXP}
-                      </Text>
-                      {bpXPEarned.comboXP > 0 && (
-                        <>
-                          <Text className="text-gray-500">•</Text>
-                          <Text className="text-blue-400 text-xs font-semibold">
-                            Combo: +{bpXPEarned.comboXP}
-                          </Text>
-                        </>
-                      )}
-                      {bpXPEarned.dailyXP > 0 && (
-                        <>
-                          <Text className="text-gray-500">•</Text>
-                          <Text className="text-yellow-400 text-xs font-semibold">
-                            Daily: +{bpXPEarned.dailyXP}
-                          </Text>
-                        </>
-                      )}
-                    </View>
-                  </View>
                 </View>
               )}
 

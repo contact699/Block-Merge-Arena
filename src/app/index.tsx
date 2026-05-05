@@ -323,20 +323,20 @@ export default function HomeScreen() {
               </GlassCard>
             </Pressable>
           </Link>
-          <Link href="/friends" asChild>
-            <Pressable testID="friends-button" style={{ flex: 1 }}>
+          <Link href="/leaderboard" asChild>
+            <Pressable testID="leaderboard-quick-button" style={{ flex: 1 }}>
               <GlassCard style={{ padding: 14 }}>
                 <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.cobalt, letterSpacing: 1.6 }}>
-                  FRIENDS
+                  TODAY
                 </Text>
                 <Text style={{ fontSize: 16, fontWeight: fontWeight.heavy, color: colors.ink, marginTop: 4 }}>
-                  Beat Jules
+                  Leaderboard
                 </Text>
                 <Text style={{ fontSize: 22, fontWeight: fontWeight.black, color: colors.ink, marginTop: 6 }}>
-                  32,400
+                  Top 100
                 </Text>
                 <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>
-                  SENT 22M AGO
+                  VIEW STANDINGS
                 </Text>
               </GlassCard>
             </Pressable>
@@ -379,59 +379,18 @@ export default function HomeScreen() {
           </View>
         </GlassCard>
 
-        {/* Battle pass */}
-        <Link href="/battlepass" asChild>
-          <Pressable testID="battlepass-button">
-            <GlassCard style={{ padding: 14, marginTop: 12 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 10, fontWeight: fontWeight.bold, color: colors.ember, letterSpacing: 1.6 }}>
-                    SEASON PASS · TIER 14
-                  </Text>
-                  <Text style={{ fontSize: 16, fontWeight: fontWeight.heavy, color: colors.ink, marginTop: 4 }}>
-                    Field Notes — Vol. I
-                  </Text>
-                </View>
-                <Text style={{ fontSize: 11, fontWeight: fontWeight.bold, color: colors.inkSoft, letterSpacing: 1.4 }}>
-                  14 / 30
-                </Text>
-              </View>
-              <View
-                style={{
-                  height: 8,
-                  borderRadius: 999,
-                  backgroundColor: 'rgba(22,20,15,0.08)',
-                  overflow: 'hidden',
-                  marginTop: 10,
-                }}
-              >
-                <LinearGradient
-                  colors={[colors.ember, colors.mustard]}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 1, y: 0.5 }}
-                  style={{ width: '47%', height: '100%' }}
-                />
-              </View>
-            </GlassCard>
-          </Pressable>
-        </Link>
-
         {/* Quick navigation grid */}
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-          <NavTile href="/leaderboard" testID="leaderboard-button" label="Leaderboard" hint="Global ranks" accent={colors.cobalt} />
+          <NavTile href="/leaderboard" testID="leaderboard-button" label="Leaderboard" hint="Today's standings" accent={colors.cobalt} />
           <NavTile href="/replays" testID="replays-button" label="Replays" hint="Watch ghosts" accent={colors.plum} />
         </View>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-          <NavTile href="/shop" testID="shop-button" label="Shop" hint="Themes & skins" accent={colors.mustard} />
-          <NavTile href="/achievements" testID="achievements-button" label="Achievements" hint="20+ badges" accent={colors.forest} />
+          <NavTile href="/shop" testID="shop-button" label="Shop" hint="Themes" accent={colors.mustard} />
+          <NavTile href="/achievements" testID="achievements-button" label="Achievements" hint="6 badges" accent={colors.forest} />
         </View>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-          <NavTile href="/tutorials" testID="tutorials-button" label="Tutorials" hint="Learn the merge" accent={colors.teal} />
-          <NavTile href="/ranks" testID="ranks-button" label="Ranks" hint="Bronze → GM" accent={colors.ember} />
-        </View>
-        <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-          <NavTile href="/squads" testID="squads-button" label="Squads" hint="10-person clans" accent={colors.cobalt} />
-          <NavTile href="/share" testID="share-button" label="Share" hint="TikTok ready" accent={colors.rose} />
+          <NavTile href="/share" testID="share-button" label="Share" hint="Your grid" accent={colors.rose} />
+          <NavTile href="/settings" testID="settings-nav" label="Settings" hint="Audio · theme" accent={colors.teal} />
         </View>
       </ScrollView>
     </SafeAreaView>

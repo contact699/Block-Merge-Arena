@@ -12,8 +12,168 @@ import {
 } from '@/lib/utils/replay';
 import { ReplayPlayer } from '@/components/ReplayPlayer';
 import type { Replay } from '@/lib/types/replay';
+import { colors, fontWeight } from '@/lib/design/tokens';
+import { Pill } from '@/components/design/Pill';
+import { TactileButton } from '@/components/design/TactileButton';
+import { GlassCard } from '@/components/design/GlassCard';
 
 type TabType = 'all' | 'tournament' | 'endless';
+
+// ─── Empty State ───────────────────────────────────────────────────────────────
+
+function EmptyState() {
+  return (
+    <View style={{ alignItems: 'center', padding: 32, marginTop: 24 }}>
+      <Text style={{ fontSize: 18, fontWeight: fontWeight.heavy, color: colors.ink }}>
+        No replays yet
+      </Text>
+      <Text
+        style={{ fontSize: 13, color: colors.inkSoft, marginTop: 6, textAlign: 'center' }}
+      >
+        Finish a daily run and we'll save the replay automatically. Share the
+        6-character code with anyone.
+      </Text>
+    </View>
+  );
+}
+
+// ─── Replay Row ────────────────────────────────────────────────────────────────
+
+function ReplayRow({
+  replay,
+  onWatch,
+  onDelete,
+}: {
+  replay: Replay;
+  onWatch: (r: Replay) => void;
+  onDelete: (id: string) => void;
+}) {
+  const stats = calculateReplayStats(replay);
+  const dateStr = new Date(replay.createdAt).toLocaleDateString();
+
+  return (
+    <GlassCard style={{ marginBottom: 8, padding: 14 }}>
+      {/* Top row: code + date + watch button */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+          {replay.code ? (
+            <Pill variant="ink">{replay.code}</Pill>
+          ) : null}
+          <Text style={{ fontSize: 11, color: colors.inkSoft, fontWeight: fontWeight.semibold }}>
+            {dateStr}
+          </Text>
+        </View>
+        <TactileButton
+          variant="cobalt"
+          fullWidth={false}
+          onPress={() => onWatch(replay)}
+          style={{ height: 36, paddingHorizontal: 14 }}
+        >
+          Watch
+        </TactileButton>
+      </View>
+
+      {/* Score + multiplier */}
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 14, marginTop: 10 }}>
+        <Text
+          style={{
+            fontSize: 22,
+            fontWeight: fontWeight.black,
+            color: colors.ink,
+            letterSpacing: -0.5,
+          }}
+        >
+          {replay.finalScore.toLocaleString()}
+        </Text>
+        {replay.maxMultiplier > 1 && (
+          <Text style={{ fontSize: 14, fontWeight: fontWeight.heavy, color: colors.ember }}>
+            ×{replay.maxMultiplier}
+          </Text>
+        )}
+      </View>
+
+      {/* Secondary stats */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 8 }}>
+        <View>
+          <Text style={{ fontSize: 10, color: colors.inkDim, fontWeight: fontWeight.semibold }}>
+            MOVES
+          </Text>
+          <Text style={{ fontSize: 13, color: colors.ink, fontWeight: fontWeight.bold }}>
+            {replay.moveCount}
+          </Text>
+        </View>
+        <View>
+          <Text style={{ fontSize: 10, color: colors.inkDim, fontWeight: fontWeight.semibold }}>
+            DURATION
+          </Text>
+          <Text style={{ fontSize: 13, color: colors.ink, fontWeight: fontWeight.bold }}>
+            {formatDuration(replay.duration)}
+          </Text>
+        </View>
+        <View>
+          <Text style={{ fontSize: 10, color: colors.inkDim, fontWeight: fontWeight.semibold }}>
+            EFFICIENCY
+          </Text>
+          <Text style={{ fontSize: 13, color: colors.ink, fontWeight: fontWeight.bold }}>
+            {Math.round(stats.efficiency)} pts/move
+          </Text>
+        </View>
+        <View>
+          <Text style={{ fontSize: 10, color: colors.inkDim, fontWeight: fontWeight.semibold }}>
+            MODE
+          </Text>
+          <Text style={{ fontSize: 13, color: colors.ink, fontWeight: fontWeight.bold }}>
+            {replay.mode === 'tournament' ? '🏆' : '🎮'} {replay.mode}
+          </Text>
+        </View>
+      </View>
+
+      {/* Delete */}
+      <Pressable
+        onPress={() => onDelete(replay.id)}
+        style={{ position: 'absolute', top: 10, right: 10, padding: 6 }}
+      >
+        <Text style={{ fontSize: 13, color: colors.inkDim }}>🗑️</Text>
+      </Pressable>
+    </GlassCard>
+  );
+}
+
+// ─── Tab Pill ──────────────────────────────────────────────────────────────────
+
+function TabButton({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 999,
+        backgroundColor: active ? colors.ink : 'rgba(22,20,15,0.07)',
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 13,
+          fontWeight: fontWeight.semibold,
+          color: active ? colors.paper : colors.inkSoft,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+// ─── Screen ────────────────────────────────────────────────────────────────────
 
 export default function ReplaysScreen() {
   const router = useRouter();
@@ -70,7 +230,7 @@ export default function ReplaysScreen() {
 
   const handleDeleteReplay = async (replayId: string): Promise<void> => {
     await deleteReplay(replayId);
-    await loadReplays(); // Reload list
+    await loadReplays();
   };
 
   const handleLoadByCode = async (): Promise<void> => {
@@ -90,14 +250,10 @@ export default function ReplaysScreen() {
     }
   };
 
-  const getModeIcon = (mode: string): string => {
-    return mode === 'tournament' ? '🏆' : '🎮';
-  };
-
   // If viewing a replay, show the player
   if (selectedReplay) {
     return (
-      <SafeAreaView className="flex-1 bg-black">
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
         <ReplayPlayer
           replay={selectedReplay}
           onComplete={handleReplayComplete}
@@ -109,172 +265,119 @@ export default function ReplaysScreen() {
   }
 
   return (
-    <SafeAreaView testID="replays-screen" className="flex-1 bg-black">
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }}>
-        {/* Header */}
-        <View className="px-6 pt-4 pb-6">
-          <Pressable testID="back-button" onPress={() => router.back()}>
-            <Text className="text-purple-400 text-base font-semibold">← Back</Text>
-          </Pressable>
+    <SafeAreaView testID="replays-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+      {/* Ambient ember blob */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: -80,
+          right: -60,
+          width: 240,
+          height: 240,
+          borderRadius: 120,
+          backgroundColor: colors.ember,
+          opacity: 0.14,
+        }}
+      />
 
-          <Text className="text-4xl font-black text-white mt-4">👻 Replays</Text>
-          <Text className="text-gray-400 text-sm mt-1">Watch your best runs</Text>
+      {/* Header */}
+      <View style={{ paddingHorizontal: 18, paddingTop: 12 }}>
+        <Pressable testID="back-button" onPress={() => router.back()}>
+          <Text style={{ fontSize: 14, fontWeight: fontWeight.semibold, color: colors.cobalt }}>
+            ← Back
+          </Text>
+        </Pressable>
+
+        <View style={{ marginTop: 14 }}>
+          <Pill variant="ember">REPLAYS</Pill>
         </View>
+        <Text
+          style={{
+            fontSize: 32,
+            fontWeight: fontWeight.black,
+            color: colors.ink,
+            marginTop: 12,
+            letterSpacing: -1,
+          }}
+        >
+          Watch ghosts
+        </Text>
+        <Text style={{ fontSize: 13, color: colors.inkSoft, marginTop: 4 }}>
+          Every run records a 6-character replay code. Share it with anyone.
+        </Text>
+      </View>
 
-        {/* Load by Code Button */}
-        <View className="px-6 mb-4">
-          <Pressable
-            onPress={() => setShowCodeInput(true)}
-            className="bg-purple-500 rounded-xl py-3 px-4"
-          >
-            <Text className="text-white text-center font-semibold">
-              🔍 Load Replay by Code
-            </Text>
-          </Pressable>
+      {/* Load by Code */}
+      <View style={{ paddingHorizontal: 18, marginTop: 16 }}>
+        <TactileButton variant="plain" onPress={() => setShowCodeInput(true)}>
+          Load Replay by Code
+        </TactileButton>
+      </View>
+
+      {/* Tabs */}
+      <View style={{ paddingHorizontal: 18, marginTop: 14 }}>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TabButton label="All" active={activeTab === 'all'} onPress={() => setActiveTab('all')} />
+          <TabButton
+            label="🏆 Tournament"
+            active={activeTab === 'tournament'}
+            onPress={() => setActiveTab('tournament')}
+          />
+          <TabButton
+            label="🎮 Endless"
+            active={activeTab === 'endless'}
+            onPress={() => setActiveTab('endless')}
+          />
         </View>
+      </View>
 
-        {/* Tabs */}
-        <View className="px-6 mb-4">
-          <View className="flex-row gap-2">
-            <Pressable
-              onPress={() => setActiveTab('all')}
-              className={`px-4 py-2 rounded-full ${
-                activeTab === 'all' ? 'bg-purple-500' : 'bg-gray-800'
-              }`}
-            >
-              <Text
-                className={`font-semibold ${
-                  activeTab === 'all' ? 'text-white' : 'text-gray-400'
-                }`}
-              >
-                All
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setActiveTab('tournament')}
-              className={`px-4 py-2 rounded-full ${
-                activeTab === 'tournament' ? 'bg-purple-500' : 'bg-gray-800'
-              }`}
-            >
-              <Text
-                className={`font-semibold ${
-                  activeTab === 'tournament' ? 'text-white' : 'text-gray-400'
-                }`}
-              >
-                🏆 Tournament
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setActiveTab('endless')}
-              className={`px-4 py-2 rounded-full ${
-                activeTab === 'endless' ? 'bg-purple-500' : 'bg-gray-800'
-              }`}
-            >
-              <Text
-                className={`font-semibold ${
-                  activeTab === 'endless' ? 'text-white' : 'text-gray-400'
-                }`}
-              >
-                🎮 Endless
-              </Text>
-            </Pressable>
+      {/* List */}
+      <ScrollView
+        style={{ flex: 1, marginTop: 12 }}
+        contentContainerStyle={{ padding: 14, paddingBottom: 32 }}
+      >
+        {loading ? (
+          <View style={{ alignItems: 'center', paddingVertical: 48 }}>
+            <Text style={{ fontSize: 14, color: colors.inkSoft }}>Loading replays…</Text>
           </View>
-        </View>
-
-        {/* Replays List */}
-        <View className="px-6">
-          {loading ? (
-            <View className="items-center py-12">
-              <Text className="text-gray-500">Loading replays...</Text>
-            </View>
-          ) : filteredReplays.length === 0 ? (
-            <View className="items-center py-12 bg-gray-900/50 rounded-xl">
-              <Text className="text-gray-500 text-lg font-semibold">No replays yet</Text>
-              <Text className="text-gray-600 text-sm mt-2">
-                Play a game to record your first replay!
-              </Text>
-            </View>
-          ) : (
-            <View className="gap-3">
-              {filteredReplays.map((replay: Replay) => {
-                const stats = calculateReplayStats(replay);
-                return (
-                  <Pressable
-                    key={replay.id}
-                    onPress={() => handleReplaySelect(replay)}
-                    className="bg-gray-900/80 border border-gray-800 rounded-xl p-4"
-                  >
-                    {/* Header */}
-                    <View className="flex-row items-center justify-between mb-2">
-                      <View className="flex-row items-center gap-2">
-                        <Text className="text-2xl">{getModeIcon(replay.mode)}</Text>
-                        <Text className="text-white text-lg font-bold">
-                          {replay.finalScore.toLocaleString()}
-                        </Text>
-                      </View>
-                      <View className="bg-purple-500/20 border border-purple-500 rounded-lg px-3 py-1">
-                        <Text className="text-purple-400 text-xs font-bold">
-                          {replay.code}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* Stats */}
-                    <View className="flex-row flex-wrap gap-4 mb-3">
-                      <View>
-                        <Text className="text-gray-500 text-xs">Moves</Text>
-                        <Text className="text-white text-sm font-semibold">
-                          {replay.moveCount}
-                        </Text>
-                      </View>
-                      <View>
-                        <Text className="text-gray-500 text-xs">Duration</Text>
-                        <Text className="text-white text-sm font-semibold">
-                          {formatDuration(replay.duration)}
-                        </Text>
-                      </View>
-                      <View>
-                        <Text className="text-gray-500 text-xs">Efficiency</Text>
-                        <Text className="text-white text-sm font-semibold">
-                          {Math.round(stats.efficiency)} pts/move
-                        </Text>
-                      </View>
-                      <View>
-                        <Text className="text-gray-500 text-xs">Max Mult</Text>
-                        <Text className="text-white text-sm font-semibold">
-                          {replay.maxMultiplier}x
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* Date */}
-                    <Text className="text-gray-600 text-xs">
-                      {new Date(replay.createdAt).toLocaleString()}
-                    </Text>
-
-                    {/* Delete Button */}
-                    <Pressable
-                      onPress={() => handleDeleteReplay(replay.id)}
-                      className="absolute top-2 right-2 bg-red-500/20 rounded-lg p-2"
-                    >
-                      <Text className="text-red-400 text-xs font-semibold">🗑️</Text>
-                    </Pressable>
-                  </Pressable>
-                );
-              })}
-            </View>
-          )}
-        </View>
+        ) : filteredReplays.length === 0 ? (
+          <EmptyState />
+        ) : (
+          filteredReplays.map((replay: Replay) => (
+            <ReplayRow
+              key={replay.id}
+              replay={replay}
+              onWatch={handleReplaySelect}
+              onDelete={handleDeleteReplay}
+            />
+          ))
+        )}
       </ScrollView>
 
       {/* Code Input Modal */}
       <Modal visible={showCodeInput} transparent animationType="fade">
-        <View className="flex-1 bg-black/80 items-center justify-center p-6">
-          <View className="bg-gray-900 border border-purple-500 rounded-xl p-6 w-full max-w-md">
-            <Text className="text-white text-xl font-bold mb-2">Load Replay</Text>
-            <Text className="text-gray-400 text-sm mb-4">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(22,20,15,0.7)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 24,
+          }}
+        >
+          <GlassCard style={{ width: '100%', maxWidth: 400, padding: 24 }}>
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: fontWeight.black,
+                color: colors.ink,
+                marginBottom: 6,
+              }}
+            >
+              Load Replay
+            </Text>
+            <Text style={{ fontSize: 13, color: colors.inkSoft, marginBottom: 16 }}>
               Enter a 6-character replay code
             </Text>
 
@@ -285,36 +388,47 @@ export default function ReplaysScreen() {
                 setCodeError('');
               }}
               placeholder="ABC123"
-              placeholderTextColor="#6b7280"
+              placeholderTextColor={colors.inkDim}
               maxLength={6}
               autoCapitalize="characters"
-              className="bg-gray-800 text-white rounded-xl px-4 py-3 mb-2 text-center text-lg font-bold"
+              style={{
+                backgroundColor: colors.paper2,
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                marginBottom: 8,
+                textAlign: 'center',
+                fontSize: 20,
+                fontWeight: fontWeight.black,
+                color: colors.ink,
+                borderWidth: 1,
+                borderColor: colors.inkRule,
+                letterSpacing: 4,
+              }}
             />
 
-            {codeError && (
-              <Text className="text-red-400 text-xs mb-3">{codeError}</Text>
-            )}
+            {codeError ? (
+              <Text style={{ fontSize: 12, color: colors.ember, marginBottom: 12 }}>
+                {codeError}
+              </Text>
+            ) : null}
 
-            <View className="flex-row gap-3">
-              <Pressable
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+              <TactileButton
+                variant="plain"
                 onPress={() => {
                   setShowCodeInput(false);
                   setCodeInput('');
                   setCodeError('');
                 }}
-                className="flex-1 bg-gray-800 rounded-xl py-3"
               >
-                <Text className="text-white text-center font-semibold">Cancel</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={handleLoadByCode}
-                className="flex-1 bg-purple-500 rounded-xl py-3"
-              >
-                <Text className="text-white text-center font-semibold">Load</Text>
-              </Pressable>
+                Cancel
+              </TactileButton>
+              <TactileButton variant="cobalt" onPress={handleLoadByCode}>
+                Load
+              </TactileButton>
             </View>
-          </View>
+          </GlassCard>
         </View>
       </Modal>
     </SafeAreaView>

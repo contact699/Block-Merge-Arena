@@ -216,7 +216,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* HERO — Daily Tournament */}
-        <Link href="/tournament" asChild>
+        <Link href="/daily" asChild>
           <Pressable testID="tournament-button">
             <DeepCard style={{ padding: 20, marginTop: 8 }}>
               {/* Inner ember radial */}

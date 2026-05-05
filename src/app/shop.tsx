@@ -7,8 +7,19 @@ import { getCurrency, formatCurrency } from '@/lib/utils/currency';
 import { getInventory, purchaseItem, equipItem } from '@/lib/utils/inventory';
 import { getRarityColor, getRarityBadge } from '@/lib/shop/catalog';
 import type { Currency, ShopCategory, BoardTheme, BlockSkin, GemSkin } from '@/lib/types/shop';
+import { colors, fontWeight, radii } from '@/lib/design/tokens';
+import { Pill } from '@/components/design/Pill';
+import { GlassCard } from '@/components/design/GlassCard';
+import { TactileButton } from '@/components/design/TactileButton';
 
 type TabType = 'themes' | 'blocks' | 'gems';
+
+// Accent color per tab for item stripe
+const TAB_ACCENT: Record<TabType, string> = {
+  themes: colors.mustard,
+  blocks: colors.cobalt,
+  gems: colors.plum,
+};
 
 export default function ShopScreen() {
   const router = useRouter();
@@ -67,310 +78,279 @@ export default function ShopScreen() {
     }
   };
 
-  const renderThemeItem = (theme: BoardTheme) => (
-    <Pressable
-      key={theme.id}
-      onPress={() => {
-        if (theme.unlocked) {
-          handleEquip(theme.id, 'themes');
-        } else {
-          Alert.alert(
-            'Purchase Theme?',
-            `Buy ${theme.name} for ${theme.price.gems ? `${theme.price.gems} gems` : `${theme.price.coins} coins`}?`,
-            [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Buy',
-                onPress: () => handlePurchase(theme.id, 'themes', theme.price),
-              },
-            ]
-          );
-        }
-      }}
-      className={`bg-gray-900/80 border rounded-xl p-4 mb-3 ${
-        theme.equipped ? 'border-purple-500' : 'border-gray-800'
-      }`}
-    >
-      {/* Header */}
-      <View className="flex-row items-center justify-between mb-2">
-        <View className="flex-1">
-          <Text className="text-white text-lg font-bold">{theme.name}</Text>
-          <Text className="text-gray-400 text-xs">{theme.description}</Text>
-        </View>
+  const renderThemeItem = (theme: BoardTheme) => {
+    const accent = TAB_ACCENT.themes;
+    return (
+      <GlassCard key={theme.id} style={{ marginBottom: 12, overflow: 'hidden' }}>
+        {/* Color stripe */}
+        <View style={{ height: 4, backgroundColor: accent, borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl }} />
 
-        {/* Rarity Badge */}
-        <View
-          className="rounded-lg px-2 py-1"
-          style={{ backgroundColor: `${getRarityColor(theme.rarity)}20` }}
-        >
-          <Text style={{ color: getRarityColor(theme.rarity) }} className="text-xs font-bold">
-            {getRarityBadge(theme.rarity)}
-          </Text>
-        </View>
-      </View>
-
-      {/* Color Preview */}
-      <View className="flex-row gap-2 mb-3">
-        <View
-          className="w-8 h-8 rounded"
-          style={{ backgroundColor: theme.colors.background }}
-        />
-        <View className="w-8 h-8 rounded" style={{ backgroundColor: theme.colors.grid }} />
-        <View className="w-8 h-8 rounded" style={{ backgroundColor: theme.colors.cell }} />
-        <View
-          className="w-8 h-8 rounded"
-          style={{ backgroundColor: theme.colors.cellFilled }}
-        />
-      </View>
-
-      {/* Action Button */}
-      {theme.unlocked ? (
-        theme.equipped ? (
-          <View className="bg-green-500/20 border border-green-500 rounded-lg py-2">
-            <Text className="text-green-400 text-center font-semibold">✓ Equipped</Text>
+        <View style={{ padding: 14 }}>
+          {/* Header row */}
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+            <View style={{ flex: 1, marginRight: 10 }}>
+              <Text style={{ fontSize: 16, fontWeight: fontWeight.heavy, color: colors.ink }}>{theme.name}</Text>
+              <Text style={{ fontSize: 12, color: colors.inkSoft, marginTop: 2 }}>{theme.description}</Text>
+            </View>
+            <View style={{ borderRadius: radii.sm, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: `${getRarityColor(theme.rarity)}1a` }}>
+              <Text style={{ color: getRarityColor(theme.rarity), fontSize: 11, fontWeight: fontWeight.bold }}>
+                {getRarityBadge(theme.rarity)}
+              </Text>
+            </View>
           </View>
-        ) : (
-          <View className="bg-purple-500/20 border border-purple-500 rounded-lg py-2">
-            <Text className="text-purple-400 text-center font-semibold">Tap to Equip</Text>
+
+          {/* Color preview swatches */}
+          <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
+            <View style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: theme.colors.background, borderWidth: 1, borderColor: colors.inkRuleSoft }} />
+            <View style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: theme.colors.grid, borderWidth: 1, borderColor: colors.inkRuleSoft }} />
+            <View style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: theme.colors.cell, borderWidth: 1, borderColor: colors.inkRuleSoft }} />
+            <View style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: theme.colors.cellFilled, borderWidth: 1, borderColor: colors.inkRuleSoft }} />
           </View>
-        )
-      ) : (
-        <View className="bg-gray-800 rounded-lg py-2">
-          <Text className="text-white text-center font-semibold">
-            {theme.price.gems ? `💎 ${theme.price.gems}` : `🪙 ${theme.price.coins}`}
-          </Text>
+
+          {/* Action */}
+          {theme.unlocked ? (
+            theme.equipped ? (
+              <TactileButton
+                variant="ink"
+                fullWidth={false}
+                style={{ alignSelf: 'stretch' }}
+                onPress={() => {}}
+              >
+                Equipped
+              </TactileButton>
+            ) : (
+              <TactileButton
+                variant="cobalt"
+                fullWidth={false}
+                style={{ alignSelf: 'stretch' }}
+                onPress={() => handleEquip(theme.id, 'themes')}
+              >
+                Equip
+              </TactileButton>
+            )
+          ) : (
+            <TactileButton
+              variant="cobalt"
+              fullWidth={false}
+              style={{ alignSelf: 'stretch' }}
+              onPress={() => {
+                Alert.alert(
+                  'Purchase Theme?',
+                  `Buy ${theme.name} for ${theme.price.gems ? `${theme.price.gems} gems` : `${theme.price.coins} coins`}?`,
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Buy', onPress: () => handlePurchase(theme.id, 'themes', theme.price) },
+                  ]
+                );
+              }}
+            >
+              {theme.price.gems ? `${theme.price.gems} Gems` : `${theme.price.coins} Coins`}
+            </TactileButton>
+          )}
         </View>
-      )}
-    </Pressable>
-  );
+      </GlassCard>
+    );
+  };
 
-  const renderBlockSkinItem = (skin: BlockSkin) => (
-    <Pressable
-      key={skin.id}
-      onPress={() => {
-        if (skin.unlocked) {
-          handleEquip(skin.id, 'blocks');
-        } else {
-          Alert.alert(
-            'Purchase Block Skin?',
-            `Buy ${skin.name} for ${skin.price.gems ? `${skin.price.gems} gems` : `${skin.price.coins} coins`}?`,
-            [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Buy',
-                onPress: () => handlePurchase(skin.id, 'blocks', skin.price),
-              },
-            ]
-          );
-        }
-      }}
-      className={`bg-gray-900/80 border rounded-xl p-4 mb-3 ${
-        skin.equipped ? 'border-purple-500' : 'border-gray-800'
-      }`}
-    >
-      {/* Header */}
-      <View className="flex-row items-center justify-between mb-2">
-        <View className="flex-1">
-          <Text className="text-white text-lg font-bold">{skin.name}</Text>
-          <Text className="text-gray-400 text-xs">{skin.description}</Text>
-        </View>
+  const renderBlockSkinItem = (skin: BlockSkin) => {
+    const accent = TAB_ACCENT.blocks;
+    return (
+      <GlassCard key={skin.id} style={{ marginBottom: 12, overflow: 'hidden' }}>
+        <View style={{ height: 4, backgroundColor: accent, borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl }} />
 
-        <View
-          className="rounded-lg px-2 py-1"
-          style={{ backgroundColor: `${getRarityColor(skin.rarity)}20` }}
-        >
-          <Text style={{ color: getRarityColor(skin.rarity) }} className="text-xs font-bold">
-            {getRarityBadge(skin.rarity)}
-          </Text>
-        </View>
-      </View>
-
-      {/* Color Preview */}
-      <View className="flex-row gap-2 mb-3">
-        {skin.colors.map((color: string, index: number) => (
-          <View key={index} className="w-8 h-8 rounded" style={{ backgroundColor: color }} />
-        ))}
-      </View>
-
-      {/* Action Button */}
-      {skin.unlocked ? (
-        skin.equipped ? (
-          <View className="bg-green-500/20 border border-green-500 rounded-lg py-2">
-            <Text className="text-green-400 text-center font-semibold">✓ Equipped</Text>
+        <View style={{ padding: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+            <View style={{ flex: 1, marginRight: 10 }}>
+              <Text style={{ fontSize: 16, fontWeight: fontWeight.heavy, color: colors.ink }}>{skin.name}</Text>
+              <Text style={{ fontSize: 12, color: colors.inkSoft, marginTop: 2 }}>{skin.description}</Text>
+            </View>
+            <View style={{ borderRadius: radii.sm, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: `${getRarityColor(skin.rarity)}1a` }}>
+              <Text style={{ color: getRarityColor(skin.rarity), fontSize: 11, fontWeight: fontWeight.bold }}>
+                {getRarityBadge(skin.rarity)}
+              </Text>
+            </View>
           </View>
-        ) : (
-          <View className="bg-purple-500/20 border border-purple-500 rounded-lg py-2">
-            <Text className="text-purple-400 text-center font-semibold">Tap to Equip</Text>
+
+          <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
+            {skin.colors.map((color: string, index: number) => (
+              <View key={index} style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: color, borderWidth: 1, borderColor: colors.inkRuleSoft }} />
+            ))}
           </View>
-        )
-      ) : (
-        <View className="bg-gray-800 rounded-lg py-2">
-          <Text className="text-white text-center font-semibold">
-            {skin.price.gems ? `💎 ${skin.price.gems}` : `🪙 ${skin.price.coins}`}
-          </Text>
+
+          {skin.unlocked ? (
+            skin.equipped ? (
+              <TactileButton variant="ink" fullWidth={false} style={{ alignSelf: 'stretch' }} onPress={() => {}}>
+                Equipped
+              </TactileButton>
+            ) : (
+              <TactileButton variant="cobalt" fullWidth={false} style={{ alignSelf: 'stretch' }} onPress={() => handleEquip(skin.id, 'blocks')}>
+                Equip
+              </TactileButton>
+            )
+          ) : (
+            <TactileButton
+              variant="cobalt"
+              fullWidth={false}
+              style={{ alignSelf: 'stretch' }}
+              onPress={() => {
+                Alert.alert(
+                  'Purchase Block Skin?',
+                  `Buy ${skin.name} for ${skin.price.gems ? `${skin.price.gems} gems` : `${skin.price.coins} coins`}?`,
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Buy', onPress: () => handlePurchase(skin.id, 'blocks', skin.price) },
+                  ]
+                );
+              }}
+            >
+              {skin.price.gems ? `${skin.price.gems} Gems` : `${skin.price.coins} Coins`}
+            </TactileButton>
+          )}
         </View>
-      )}
-    </Pressable>
-  );
+      </GlassCard>
+    );
+  };
 
-  const renderGemSkinItem = (skin: GemSkin) => (
-    <Pressable
-      key={skin.id}
-      onPress={() => {
-        if (skin.unlocked) {
-          handleEquip(skin.id, 'gems');
-        } else {
-          Alert.alert(
-            'Purchase Gem Skin?',
-            `Buy ${skin.name} for ${skin.price.gems ? `${skin.price.gems} gems` : `${skin.price.coins} coins`}?`,
-            [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Buy',
-                onPress: () => handlePurchase(skin.id, 'gems', skin.price),
-              },
-            ]
-          );
-        }
-      }}
-      className={`bg-gray-900/80 border rounded-xl p-4 mb-3 ${
-        skin.equipped ? 'border-purple-500' : 'border-gray-800'
-      }`}
-    >
-      {/* Header */}
-      <View className="flex-row items-center justify-between mb-2">
-        <View className="flex-1">
-          <Text className="text-white text-lg font-bold">{skin.name}</Text>
-          <Text className="text-gray-400 text-xs">{skin.description}</Text>
-        </View>
+  const renderGemSkinItem = (skin: GemSkin) => {
+    const accent = TAB_ACCENT.gems;
+    return (
+      <GlassCard key={skin.id} style={{ marginBottom: 12, overflow: 'hidden' }}>
+        <View style={{ height: 4, backgroundColor: accent, borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl }} />
 
-        <View
-          className="rounded-lg px-2 py-1"
-          style={{ backgroundColor: `${getRarityColor(skin.rarity)}20` }}
-        >
-          <Text style={{ color: getRarityColor(skin.rarity) }} className="text-xs font-bold">
-            {getRarityBadge(skin.rarity)}
-          </Text>
-        </View>
-      </View>
-
-      {/* Effect Badge */}
-      <View className="bg-purple-500/10 border border-purple-500/30 rounded-lg py-2 px-3 mb-3">
-        <Text className="text-purple-300 text-xs font-semibold">Effect: {skin.effect}</Text>
-      </View>
-
-      {/* Action Button */}
-      {skin.unlocked ? (
-        skin.equipped ? (
-          <View className="bg-green-500/20 border border-green-500 rounded-lg py-2">
-            <Text className="text-green-400 text-center font-semibold">✓ Equipped</Text>
+        <View style={{ padding: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+            <View style={{ flex: 1, marginRight: 10 }}>
+              <Text style={{ fontSize: 16, fontWeight: fontWeight.heavy, color: colors.ink }}>{skin.name}</Text>
+              <Text style={{ fontSize: 12, color: colors.inkSoft, marginTop: 2 }}>{skin.description}</Text>
+            </View>
+            <View style={{ borderRadius: radii.sm, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: `${getRarityColor(skin.rarity)}1a` }}>
+              <Text style={{ color: getRarityColor(skin.rarity), fontSize: 11, fontWeight: fontWeight.bold }}>
+                {getRarityBadge(skin.rarity)}
+              </Text>
+            </View>
           </View>
-        ) : (
-          <View className="bg-purple-500/20 border border-purple-500 rounded-lg py-2">
-            <Text className="text-purple-400 text-center font-semibold">Tap to Equip</Text>
+
+          <View style={{ backgroundColor: `${colors.plum}14`, borderWidth: 1, borderColor: `${colors.plum}30`, borderRadius: radii.md, paddingVertical: 8, paddingHorizontal: 12, marginBottom: 12 }}>
+            <Text style={{ color: colors.plum, fontSize: 12, fontWeight: fontWeight.semibold }}>Effect: {skin.effect}</Text>
           </View>
-        )
-      ) : (
-        <View className="bg-gray-800 rounded-lg py-2">
-          <Text className="text-white text-center font-semibold">
-            {skin.price.gems ? `💎 ${skin.price.gems}` : `🪙 ${skin.price.coins}`}
-          </Text>
+
+          {skin.unlocked ? (
+            skin.equipped ? (
+              <TactileButton variant="ink" fullWidth={false} style={{ alignSelf: 'stretch' }} onPress={() => {}}>
+                Equipped
+              </TactileButton>
+            ) : (
+              <TactileButton variant="cobalt" fullWidth={false} style={{ alignSelf: 'stretch' }} onPress={() => handleEquip(skin.id, 'gems')}>
+                Equip
+              </TactileButton>
+            )
+          ) : (
+            <TactileButton
+              variant="cobalt"
+              fullWidth={false}
+              style={{ alignSelf: 'stretch' }}
+              onPress={() => {
+                Alert.alert(
+                  'Purchase Gem Skin?',
+                  `Buy ${skin.name} for ${skin.price.gems ? `${skin.price.gems} gems` : `${skin.price.coins} coins`}?`,
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Buy', onPress: () => handlePurchase(skin.id, 'gems', skin.price) },
+                  ]
+                );
+              }}
+            >
+              {skin.price.gems ? `${skin.price.gems} Gems` : `${skin.price.coins} Coins`}
+            </TactileButton>
+          )}
         </View>
-      )}
-    </Pressable>
-  );
+      </GlassCard>
+    );
+  };
+
+  const tabs: { id: TabType; label: string }[] = [
+    { id: 'themes', label: 'Themes' },
+    { id: 'blocks', label: 'Blocks' },
+    { id: 'gems', label: 'Gems' },
+  ];
 
   return (
-    <SafeAreaView testID="shop-screen" className="flex-1 bg-black">
-      {/* Header */}
-      <View className="px-6 pt-4 pb-4 border-b border-gray-800">
-        <Pressable testID="back-button" onPress={() => router.back()}>
-          <Text className="text-purple-400 text-base font-semibold">← Back</Text>
+    <SafeAreaView testID="shop-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+      {/* Decorative orb */}
+      <View
+        pointerEvents="none"
+        style={{ position: 'absolute', top: -80, right: -60, width: 240, height: 240, borderRadius: 120, backgroundColor: colors.mustard, opacity: 0.14 }}
+      />
+
+      {/* Back button */}
+      <View style={{ paddingHorizontal: 18, paddingTop: 8 }}>
+        <Pressable testID="back-button" onPress={() => router.back()} style={{ alignSelf: 'flex-start', paddingVertical: 6, paddingRight: 12 }}>
+          <Text style={{ fontSize: 22, color: colors.ink }}>←</Text>
         </Pressable>
+      </View>
 
-        <View className="flex-row items-center justify-between mt-4">
-          <View>
-            <Text className="text-4xl font-black text-white">🛒 Shop</Text>
-            <Text className="text-gray-400 text-sm mt-1">Customize your experience</Text>
+      {/* Header */}
+      <View style={{ paddingHorizontal: 18, paddingTop: 4 }}>
+        <Pill variant="mustard">SHOP</Pill>
+        <Text style={{ fontSize: 32, fontWeight: fontWeight.black, color: colors.ink, marginTop: 12, letterSpacing: -1 }}>
+          Themes
+        </Text>
+        <Text style={{ fontSize: 13, color: colors.inkSoft, marginTop: 4 }}>
+          Cosmetic-only. Phase 3 wires real purchases.
+        </Text>
+
+        {/* Currency display */}
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 14, marginBottom: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: `${colors.plum}14`, borderWidth: 1, borderColor: `${colors.plum}30`, borderRadius: radii.md, paddingHorizontal: 12, paddingVertical: 7 }}>
+            <Text style={{ fontSize: 13, fontWeight: fontWeight.bold, color: colors.plum }}>
+              💎 {formatCurrency(currency.gems)}
+            </Text>
           </View>
-
-          {/* Currency Display */}
-          <View className="items-end">
-            <View className="flex-row items-center bg-purple-500/20 border border-purple-500 rounded-lg px-3 py-2 mb-1">
-              <Text className="text-purple-400 font-bold text-sm">
-                💎 {formatCurrency(currency.gems)}
-              </Text>
-            </View>
-            <View className="flex-row items-center bg-yellow-500/20 border border-yellow-600 rounded-lg px-3 py-2">
-              <Text className="text-yellow-400 font-bold text-sm">
-                🪙 {formatCurrency(currency.coins)}
-              </Text>
-            </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: `${colors.mustard}20`, borderWidth: 1, borderColor: `${colors.mustard}50`, borderRadius: radii.md, paddingHorizontal: 12, paddingVertical: 7 }}>
+            <Text style={{ fontSize: 13, fontWeight: fontWeight.bold, color: colors.mustardDeep }}>
+              🪙 {formatCurrency(currency.coins)}
+            </Text>
           </View>
         </View>
       </View>
 
       {/* Tabs */}
-      <View className="px-6 pt-4 pb-2">
-        <View className="flex-row gap-2">
-          <Pressable
-            testID="themes-tab"
-            onPress={() => setActiveTab('themes')}
-            className={`flex-1 py-3 rounded-xl ${
-              activeTab === 'themes' ? 'bg-purple-500' : 'bg-gray-800'
-            }`}
-          >
-            <Text
-              className={`text-center font-bold ${
-                activeTab === 'themes' ? 'text-white' : 'text-gray-400'
-              }`}
-            >
-              Themes
-            </Text>
-          </Pressable>
-
-          <Pressable
-            testID="blocks-tab"
-            onPress={() => setActiveTab('blocks')}
-            className={`flex-1 py-3 rounded-xl ${
-              activeTab === 'blocks' ? 'bg-purple-500' : 'bg-gray-800'
-            }`}
-          >
-            <Text
-              className={`text-center font-bold ${
-                activeTab === 'blocks' ? 'text-white' : 'text-gray-400'
-              }`}
-            >
-              Blocks
-            </Text>
-          </Pressable>
-
-          <Pressable
-            testID="gems-tab"
-            onPress={() => setActiveTab('gems')}
-            className={`flex-1 py-3 rounded-xl ${
-              activeTab === 'gems' ? 'bg-purple-500' : 'bg-gray-800'
-            }`}
-          >
-            <Text
-              className={`text-center font-bold ${
-                activeTab === 'gems' ? 'text-white' : 'text-gray-400'
-              }`}
-            >
-              Gems
-            </Text>
-          </Pressable>
+      <View style={{ paddingHorizontal: 18, paddingTop: 14, paddingBottom: 6 }}>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <Pressable
+                key={tab.id}
+                testID={`${tab.id}-tab`}
+                onPress={() => setActiveTab(tab.id)}
+                style={{
+                  flex: 1,
+                  paddingVertical: 11,
+                  borderRadius: radii.lg,
+                  alignItems: 'center',
+                  backgroundColor: isActive ? colors.ink : colors.paper2,
+                  borderWidth: isActive ? 0 : 1,
+                  borderColor: colors.inkRule,
+                }}
+              >
+                <Text style={{ fontSize: 14, fontWeight: fontWeight.bold, color: isActive ? colors.paper : colors.inkSoft }}>
+                  {tab.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
 
-      {/* Shop Items */}
-      <ScrollView className="flex-1 px-6" contentContainerStyle={{ paddingBottom: 20 }}>
+      {/* Items */}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 10, paddingBottom: 32 }}>
         {loading ? (
-          <View className="items-center py-12">
-            <Text className="text-gray-500">Loading shop...</Text>
-          </View>
+          <GlassCard style={{ padding: 40, alignItems: 'center', marginTop: 8 }}>
+            <Text style={{ fontSize: 14, color: colors.inkSoft }}>Loading shop...</Text>
+          </GlassCard>
         ) : (
-          <View className="mt-4">
+          <View style={{ marginTop: 4 }}>
             {activeTab === 'themes' && themes.map(renderThemeItem)}
             {activeTab === 'blocks' && blockSkins.map(renderBlockSkinItem)}
             {activeTab === 'gems' && gemSkins.map(renderGemSkinItem)}

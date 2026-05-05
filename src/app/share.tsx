@@ -13,6 +13,10 @@ import {
   isTikTokInstalled,
 } from '@/lib/utils/social';
 import type { ShareableHighlight, RecordingConfig, SocialStats, SharePlatform } from '@/lib/types/social';
+import { colors, fontWeight, radii } from '@/lib/design/tokens';
+import { Pill } from '@/components/design/Pill';
+import { GlassCard } from '@/components/design/GlassCard';
+import { TactileButton } from '@/components/design/TactileButton';
 
 export default function ShareScreen() {
   const router = useRouter();
@@ -37,7 +41,7 @@ export default function ShareScreen() {
         getSocialStats(),
         isTikTokInstalled(),
       ]);
-      
+
       setHighlights(hl);
       setConfig(cfg);
       setStats(sts);
@@ -52,12 +56,12 @@ export default function ShareScreen() {
     if (!selectedHighlight) return;
 
     const result = await shareToPlatform(platform, selectedHighlight);
-    
+
     if (result.success && result.shared) {
-      Alert.alert('Shared! 🎉', `Successfully shared to ${platform}!`, [{ text: 'OK' }]);
+      Alert.alert('Shared!', `Successfully shared to ${platform}!`, [{ text: 'OK' }]);
       setShowShareModal(false);
       setSelectedHighlight(null);
-      loadData(); // Refresh stats
+      loadData();
     } else if (!result.success) {
       Alert.alert('Error', result.error || 'Failed to share', [{ text: 'OK' }]);
     }
@@ -83,14 +87,12 @@ export default function ShareScreen() {
 
   const handleToggleAutoCapture = async (): Promise<void> => {
     if (!config) return;
-    
     await saveRecordingConfig({ autoCapture: !config.autoCapture });
     loadData();
   };
 
   const handleToggleRecording = async (): Promise<void> => {
     if (!config) return;
-    
     await saveRecordingConfig({ enabled: !config.enabled });
     loadData();
   };
@@ -119,161 +121,173 @@ export default function ShareScreen() {
     }
   };
 
-  const renderHeader = () => (
-    <View className="mb-6">
-      <View className="flex-row items-center justify-between mb-4">
-        <Pressable testID="back-button" onPress={() => router.back()} className="p-2">
-          <Text className="text-2xl">←</Text>
-        </Pressable>
-        <Text className="text-2xl font-bold text-white">Share & TikTok</Text>
-        <View className="w-10" />
-      </View>
-
-      {/* Stats */}
-      {stats && (
-        <View className="bg-gradient-to-r from-pink-600 to-purple-600 rounded-xl p-4 mb-4">
-          <Text className="text-white text-lg font-bold mb-2">📊 Your Sharing Stats</Text>
-          <View className="flex-row justify-around">
-            <View className="items-center">
-              <Text className="text-white text-2xl font-bold">{stats.totalShares}</Text>
-              <Text className="text-white/70 text-xs">Total Shares</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-white text-2xl font-bold">{stats.sharesByPlatform.tiktok}</Text>
-              <Text className="text-white/70 text-xs">TikTok</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-white text-2xl font-bold">{stats.sharesByPlatform.instagram}</Text>
-              <Text className="text-white/70 text-xs">Instagram</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-white text-2xl font-bold">{highlights.length}</Text>
-              <Text className="text-white/70 text-xs">Highlights</Text>
-            </View>
+  const renderStats = () => {
+    if (!stats) return null;
+    return (
+      <GlassCard style={{ marginTop: 16, padding: 16 }}>
+        <Text style={{ fontSize: 12, fontWeight: fontWeight.bold, color: colors.inkSoft, letterSpacing: 0.8, marginBottom: 12 }}>
+          SHARING STATS
+        </Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontSize: 24, fontWeight: fontWeight.black, color: colors.ink }}>{stats.totalShares}</Text>
+            <Text style={{ fontSize: 11, color: colors.inkDim, marginTop: 2 }}>Total Shares</Text>
+          </View>
+          <View style={{ width: 1, backgroundColor: colors.inkRule }} />
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontSize: 24, fontWeight: fontWeight.black, color: colors.ink }}>{stats.sharesByPlatform.tiktok}</Text>
+            <Text style={{ fontSize: 11, color: colors.inkDim, marginTop: 2 }}>TikTok</Text>
+          </View>
+          <View style={{ width: 1, backgroundColor: colors.inkRule }} />
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontSize: 24, fontWeight: fontWeight.black, color: colors.ink }}>{stats.sharesByPlatform.instagram}</Text>
+            <Text style={{ fontSize: 11, color: colors.inkDim, marginTop: 2 }}>Instagram</Text>
+          </View>
+          <View style={{ width: 1, backgroundColor: colors.inkRule }} />
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontSize: 24, fontWeight: fontWeight.black, color: colors.ink }}>{highlights.length}</Text>
+            <Text style={{ fontSize: 11, color: colors.inkDim, marginTop: 2 }}>Highlights</Text>
           </View>
         </View>
-      )}
+      </GlassCard>
+    );
+  };
 
-      {/* Settings */}
-      {config && (
-        <View className="bg-gray-800 rounded-xl p-4">
-          <Text className="text-white font-bold mb-3">⚙️ Capture Settings</Text>
-          
-          <Pressable
-            onPress={handleToggleRecording}
-            className="flex-row items-center justify-between py-2"
-          >
-            <Text className="text-gray-300">Highlight Recording</Text>
-            <View className={`w-12 h-6 rounded-full ${config.enabled ? 'bg-green-500' : 'bg-gray-600'} justify-center ${config.enabled ? 'items-end' : 'items-start'} px-1`}>
-              <View className="w-4 h-4 bg-white rounded-full" />
-            </View>
-          </Pressable>
-          
-          <Pressable
-            onPress={handleToggleAutoCapture}
-            className="flex-row items-center justify-between py-2"
-          >
-            <View>
-              <Text className="text-gray-300">Auto-Capture Epic Moments</Text>
-              <Text className="text-gray-500 text-xs">3+ combos, 3x+ multipliers</Text>
-            </View>
-            <View className={`w-12 h-6 rounded-full ${config.autoCapture ? 'bg-green-500' : 'bg-gray-600'} justify-center ${config.autoCapture ? 'items-end' : 'items-start'} px-1`}>
-              <View className="w-4 h-4 bg-white rounded-full" />
-            </View>
-          </Pressable>
-        </View>
-      )}
-    </View>
-  );
+  const renderSettings = () => {
+    if (!config) return null;
+    return (
+      <GlassCard style={{ marginTop: 12, padding: 16 }}>
+        <Text style={{ fontSize: 12, fontWeight: fontWeight.bold, color: colors.inkSoft, letterSpacing: 0.8, marginBottom: 12 }}>
+          CAPTURE SETTINGS
+        </Text>
+
+        <Pressable
+          onPress={handleToggleRecording}
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10 }}
+        >
+          <Text style={{ fontSize: 14, color: colors.ink, fontWeight: fontWeight.medium }}>Highlight Recording</Text>
+          <View style={{
+            width: 44, height: 24, borderRadius: 12,
+            backgroundColor: config.enabled ? colors.forest : colors.inkRule,
+            justifyContent: 'center',
+            alignItems: config.enabled ? 'flex-end' : 'flex-start',
+            paddingHorizontal: 3,
+          }}>
+            <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.paper }} />
+          </View>
+        </Pressable>
+
+        <View style={{ height: 1, backgroundColor: colors.inkRuleSoft }} />
+
+        <Pressable
+          onPress={handleToggleAutoCapture}
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10 }}
+        >
+          <View>
+            <Text style={{ fontSize: 14, color: colors.ink, fontWeight: fontWeight.medium }}>Auto-Capture Epic Moments</Text>
+            <Text style={{ fontSize: 11, color: colors.inkDim, marginTop: 2 }}>3+ combos, 3x+ multipliers</Text>
+          </View>
+          <View style={{
+            width: 44, height: 24, borderRadius: 12,
+            backgroundColor: config.autoCapture ? colors.forest : colors.inkRule,
+            justifyContent: 'center',
+            alignItems: config.autoCapture ? 'flex-end' : 'flex-start',
+            paddingHorizontal: 3,
+          }}>
+            <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.paper }} />
+          </View>
+        </Pressable>
+      </GlassCard>
+    );
+  };
 
   const renderHighlights = () => {
     if (highlights.length === 0) {
       return (
-        <View className="items-center justify-center py-12">
-          <Text className="text-6xl mb-4">📱</Text>
-          <Text className="text-white text-xl font-bold mb-2">No Highlights Yet</Text>
-          <Text className="text-gray-400 text-center mb-6">
+        <GlassCard style={{ marginTop: 16, padding: 28, alignItems: 'center' }}>
+          <Text style={{ fontSize: 48, marginBottom: 12 }}>📱</Text>
+          <Text style={{ fontSize: 18, fontWeight: fontWeight.bold, color: colors.ink, marginBottom: 6 }}>No Highlights Yet</Text>
+          <Text style={{ fontSize: 13, color: colors.inkSoft, textAlign: 'center', marginBottom: 18, lineHeight: 19 }}>
             Epic moments from your games will{'\n'}appear here for easy sharing!
           </Text>
-          <Pressable
+          <TactileButton
+            variant="primary"
+            fullWidth={false}
+            style={{ paddingHorizontal: 32 }}
             onPress={() => router.push('/game')}
-            className="bg-purple-600 px-6 py-3 rounded-xl"
           >
-            <Text className="text-white font-bold">Play a Game 🎮</Text>
-          </Pressable>
-        </View>
+            Play a Game
+          </TactileButton>
+        </GlassCard>
       );
     }
 
     return (
-      <View className="gap-3">
-        <Text className="text-gray-400 mb-2">
+      <View style={{ gap: 10, marginTop: 16 }}>
+        <Text style={{ fontSize: 12, color: colors.inkDim, fontWeight: fontWeight.medium, letterSpacing: 0.4 }}>
           {highlights.length} Highlight{highlights.length !== 1 ? 's' : ''} Ready to Share
         </Text>
-        
+
         {highlights.map((highlight) => (
-          <Pressable
-            key={highlight.id}
-            onPress={() => {
-              setSelectedHighlight(highlight);
-              setShowShareModal(true);
-            }}
-            className="bg-gray-800 rounded-xl p-4"
-          >
-            <View className="flex-row items-start justify-between">
-              <View className="flex-row items-center flex-1">
-                <Text className="text-3xl mr-3">{getHighlightIcon(highlight.type)}</Text>
-                <View className="flex-1">
-                  <Text className="text-white font-bold">{highlight.title}</Text>
-                  <Text className="text-gray-400 text-sm">{highlight.description}</Text>
-                  <Text className="text-gray-500 text-xs mt-1">
-                    {formatTimeAgo(highlight.timestamp)}
-                    {highlight.replayCode && ` • 👻 ${highlight.replayCode}`}
-                  </Text>
+          <GlassCard key={highlight.id} style={{ padding: 14 }}>
+            <Pressable
+              onPress={() => {
+                setSelectedHighlight(highlight);
+                setShowShareModal(true);
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Text style={{ fontSize: 28, marginRight: 12 }}>{getHighlightIcon(highlight.type)}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: fontWeight.bold, color: colors.ink }}>{highlight.title}</Text>
+                    <Text style={{ fontSize: 13, color: colors.inkSoft, marginTop: 2 }}>{highlight.description}</Text>
+                    <Text style={{ fontSize: 11, color: colors.inkDim, marginTop: 4 }}>
+                      {formatTimeAgo(highlight.timestamp)}
+                      {highlight.replayCode && ` · ${highlight.replayCode}`}
+                    </Text>
+                  </View>
                 </View>
+                <Pressable onPress={() => handleDeleteHighlight(highlight.id)} style={{ padding: 6 }}>
+                  <Text style={{ fontSize: 16, color: colors.inkDim }}>🗑️</Text>
+                </Pressable>
               </View>
-              <Pressable
-                onPress={() => handleDeleteHighlight(highlight.id)}
-                className="p-2"
-              >
-                <Text className="text-gray-500">🗑️</Text>
-              </Pressable>
-            </View>
-            
-            {/* Quick share buttons */}
-            <View className="flex-row gap-2 mt-3">
-              <Pressable
-                onPress={(e) => {
-                  e.stopPropagation();
-                  setSelectedHighlight(highlight);
-                  handleShare('tiktok');
-                }}
-                className="flex-1 bg-black border border-gray-700 py-2 rounded-lg items-center flex-row justify-center"
-              >
-                <Text className="text-white font-semibold">🎵 TikTok</Text>
-              </Pressable>
-              <Pressable
-                onPress={(e) => {
-                  e.stopPropagation();
-                  setSelectedHighlight(highlight);
-                  handleShare('instagram');
-                }}
-                className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 py-2 rounded-lg items-center"
-              >
-                <Text className="text-white font-semibold">📷 Insta</Text>
-              </Pressable>
-              <Pressable
-                onPress={(e) => {
-                  e.stopPropagation();
-                  setSelectedHighlight(highlight);
-                  handleShare('generic');
-                }}
-                className="flex-1 bg-gray-700 py-2 rounded-lg items-center"
-              >
-                <Text className="text-white font-semibold">📤 More</Text>
-              </Pressable>
-            </View>
-          </Pressable>
+
+              {/* Quick share buttons */}
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+                <Pressable
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    setSelectedHighlight(highlight);
+                    handleShare('tiktok');
+                  }}
+                  style={{ flex: 1, backgroundColor: colors.ink, borderRadius: radii.md, paddingVertical: 9, alignItems: 'center' }}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: fontWeight.semibold, color: colors.paper }}>🎵 TikTok</Text>
+                </Pressable>
+                <Pressable
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    setSelectedHighlight(highlight);
+                    handleShare('instagram');
+                  }}
+                  style={{ flex: 1, backgroundColor: colors.plum, borderRadius: radii.md, paddingVertical: 9, alignItems: 'center' }}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: fontWeight.semibold, color: colors.paper }}>📷 Insta</Text>
+                </Pressable>
+                <Pressable
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    setSelectedHighlight(highlight);
+                    handleShare('generic');
+                  }}
+                  style={{ flex: 1, backgroundColor: colors.paper3, borderRadius: radii.md, paddingVertical: 9, alignItems: 'center', borderWidth: 1, borderColor: colors.inkRule }}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: fontWeight.semibold, color: colors.ink }}>📤 More</Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </GlassCard>
         ))}
       </View>
     );
@@ -282,81 +296,100 @@ export default function ShareScreen() {
   const renderShareModal = () => {
     if (!showShareModal || !selectedHighlight) return null;
 
-    const platforms: { id: SharePlatform; name: string; icon: string; color: string }[] = [
-      { id: 'tiktok', name: 'TikTok', icon: '🎵', color: 'bg-black border border-gray-600' },
-      { id: 'instagram', name: 'Instagram', icon: '📷', color: 'bg-gradient-to-r from-purple-600 to-pink-500' },
-      { id: 'twitter', name: 'Twitter/X', icon: '🐦', color: 'bg-blue-500' },
-      { id: 'facebook', name: 'Facebook', icon: '👍', color: 'bg-blue-600' },
-      { id: 'generic', name: 'More Options', icon: '📤', color: 'bg-gray-600' },
+    const platforms: { id: SharePlatform; name: string; icon: string; bg: string; textColor: string }[] = [
+      { id: 'tiktok', name: 'TikTok', icon: '🎵', bg: colors.ink, textColor: colors.paper },
+      { id: 'instagram', name: 'Instagram', icon: '📷', bg: colors.plum, textColor: colors.paper },
+      { id: 'twitter', name: 'Twitter/X', icon: '🐦', bg: colors.cobalt, textColor: colors.paper },
+      { id: 'facebook', name: 'Facebook', icon: '👍', bg: colors.cobaltDeep, textColor: colors.paper },
+      { id: 'generic', name: 'More Options', icon: '📤', bg: colors.paper3, textColor: colors.ink },
     ];
 
     return (
-      <View className="absolute inset-0 bg-black/80 items-center justify-center p-4">
-        <View className="bg-gray-900 rounded-2xl p-6 w-full max-w-md">
-          <View className="flex-row items-center justify-between mb-6">
-            <Text className="text-white text-xl font-bold">Share Highlight</Text>
-            <Pressable onPress={() => setShowShareModal(false)} className="p-2">
-              <Text className="text-2xl text-gray-400">✕</Text>
+      <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(22,20,15,0.7)', alignItems: 'center', justifyContent: 'center', padding: 16 } as any}>
+        <GlassCard style={{ padding: 20, width: '100%', maxWidth: 400 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <Text style={{ fontSize: 18, fontWeight: fontWeight.bold, color: colors.ink }}>Share Highlight</Text>
+            <Pressable onPress={() => setShowShareModal(false)} style={{ padding: 6 }}>
+              <Text style={{ fontSize: 18, color: colors.inkSoft }}>✕</Text>
             </Pressable>
           </View>
 
           {/* Highlight preview */}
-          <View className="bg-gray-800 rounded-xl p-4 mb-6">
-            <View className="flex-row items-center">
-              <Text className="text-3xl mr-3">{getHighlightIcon(selectedHighlight.type)}</Text>
-              <View>
-                <Text className="text-white font-bold">{selectedHighlight.title}</Text>
-                <Text className="text-gray-400 text-sm">{selectedHighlight.description}</Text>
-              </View>
+          <View style={{ backgroundColor: colors.paper2, borderRadius: radii.lg, padding: 14, marginBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ fontSize: 28, marginRight: 12 }}>{getHighlightIcon(selectedHighlight.type)}</Text>
+            <View>
+              <Text style={{ fontSize: 15, fontWeight: fontWeight.bold, color: colors.ink }}>{selectedHighlight.title}</Text>
+              <Text style={{ fontSize: 12, color: colors.inkSoft, marginTop: 2 }}>{selectedHighlight.description}</Text>
             </View>
           </View>
 
           {/* Platform buttons */}
-          <View className="gap-3">
+          <View style={{ gap: 8 }}>
             {platforms.map((platform) => (
               <Pressable
                 key={platform.id}
                 onPress={() => handleShare(platform.id)}
-                className={`${platform.color} py-4 rounded-xl flex-row items-center justify-center`}
+                style={{ backgroundColor: platform.bg, borderRadius: radii.lg, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: platform.id === 'generic' ? 1 : 0, borderColor: colors.inkRule }}
               >
-                <Text className="text-2xl mr-2">{platform.icon}</Text>
-                <Text className="text-white font-bold text-lg">{platform.name}</Text>
+                <Text style={{ fontSize: 20, marginRight: 8 }}>{platform.icon}</Text>
+                <Text style={{ fontSize: 15, fontWeight: fontWeight.bold, color: platform.textColor }}>{platform.name}</Text>
                 {platform.id === 'tiktok' && tikTokInstalled && (
-                  <View className="bg-green-500 px-2 py-0.5 rounded-full ml-2">
-                    <Text className="text-white text-xs">Installed</Text>
+                  <View style={{ backgroundColor: colors.forest, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, marginLeft: 8 }}>
+                    <Text style={{ color: colors.paper, fontSize: 10, fontWeight: fontWeight.bold }}>Installed</Text>
                   </View>
                 )}
               </Pressable>
             ))}
           </View>
 
-          {/* Replay code */}
           {selectedHighlight.replayCode && (
-            <View className="mt-4 p-3 bg-gray-800 rounded-xl">
-              <Text className="text-gray-400 text-sm text-center">
-                Replay Code: <Text className="text-purple-400 font-bold">{selectedHighlight.replayCode}</Text>
+            <View style={{ marginTop: 14, padding: 12, backgroundColor: colors.paper2, borderRadius: radii.md }}>
+              <Text style={{ fontSize: 12, color: colors.inkSoft, textAlign: 'center' }}>
+                Replay Code:{' '}
+                <Text style={{ color: colors.cobalt, fontWeight: fontWeight.bold }}>{selectedHighlight.replayCode}</Text>
               </Text>
             </View>
           )}
-        </View>
+        </GlassCard>
       </View>
     );
   };
 
   return (
-    <SafeAreaView testID="share-screen" className="flex-1 bg-gray-950">
-      <ScrollView className="flex-1 px-4 pt-4">
-        {renderHeader()}
+    <SafeAreaView testID="share-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+      {/* Decorative orb */}
+      <View
+        pointerEvents="none"
+        style={{ position: 'absolute', top: -80, right: -60, width: 240, height: 240, borderRadius: 120, backgroundColor: colors.ember, opacity: 0.14 }}
+      />
+
+      {/* Back button */}
+      <View style={{ paddingHorizontal: 18, paddingTop: 8 }}>
+        <Pressable testID="back-button" onPress={() => router.back()} style={{ alignSelf: 'flex-start', paddingVertical: 6, paddingRight: 12 }}>
+          <Text style={{ fontSize: 22, color: colors.ink }}>←</Text>
+        </Pressable>
+      </View>
+
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 32 }}>
+        {/* Header */}
+        <Pill variant="ember">SHARE</Pill>
+        <Text style={{ fontSize: 32, fontWeight: fontWeight.black, color: colors.ink, marginTop: 12, letterSpacing: -1 }}>
+          Your highlights
+        </Text>
+        <Text style={{ fontSize: 13, color: colors.inkSoft, marginTop: 6, lineHeight: 19 }}>
+          Epic moments from your games, ready to share.
+        </Text>
+
+        {renderStats()}
+        {renderSettings()}
 
         {loading ? (
-          <View className="items-center justify-center py-12">
-            <Text className="text-white text-lg">Loading...</Text>
-          </View>
+          <GlassCard style={{ marginTop: 16, padding: 40, alignItems: 'center' }}>
+            <Text style={{ fontSize: 14, color: colors.inkSoft }}>Loading...</Text>
+          </GlassCard>
         ) : (
           renderHighlights()
         )}
-
-        <View className="h-8" />
       </ScrollView>
 
       {renderShareModal()}

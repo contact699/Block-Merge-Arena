@@ -65,85 +65,42 @@ npm run lint
 src/
 ├── app/                          # Expo Router screens
 │   ├── _layout.tsx              # Root layout
-│   ├── index.tsx                # Home screen
-│   ├── game.tsx                 # Main gameplay
-│   ├── tournament.tsx           # Daily tournaments
-│   ├── leaderboard.tsx          # Rankings
-│   ├── replays.tsx              # Ghost replay viewer
-│   ├── shop.tsx                 # Cosmetic shop
-│   ├── settings.tsx             # Settings
-│   ├── achievements.tsx         # Achievements
-│   ├── tutorials.tsx            # Tutorial system
-│   ├── ranks.tsx                # Ranked ladder
-│   ├── battlepass.tsx           # Battle pass
-│   ├── squads.tsx               # Squad/clan system
-│   ├── friends.tsx              # Friends & challenges
-│   ├── share.tsx                # Social sharing
-│   └── welcome.tsx              # Onboarding
+│   ├── index.tsx                # Home
+│   ├── welcome.tsx              # First-run onboarding
+│   ├── game.tsx                 # Endless mode
+│   ├── tournament.tsx           # Daily run (renamed → daily.tsx in T10)
+│   ├── leaderboard.tsx          # Daily standings
+│   ├── replays.tsx              # 6-char ghost replays
+│   ├── achievements.tsx         # Six tasteful badges
+│   ├── settings.tsx             # Audio · theme · account
+│   ├── share.tsx                # Annotated emoji grid (Phase 2)
+│   └── shop.tsx                 # Cosmetic themes only
 │
 ├── components/                   # Reusable UI
-│   ├── GameBoard.tsx            # 8x8 game grid
-│   ├── BlockPiece.tsx           # Tetris-style blocks
+│   ├── design/                  # Tactile-console primitives
+│   │   ├── TactileCell.tsx      # Gradient block cell
+│   │   ├── Pill.tsx             # Inline labels
+│   │   ├── TactileButton.tsx    # Primary / cobalt / ink / plain
+│   │   └── GlassCard.tsx        # GlassCard + DeepCard
+│   ├── GameBoard.tsx            # 8x8 deep-dark board
+│   ├── BlockPiece.tsx           # Piece tray
 │   ├── GemDisplay.tsx           # Gem visualization
 │   ├── ScoreDisplay.tsx         # Score with multiplier
 │   ├── PowerUpButton.tsx        # Power-up activation
-│   ├── ComboAnimation.tsx       # Combo effects
-│   ├── ReplayPlayer.tsx         # Replay playback
-│   ├── TournamentTimer.tsx      # 5-min countdown
-│   └── TutorialOverlay.tsx      # Tutorial hints
+│   ├── ComboAnimation.tsx       # Cascade animations (Phase 2 polish)
+│   └── ReplayPlayer.tsx         # Replay playback
 │
-└── lib/                          # Core logic
-    ├── types/                    # TypeScript definitions
-    │   ├── game.ts              # Game state types
-    │   ├── replay.ts            # Replay system types
-    │   ├── shop.ts              # Shop & cosmetics
-    │   ├── settings.ts          # Settings types
-    │   ├── achievements.ts      # Achievement types
-    │   ├── tutorial.ts          # Tutorial types
-    │   ├── ranks.ts             # Ranked system
-    │   ├── battlepass.ts        # Battle pass types
-    │   ├── squad.ts             # Squad types
-    │   ├── friends.ts           # Friends types
-    │   └── social.ts            # Social sharing types
-    │
-    ├── game/                     # Game engine
-    │   ├── board.ts             # Board logic
-    │   ├── pieces.ts            # Piece generation
-    │   ├── merge.ts             # Gem merging
-    │   ├── powerups.ts          # Power-up effects
-    │   └── replay-recorder.ts   # Replay recording
-    │
-    ├── firebase/                 # Backend
-    │   ├── config.ts            # Firebase setup
-    │   ├── auth.ts              # Anonymous auth
-    │   ├── api.ts               # Score submission
-    │   ├── types.ts             # Firebase types
-    │   └── index.ts             # Exports
-    │
-    ├── utils/                    # Utilities
-    │   ├── leaderboard.ts       # Local + global scores
-    │   ├── tournament.ts        # Tournament logic
-    │   ├── replay.ts            # Replay storage
-    │   ├── currency.ts          # Virtual currency
-    │   ├── inventory.ts         # Player inventory
-    │   ├── settings.ts          # Settings storage
-    │   ├── achievements.ts      # Achievement tracking
-    │   ├── tutorial.ts          # Tutorial state
-    │   ├── ranks.ts             # Rank calculations
-    │   ├── battlepass.ts        # Battle pass progress
-    │   ├── squad.ts             # Squad management
-    │   ├── friends.ts           # Friend system
-    │   └── social.ts            # Social sharing
-    │
-    ├── shop/
-    │   └── catalog.ts           # Shop items
-    │
-    ├── battlepass/
-    │   └── catalog.ts           # Battle pass rewards
-    │
-    └── tutorial/
-        └── catalog.ts           # Tutorial steps
+└── lib/
+    ├── design/
+    │   └── tokens.ts            # Palette, fonts, shadows
+    ├── types/                    # game, replay, shop, settings, achievements, social
+    ├── game/                     # board, pieces, merge, powerups, replay-recorder
+    ├── firebase/                 # config, auth, api, types
+    ├── shop/                     # catalog
+    └── utils/                    # leaderboard, tournament, replay, currency, inventory, settings, achievements, tutorial (welcome flag only), social
 ```
+
+(Cut from this tree in Phase 1: `lib/types/{squad,battlepass,ranks,friends}.ts`, `lib/utils/{squad,battlepass,ranks,friends}.ts`, `lib/battlepass/`, `lib/tutorial/`, `components/TutorialOverlay.tsx`, plus the matching screens.)
 
 ---
 
@@ -169,68 +126,47 @@ src/
 |----------|--------|
 | 🔄 Reroll | Swap current piece for different shape |
 | 💣 Blast | Clear 3x3 area around tap |
-| ⏱️ Freeze | Pause timer (tournament only) |
+| 🎯 Target | Suggests an optimal placement |
 
 ---
 
 ## 🏆 Game Modes
 
-### Endless Mode
+### Endless
 - No time limit
-- Practice and beat your high score
-- Perfect for learning strategies
+- Free, unlimited practice
+- Beat your high score
 
-### Daily Tournament
-- **Same pieces for all players** (seeded by date)
-- **5-minute time limit**
-- Global real-time leaderboard
-- New tournament every day at midnight UTC
-
----
-
-## 📊 Progression Systems
-
-### Ranked Ladder
-Bronze → Silver → Gold → Platinum → Diamond → Master → Grandmaster
-- Earn rank points from tournament performance
-- Seasonal resets with rewards
-
-### Battle Pass (30 levels)
-- **Free tier**: Coins, basic cosmetics
-- **Premium tier**: Exclusive themes, gems, power-ups
-- XP from gameplay, daily challenges
-
-### Achievements
-- 20+ achievements with gem rewards
-- Track combos, scores, streaks, and more
+### Daily
+- **One run per day**, no timer (Phase 2 owns the timer-removal migration)
+- **Same piece sequence for everyone**, seeded by global date
+- Subscriber-only archive of past dailies (Phase 3)
 
 ---
 
-## 👥 Social Features
+## 📊 Progression (v1)
 
-### Squads
-- Create or join 10-person squads
-- Combined squad score leaderboard
-- Squad activity feed
-- Leader/Co-Leader/Member roles
+### Achievements (six tasteful badges, status-only — no XP)
+- First Merge, Five-Cluster, Daily Debut, A Week Steady, Quick Hand, Centurion
 
-### Friends
-- Add friends via 8-character friend codes
-- Challenge friends to beat your score
-- Share replays with friends
-- Friend leaderboard
+(Ranked ladder and battle pass are CUT from v1. They were juvenile-coded for the adult crossover audience we're targeting.)
+
+---
+
+## 👥 Social (v1)
 
 ### Replays
-- Every game records a replay
-- 6-character shareable codes
-- Ghost visualization (watch moves play back)
-- Share epic moments
+- Every run records a replay
+- 6-character shareable code
+- Ghost playback for friends-watching-friends
 
-### Social Sharing
-- One-tap share to TikTok
-- Instagram, Twitter, Facebook support
-- Auto-capture epic combos (3+ combos, 3x+ multipliers)
-- Generated captions and hashtags
+### Daily share grid
+- Annotated emoji grid showing the player's final board state
+- Merged gems render as colored circles with multiplier numbers
+- Same artifact as the differentiator — one share = one merge story
+- (Format generator lands in Phase 2)
+
+(Squads, friend codes, and TikTok auto-capture are CUT from v1.)
 
 ---
 
@@ -278,24 +214,38 @@ Use NativeWind with `cn()` helper:
 
 ## 🚀 Launch Checklist
 
-### Pre-Launch
-- [x] All 49 features implemented
+### Phase 1 (Foundation, weeks 1–3)
 - [x] No TypeScript errors
-- [x] App.json configured for Block Merge Arena
-- [x] Firebase backend ready
-- [ ] Create app store assets (icon, screenshots)
-- [ ] Write app store descriptions
-- [ ] Set up analytics (Firebase Analytics)
-- [ ] Configure push notifications
-- [ ] Test on real devices (iOS + Android)
-- [ ] Performance optimization pass
+- [x] Tactile-console redesign foundation (tokens + primitives)
+- [x] Cuts merged (squads, battlepass, ranks, friends, tutorials-as-screen)
+- [ ] Backend: populate Firebase production env vars (see `docs/decisions/0002-firebase-production-setup.md`)
+- [ ] Analytics: PostHog wired and verified live (see `docs/decisions/0001-analytics-platform.md`)
+- [ ] Restyle: Daily, Leaderboard, Replays, Achievements, Settings, Share, Shop
+- [ ] Maestro flow cleanup
+- [ ] Phase 1 gate verification
+
+### Phase 2 (Differentiator, weeks 4–6)
+- [ ] Annotated emoji share grid generator
+- [ ] Merge cascade animation (visual + audio + haptic)
+- [ ] Daily run model migration: drop 5-min timer, switch to one-run-no-timer
+- [ ] Daily archive Firestore schema
+
+### Phase 3 (Monetization, weeks 7–9)
+- [ ] RevenueCat integration
+- [ ] Paywall surfaces (archive, GIF export, theme apply)
+- [ ] Cosmetic theme rotation
+
+### Phase 4 (Polish & Launch Gates, weeks 10–12)
+- [ ] Sound design pass
+- [ ] Performance optimization on real devices
+- [ ] App Store assets (icon, screenshots, descriptions, preview video)
+- [ ] Soft launch territory (Canada or NZ) → wide launch
 
 ### App Store Requirements
 - [ ] iOS: Apple Developer account, App Store Connect
 - [ ] Android: Google Play Console
 - [ ] Privacy policy URL
 - [ ] Terms of service URL
-- [ ] Age rating (rated for ages 10+)
 
 ### Firebase Setup (Production)
 1. Create Firebase project at console.firebase.google.com

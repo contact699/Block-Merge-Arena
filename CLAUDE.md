@@ -1,10 +1,19 @@
-# Block Merge Arena - Complete Project Guide
+# Block Merge — Project Guide
 
-> **Project:** Block Merge Arena - Competitive block puzzle game for Gen Z (ages 10-15)
-> **Status:** ✅ COMPLETE - Ready for Launch
+> **Project:** Block Merge — Daily block puzzle with merge cascade for adult crossover puzzlers (Wordle/NYT Games audience)
+> **Status:** Phase 1 of launch plan in progress — see `docs/superpowers/plans/2026-05-05-phase-1-foundation.md`
 > **Tech Stack:** Expo SDK 53, React Native 0.79.6, TypeScript (strict), Firebase
 > **Package Manager:** NPM (with legacy-peer-deps flag)
 > **Target Platform:** iOS & Android mobile
+
+---
+
+## Source of truth
+
+- **Launch design:** `docs/superpowers/specs/2026-05-05-block-merge-launch-design.md`
+- **Phase 1 plan:** `docs/superpowers/plans/2026-05-05-phase-1-foundation.md`
+- **Design tokens:** `src/lib/design/tokens.ts`
+- **Tactile primitives:** `src/components/design/`
 
 ---
 
@@ -31,25 +40,22 @@ npm run lint
 
 ---
 
-## 📱 App Screens
+## 📱 App Screens (v1)
 
 | Screen | Route | Description |
 |--------|-------|-------------|
-| Home | `/` | Main menu with all navigation options |
-| Game | `/game` | Solo endless mode gameplay |
-| Tournament | `/tournament` | Daily 5-min competitive mode |
-| Leaderboard | `/leaderboard` | Global & local rankings |
-| Replays | `/replays` | Watch ghost replays with 6-char codes |
-| Shop | `/shop` | Cosmetics & virtual currency store |
-| Settings | `/settings` | Audio, display, account settings |
-| Achievements | `/achievements` | Badges & progress tracking |
-| Tutorials | `/tutorials` | Interactive game tutorials |
-| Ranks | `/ranks` | Ranked ladder (Bronze → Diamond) |
-| Battle Pass | `/battlepass` | Seasonal rewards (free + premium) |
-| Squads | `/squads` | 10-person squad system |
-| Friends | `/friends` | Friend list & challenges |
-| Share | `/share` | TikTok/social media sharing |
-| Welcome | `/welcome` | First-time onboarding |
+| Home | `/` | Daily hero card + nav |
+| Welcome | `/welcome` | First-run onboarding |
+| Daily | `/daily` | One run per day, no timer |
+| Endless | `/game` | Free practice, unlimited |
+| Leaderboard | `/leaderboard` | Daily standings |
+| Replays | `/replays` | 6-char ghost replays |
+| Achievements | `/achievements` | Six tasteful badges |
+| Settings | `/settings` | Audio, theme, account |
+| Share | `/share` | Annotated emoji grid |
+| Shop | `/shop` | Cosmetic themes only |
+
+**Cut from v1:** Squads, Battle Pass, Ranks Ladder, Friends-by-code, Tutorials-as-screen, 5-min Sprint mode.
 
 ---
 
@@ -319,26 +325,3 @@ npx eas build --platform android # Build for Android
 npx eas submit                   # Submit to stores
 ```
 
----
-
-## 🎉 Feature Summary
-
-**Block Merge Arena is 100% complete with:**
-
-✅ Core block puzzle gameplay (8x8 grid, line clearing)
-✅ Innovative gem merge system (2x, 3x, 5x multipliers)
-✅ Solo endless mode + daily tournaments
-✅ Power-up system (Reroll, Blast, Freeze)
-✅ Firebase backend (auth, leaderboards, real-time)
-✅ Ghost replay system (6-char codes)
-✅ Virtual currency & cosmetic shop
-✅ Settings & audio controls
-✅ 20+ achievements with rewards
-✅ Interactive tutorial system
-✅ Ranked ladder (Bronze → Grandmaster)
-✅ 30-level battle pass (free + premium)
-✅ Squad/clan system (10-person teams)
-✅ Friend system with challenges
-✅ TikTok & social media integration
-
-**Ready for launch! 🚀🎮**

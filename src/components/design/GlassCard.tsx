@@ -1,5 +1,5 @@
 import { View, type ViewStyle } from 'react-native';
-import { colors, radii, shadows } from '@/lib/design/tokens';
+import { radii, shadows } from '@/lib/design/tokens';
 
 interface GlassCardProps {
   children: React.ReactNode;

@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getTodayDateString } from '@/lib/utils/tournament';
 import { hasCompletedWelcome } from '@/lib/utils/tutorial';
-import { colors, fontWeight, radii } from '@/lib/design/tokens';
+import { colors, fontWeight } from '@/lib/design/tokens';
 import { GlassCard, DeepCard } from '@/components/design/GlassCard';
 import { Pill } from '@/components/design/Pill';
 import { TactileButton } from '@/components/design/TactileButton';

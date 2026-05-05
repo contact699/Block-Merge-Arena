@@ -334,6 +334,8 @@ export default function GameScreen() {
   const [score, setScore] = useState<number>(0);
   const [highScore, setHighScore] = useState<number>(0);
   const [multiplier, setMultiplier] = useState<number>(1);
+  // gems state is set during merge; the rendered board reads gems via cell state directly.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [gems, setGems] = useState<Gem[]>([]);
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [recentPoints, setRecentPoints] = useState<number>(0);

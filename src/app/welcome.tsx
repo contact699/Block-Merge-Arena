@@ -1,14 +1,91 @@
-// Welcome Screen - First-time user onboarding
+// Welcome Screen — Tactile Console redesign.
 import { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { TutorialOverlay } from '@/components/TutorialOverlay';
 import { WELCOME_TUTORIAL } from '@/lib/tutorial/catalog';
-import {
-  completeStep,
-  skipTutorial,
-} from '@/lib/utils/tutorial';
+import { completeStep, skipTutorial } from '@/lib/utils/tutorial';
+import { colors, fontWeight } from '@/lib/design/tokens';
+import { TactileCell } from '@/components/design/TactileCell';
+import { TactileButton } from '@/components/design/TactileButton';
+import { Pill } from '@/components/design/Pill';
+
+function IntroBoardPreview() {
+  // Renders a small 8x8 dark board with a hand-crafted "intro" layout —
+  // mirrors the design's makeIntroBoard() so the welcome screen feels alive.
+  const layout: (keyof typeof BOARD_FIXTURE)[][] = (() => {
+    const grid: string[][] = Array.from({ length: 8 }, () => Array(8).fill(''));
+    const set = (r: number, c: number, col: string) => (grid[r][c] = col);
+    set(2, 2, 'ember'); set(2, 3, 'ember');
+    set(3, 2, 'cobalt'); set(3, 3, 'cobalt'); set(3, 4, 'cobalt');
+    set(4, 4, 'mustard'); set(5, 4, 'mustard');
+    set(5, 5, 'forest'); set(5, 6, 'forest');
+    set(6, 1, 'plum'); set(6, 2, 'plum');
+    return grid as (keyof typeof BOARD_FIXTURE)[][];
+  })();
+
+  const boardSize = 240;
+  const padding = 8;
+  const gap = 2;
+  const cell = (boardSize - padding * 2 - gap * 7) / 8;
+
+  return (
+    <View
+      style={{
+        width: boardSize,
+        height: boardSize,
+        borderRadius: 14,
+        padding,
+        backgroundColor: '#0a0805',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.06)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 24 },
+        shadowOpacity: 0.5,
+        shadowRadius: 30,
+        elevation: 10,
+      }}
+    >
+      {Array.from({ length: 8 }).map((_, r) => (
+        <View key={r} style={{ flexDirection: 'row', flex: 1 }}>
+          {Array.from({ length: 8 }).map((__, c) => {
+            const cellColor = layout[r][c];
+            return (
+              <View
+                key={c}
+                style={{
+                  width: cell,
+                  height: cell,
+                  marginRight: c < 7 ? gap : 0,
+                  marginBottom: r < 7 ? gap : 0,
+                  borderRadius: 5,
+                  backgroundColor: 'rgba(255,255,255,0.025)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(255,255,255,0.04)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {cellColor ? (
+                  <TactileCell color={cellColor as never} size={cell - 2} rounded={4} />
+                ) : null}
+              </View>
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const BOARD_FIXTURE = {
+  ember: 1,
+  cobalt: 1,
+  forest: 1,
+  mustard: 1,
+  plum: 1,
+};
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -22,18 +99,13 @@ export default function WelcomeScreen() {
 
   const handleNext = async (): Promise<void> => {
     const result = await completeStep(currentStep.id);
-
     if (result.tutorialComplete) {
-      // Tutorial finished!
       setEarnedCoins(WELCOME_TUTORIAL.rewards?.coins || 0);
       setEarnedGems(WELCOME_TUTORIAL.rewards?.gems || 0);
       setShowRewards(true);
     } else if (result.nextStep) {
-      // Move to next step
       const nextIndex = WELCOME_TUTORIAL.steps.findIndex((s) => s.id === result.nextStep);
-      if (nextIndex !== -1) {
-        setCurrentStepIndex(nextIndex);
-      }
+      if (nextIndex !== -1) setCurrentStepIndex(nextIndex);
     }
   };
 
@@ -47,61 +119,107 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <SafeAreaView testID="welcome-screen" className="flex-1 bg-black">
-      <View className="flex-1 items-center justify-center p-6">
-        {/* Logo/Branding */}
-        <View className="items-center mb-8">
-          <Text className="text-6xl font-black text-purple-400 mb-2">Block Merge</Text>
-          <Text className="text-4xl font-black text-white">Arena</Text>
-          <Text className="text-gray-400 text-sm mt-3">
-            Competitive Block Puzzle • Merge • Dominate
-          </Text>
+    <SafeAreaView testID="welcome-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+      {/* Ambient ember blob */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: -80,
+          right: -60,
+          width: 240,
+          height: 240,
+          borderRadius: 120,
+          backgroundColor: colors.ember,
+          opacity: 0.18,
+        }}
+      />
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          bottom: 80,
+          left: -60,
+          width: 200,
+          height: 200,
+          borderRadius: 100,
+          backgroundColor: colors.cobalt,
+          opacity: 0.12,
+        }}
+      />
+
+      <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 28, paddingBottom: 24 }}>
+        <Pill variant="ember">NEW · 2026</Pill>
+
+        <Text
+          style={{
+            marginTop: 18,
+            fontSize: 56,
+            lineHeight: 56,
+            fontWeight: fontWeight.black,
+            letterSpacing: -2,
+            color: colors.ink,
+          }}
+        >
+          Place.{'\n'}Clear.{'\n'}
+          <Text style={{ color: colors.ember }}>Merge.</Text>
+        </Text>
+
+        <Text
+          style={{
+            marginTop: 14,
+            fontSize: 14,
+            lineHeight: 20,
+            color: colors.inkSoft,
+            maxWidth: 300,
+          }}
+        >
+          A puzzle that rewards patience. Stack pieces, clear lines, then watch
+          leftover gems merge into multipliers.
+        </Text>
+
+        <View style={{ alignItems: 'center', marginTop: 28 }}>
+          <View style={{ position: 'relative' }}>
+            <IntroBoardPreview />
+            {/* Multiplier badge */}
+            <View
+              style={{
+                position: 'absolute',
+                top: -12,
+                right: -12,
+                paddingHorizontal: 12,
+                paddingVertical: 5,
+                backgroundColor: colors.ember,
+                borderRadius: 999,
+                borderWidth: 1.5,
+                borderColor: 'white',
+                shadowColor: colors.ember,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.6,
+                shadowRadius: 16,
+                elevation: 8,
+              }}
+            >
+              <Text style={{ color: 'white', fontWeight: fontWeight.black, fontSize: 16 }}>3×</Text>
+            </View>
+          </View>
         </View>
 
-        {/* Feature Highlights */}
-        <View className="w-full max-w-md bg-gray-900/50 rounded-2xl p-6 gap-4">
-          <View className="flex-row items-center gap-3">
-            <Text className="text-3xl">🎮</Text>
-            <View className="flex-1">
-              <Text className="text-white font-bold">Strategic Gameplay</Text>
-              <Text className="text-gray-400 text-xs">Place blocks, clear lines, earn points</Text>
-            </View>
-          </View>
-
-          <View className="flex-row items-center gap-3">
-            <Text className="text-3xl">💎</Text>
-            <View className="flex-1">
-              <Text className="text-white font-bold">Merge for Multipliers</Text>
-              <Text className="text-gray-400 text-xs">
-                Combine gems for 5x score bonuses
-              </Text>
-            </View>
-          </View>
-
-          <View className="flex-row items-center gap-3">
-            <Text className="text-3xl">🏆</Text>
-            <View className="flex-1">
-              <Text className="text-white font-bold">Daily Tournaments</Text>
-              <Text className="text-gray-400 text-xs">
-                Compete globally with fair matchmaking
-              </Text>
-            </View>
-          </View>
-
-          <View className="flex-row items-center gap-3">
-            <Text className="text-3xl">🎯</Text>
-            <View className="flex-1">
-              <Text className="text-white font-bold">Power-Ups & Strategy</Text>
-              <Text className="text-gray-400 text-xs">Master tactics to climb ranks</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* CTA Message */}
-        <View className="mt-8">
-          <Text className="text-purple-400 text-center text-lg font-bold">
-            Ready to begin your journey?
-          </Text>
+        <View style={{ marginTop: 'auto', gap: 10 }}>
+          <TactileButton
+            variant="primary"
+            onPress={() => {
+              // Move into the tutorial flow if available, otherwise finish.
+              if (totalSteps > 0) {
+                // The TutorialOverlay below drives state; nothing to do here.
+              }
+            }}
+          >
+            Start playing
+          </TactileButton>
+          <Pressable onPress={handleSkip} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, alignItems: 'center', paddingVertical: 12 })}>
+            <Text style={{ color: colors.inkSoft, fontWeight: fontWeight.semibold }}>I have an account</Text>
+          </Pressable>
         </View>
       </View>
 
@@ -118,50 +236,91 @@ export default function WelcomeScreen() {
 
       {/* Rewards Modal */}
       {showRewards && (
-        <View className="absolute inset-0 bg-black/90 items-center justify-center p-6">
-          <View className="bg-gray-900 border-2 border-purple-500 rounded-2xl p-6 max-w-md w-full">
-            <Text className="text-center text-4xl mb-4">🎉</Text>
-            <Text className="text-white text-2xl font-bold text-center mb-2">
-              Welcome Complete!
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(22,20,15,0.78)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 24,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: colors.paper,
+              borderRadius: 20,
+              padding: 24,
+              width: '100%',
+              maxWidth: 360,
+              borderWidth: 1,
+              borderColor: 'rgba(22,20,15,0.1)',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 24 },
+              shadowOpacity: 0.4,
+              shadowRadius: 40,
+              elevation: 14,
+            }}
+          >
+            <Pill variant="ember" style={{ alignSelf: 'flex-start' }}>WELCOME</Pill>
+            <Text
+              style={{
+                marginTop: 14,
+                fontSize: 28,
+                fontWeight: fontWeight.black,
+                color: colors.ink,
+                letterSpacing: -1,
+              }}
+            >
+              You're in.
             </Text>
-            <Text className="text-gray-400 text-center mb-6">
-              Here's a starter bonus to get you started on your journey to the top!
+            <Text style={{ color: colors.inkSoft, marginTop: 6, fontSize: 14 }}>
+              A starter bonus to get you going.
             </Text>
 
-            {/* Rewards */}
-            <View className="bg-black/40 rounded-xl p-4 mb-6">
-              <Text className="text-gray-400 text-xs text-center mb-3">🎁 Starter Rewards</Text>
-              <View className="flex-row justify-center gap-6">
-                {earnedCoins > 0 && (
-                  <View className="items-center">
-                    <Text className="text-yellow-400 text-3xl font-black">{earnedCoins}</Text>
-                    <Text className="text-yellow-400 text-xs mt-1">🪙 Coins</Text>
-                  </View>
-                )}
-                {earnedGems > 0 && (
-                  <View className="items-center">
-                    <Text className="text-purple-400 text-3xl font-black">{earnedGems}</Text>
-                    <Text className="text-purple-400 text-xs mt-1">💎 Gems</Text>
-                  </View>
-                )}
-              </View>
+            <View
+              style={{
+                marginTop: 18,
+                marginBottom: 18,
+                backgroundColor: 'rgba(22,20,15,0.05)',
+                borderRadius: 14,
+                padding: 16,
+                flexDirection: 'row',
+                justifyContent: 'space-around',
+              }}
+            >
+              {earnedCoins > 0 && (
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={{ color: colors.mustard, fontSize: 28, fontWeight: fontWeight.black }}>
+                    {earnedCoins}
+                  </Text>
+                  <Text style={{ color: colors.inkSoft, fontSize: 11, marginTop: 4, letterSpacing: 1.4 }}>
+                    COINS
+                  </Text>
+                </View>
+              )}
+              {earnedGems > 0 && (
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={{ color: colors.plum, fontSize: 28, fontWeight: fontWeight.black }}>
+                    {earnedGems}
+                  </Text>
+                  <Text style={{ color: colors.inkSoft, fontSize: 11, marginTop: 4, letterSpacing: 1.4 }}>
+                    GEMS
+                  </Text>
+                </View>
+              )}
             </View>
 
-            {/* Finish Button */}
-            <Pressable
+            <TactileButton
               testID="lets-play-button"
               onPress={handleFinish}
-              className="bg-purple-500 rounded-xl py-4 active:scale-95"
+              variant="primary"
             >
-              <Text className="text-white text-center text-lg font-bold">
-                Let's Play! 🚀
-              </Text>
-            </Pressable>
-
-            {/* Next Steps Hint */}
-            <Text className="text-gray-500 text-xs text-center mt-4">
-              💡 Check out more tutorials to master advanced strategies
-            </Text>
+              Let's play
+            </TactileButton>
           </View>
         </View>
       )}

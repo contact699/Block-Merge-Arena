@@ -1,9 +1,109 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { getTodayDateString } from '@/lib/utils/tournament';
 import { hasCompletedWelcome } from '@/lib/utils/tutorial';
+import { colors, fontWeight, radii } from '@/lib/design/tokens';
+import { GlassCard, DeepCard } from '@/components/design/GlassCard';
+import { Pill } from '@/components/design/Pill';
+import { TactileButton } from '@/components/design/TactileButton';
+
+const WEEK = [40, 65, 30, 80, 95, 50, 70];
+const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+function Sparkline() {
+  return (
+    <View>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 56, gap: 4 }}>
+        {WEEK.map((h, i) => {
+          const isPeak = i === 4;
+          return (
+            <View key={i} style={{ flex: 1, height: `${h}%`, justifyContent: 'flex-end' }}>
+              {isPeak ? (
+                <LinearGradient
+                  colors={[colors.emberLight, colors.emberDeep]}
+                  start={{ x: 0.5, y: 0 }}
+                  end={{ x: 0.5, y: 1 }}
+                  style={{
+                    flex: 1,
+                    borderTopLeftRadius: 4,
+                    borderTopRightRadius: 4,
+                    shadowColor: colors.ember,
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0.55,
+                    shadowRadius: 8,
+                    elevation: 4,
+                  }}
+                />
+              ) : (
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(22,20,15,0.14)',
+                    borderTopLeftRadius: 4,
+                    borderTopRightRadius: 4,
+                  }}
+                />
+              )}
+            </View>
+          );
+        })}
+      </View>
+      <View style={{ flexDirection: 'row', marginTop: 6, gap: 4 }}>
+        {DAYS.map((d, i) => {
+          const isPeak = i === 4;
+          return (
+            <Text
+              key={i}
+              style={{
+                flex: 1,
+                textAlign: 'center',
+                fontSize: 9,
+                fontWeight: isPeak ? fontWeight.heavy : fontWeight.bold,
+                color: isPeak ? colors.ember : colors.inkDim,
+                letterSpacing: 1.4,
+              }}
+            >
+              {d}
+            </Text>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function NavTile({
+  href,
+  testID,
+  label,
+  hint,
+  accent = colors.ink,
+}: {
+  href: string;
+  testID: string;
+  label: string;
+  hint?: string;
+  accent?: string;
+}) {
+  return (
+    <Link href={href as never} asChild>
+      <Pressable testID={testID} style={({ pressed }) => ({ flex: 1, transform: [{ translateY: pressed ? 1 : 0 }] })}>
+        <GlassCard style={{ padding: 14 }}>
+          <View style={{ width: 28, height: 4, borderRadius: 2, backgroundColor: accent, marginBottom: 10 }} />
+          <Text style={{ fontSize: 14, fontWeight: fontWeight.heavy, color: colors.ink, letterSpacing: -0.3 }}>
+            {label}
+          </Text>
+          {hint && (
+            <Text style={{ color: colors.inkSoft, fontSize: 11, marginTop: 2 }}>{hint}</Text>
+          )}
+        </GlassCard>
+      </Pressable>
+    </Link>
+  );
+}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -11,212 +111,329 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    checkFirstTime();
+    (async () => {
+      const completedWelcome = await hasCompletedWelcome();
+      if (!completedWelcome) router.replace('/welcome');
+      else setLoading(false);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const checkFirstTime = async (): Promise<void> => {
-    const completedWelcome = await hasCompletedWelcome();
-    if (!completedWelcome) {
-      // First time user - redirect to welcome screen
-      router.replace('/welcome');
-    } else {
-      setLoading(false);
-    }
-  };
-
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-black items-center justify-center">
-        <Text className="text-purple-400 text-lg">Loading...</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color: colors.ember, fontSize: 16, fontWeight: fontWeight.bold }}>Loading…</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView testID="home-screen" className="flex-1 bg-black">
-      {/* Settings Button - Top Right */}
-      <View className="absolute top-4 right-6 z-10">
-        <Link href="/settings" asChild>
-          <Pressable testID="settings-button" className="bg-gray-900 border border-gray-700 rounded-full p-3 active:scale-95">
-            <Text className="text-2xl">⚙️</Text>
-          </Pressable>
-        </Link>
-      </View>
+    <SafeAreaView testID="home-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+      {/* Ambient blobs */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: -80,
+          right: -60,
+          width: 240,
+          height: 240,
+          borderRadius: 120,
+          backgroundColor: colors.ember,
+          opacity: 0.16,
+        }}
+      />
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          bottom: 100,
+          left: -60,
+          width: 200,
+          height: 200,
+          borderRadius: 100,
+          backgroundColor: colors.cobalt,
+          opacity: 0.1,
+        }}
+      />
 
-      <View className="flex-1 items-center justify-center p-6">
-        {/* Title */}
-        <View className="items-center mb-12">
-          <Text className="text-6xl font-black text-purple-400 mb-2">
-            Block Merge
-          </Text>
-          <Text className="text-4xl font-black text-white">
-            Arena
-          </Text>
-          <Text className="text-base text-gray-400 mt-3 tracking-widest uppercase">
-            Competitive • Strategic • Addictive
-          </Text>
-        </View>
-
-        {/* Main Buttons */}
-        <View className="w-full max-w-sm space-y-4">
-          {/* Tournament Mode */}
-          <Link href="/tournament" asChild>
-            <Pressable testID="tournament-button" className="bg-gradient-to-r from-purple-600 to-pink-600 p-[2px] rounded-2xl active:scale-95">
-              <View className="bg-black rounded-2xl px-8 py-6">
-                <View className="flex-row items-center justify-between mb-2">
-                  <Text className="text-2xl font-bold text-white">🏆 Tournament</Text>
-                  <View className="bg-red-500 px-2 py-1 rounded-full">
-                    <Text className="text-white text-xs font-bold">LIVE</Text>
-                  </View>
-                </View>
-                <Text className="text-gray-400 text-sm">
-                  Compete globally • Same pieces for all
-                </Text>
-                <Text className="text-purple-400 text-xs mt-2">
-                  Today: {todayDate}
-                </Text>
-              </View>
-            </Pressable>
-          </Link>
-
-          {/* Endless Mode */}
-          <Link href="/game" asChild>
-            <Pressable testID="endless-mode-button" className="border-2 border-purple-500 rounded-2xl px-8 py-6 active:scale-95">
-              <Text className="text-2xl font-bold text-white mb-2">
-                🎮 Endless Mode
-              </Text>
-              <Text className="text-gray-400 text-sm">
-                Practice • No time limit • Beat your high score
-              </Text>
-            </Pressable>
-          </Link>
-
-          {/* Leaderboard */}
-          <Link href="/leaderboard" asChild>
-            <Pressable testID="leaderboard-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
-              <View className="flex-row items-center justify-center">
-                <Text className="text-xl font-bold text-gray-300 mr-2">🏅</Text>
-                <Text className="text-xl font-bold text-gray-300">Leaderboard</Text>
-              </View>
-            </Pressable>
-          </Link>
-
-          {/* Replays */}
-          <Link href="/replays" asChild>
-            <Pressable testID="replays-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
-              <View className="flex-row items-center justify-center">
-                <Text className="text-xl font-bold text-gray-300 mr-2">👻</Text>
-                <Text className="text-xl font-bold text-gray-300">Replays</Text>
-              </View>
-            </Pressable>
-          </Link>
-
-          {/* Shop */}
-          <Link href="/shop" asChild>
-            <Pressable testID="shop-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
-              <View className="flex-row items-center justify-center">
-                <Text className="text-xl font-bold text-gray-300 mr-2">🛒</Text>
-                <Text className="text-xl font-bold text-gray-300">Shop</Text>
-              </View>
-            </Pressable>
-          </Link>
-
-          {/* Achievements */}
-          <Link href="/achievements" asChild>
-            <Pressable testID="achievements-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
-              <View className="flex-row items-center justify-center">
-                <Text className="text-xl font-bold text-gray-300 mr-2">🏆</Text>
-                <Text className="text-xl font-bold text-gray-300">Achievements</Text>
-              </View>
-            </Pressable>
-          </Link>
-
-          {/* Tutorials */}
-          <Link href="/tutorials" asChild>
-            <Pressable testID="tutorials-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
-              <View className="flex-row items-center justify-center">
-                <Text className="text-xl font-bold text-gray-300 mr-2">📚</Text>
-                <Text className="text-xl font-bold text-gray-300">Tutorials</Text>
-              </View>
-            </Pressable>
-          </Link>
-
-          {/* Ranked */}
-          <Link href="/ranks" asChild>
-            <Pressable testID="ranks-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
-              <View className="flex-row items-center justify-center">
-                <Text className="text-xl font-bold text-gray-300 mr-2">🏅</Text>
-                <Text className="text-xl font-bold text-gray-300">Ranked</Text>
-              </View>
-            </Pressable>
-          </Link>
-
-          {/* Battle Pass */}
-          <Link href="/battlepass" asChild>
-            <Pressable testID="battlepass-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
-              <View className="flex-row items-center justify-center">
-                <Text className="text-xl font-bold text-gray-300 mr-2">🎫</Text>
-                <Text className="text-xl font-bold text-gray-300">Battle Pass</Text>
-              </View>
-            </Pressable>
-          </Link>
-
-          {/* Squads */}
-          <Link href="/squads" asChild>
-            <Pressable testID="squads-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
-              <View className="flex-row items-center justify-center">
-                <Text className="text-xl font-bold text-gray-300 mr-2">🛡️</Text>
-                <Text className="text-xl font-bold text-gray-300">Squads</Text>
-              </View>
-            </Pressable>
-          </Link>
-
-          {/* Friends */}
-          <Link href="/friends" asChild>
-            <Pressable testID="friends-button" className="border border-gray-700 rounded-2xl px-8 py-4 active:scale-95">
-              <View className="flex-row items-center justify-center">
-                <Text className="text-xl font-bold text-gray-300 mr-2">👥</Text>
-                <Text className="text-xl font-bold text-gray-300">Friends</Text>
-              </View>
-            </Pressable>
-          </Link>
-
-          {/* Share / TikTok */}
-          <Link href="/share" asChild>
-            <Pressable testID="share-button" accessibilityLabel="Share and TikTok" className="bg-gradient-to-r from-pink-600 to-purple-600 p-[2px] rounded-2xl active:scale-95">
-              <View className="bg-black rounded-2xl px-8 py-4">
-                <View className="flex-row items-center justify-center">
-                  <Text className="text-xl font-bold text-white mr-2">🎵</Text>
-                  <Text className="text-xl font-bold text-white">Share & TikTok</Text>
-                </View>
-              </View>
-            </Pressable>
-          </Link>
-        </View>
-
-        {/* Features */}
-        <View className="mt-12 bg-gray-900/50 rounded-xl px-6 py-4">
-          <View className="flex-row flex-wrap justify-center gap-3">
-            <View className="items-center">
-              <Text className="text-2xl">💎</Text>
-              <Text className="text-gray-400 text-xs mt-1">Merge Gems</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-2xl">⚡</Text>
-              <Text className="text-gray-400 text-xs mt-1">Epic Combos</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-2xl">🔥</Text>
-              <Text className="text-gray-400 text-xs mt-1">Multipliers</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-2xl">🎯</Text>
-              <Text className="text-gray-400 text-xs mt-1">Daily Events</Text>
-            </View>
+      {/* Topbar */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 12, paddingBottom: 6 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+            }}
+          >
+            <LinearGradient
+              colors={[colors.emberLight, colors.emberDeep]}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+            />
+            <Text style={{ color: 'white', fontWeight: fontWeight.heavy, fontSize: 16 }}>M</Text>
+          </View>
+          <View>
+            <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.inkSoft, letterSpacing: 1.6 }}>
+              WELCOME BACK
+            </Text>
+            <Text style={{ fontSize: 16, fontWeight: fontWeight.heavy, color: colors.ink, letterSpacing: -0.4 }}>
+              Player · Gold II
+            </Text>
           </View>
         </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Pill variant="mustard">{`1,420 ◆`}</Pill>
+          <Link href="/settings" asChild>
+            <Pressable testID="settings-button">
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 12,
+                  backgroundColor: 'rgba(255,255,255,0.7)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(22,20,15,0.08)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ fontSize: 16 }}>⚙︎</Text>
+              </View>
+            </Pressable>
+          </Link>
+        </View>
       </View>
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 24 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* HERO — Daily Tournament */}
+        <Link href="/tournament" asChild>
+          <Pressable testID="tournament-button">
+            <DeepCard style={{ padding: 20, marginTop: 8 }}>
+              {/* Inner ember radial */}
+              <View
+                pointerEvents="none"
+                style={{
+                  position: 'absolute',
+                  top: -50,
+                  right: -40,
+                  width: 220,
+                  height: 220,
+                  borderRadius: 110,
+                  backgroundColor: colors.ember,
+                  opacity: 0.5,
+                }}
+              />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <View style={{ flex: 1 }}>
+                  <Pill variant="ember">● LIVE · 847K</Pill>
+                  <Text
+                    style={{
+                      marginTop: 12,
+                      fontSize: 28,
+                      fontWeight: fontWeight.black,
+                      color: colors.paper,
+                      letterSpacing: -1,
+                    }}
+                  >
+                    Daily Tournament
+                  </Text>
+                  <Text style={{ color: 'rgba(243,239,231,0.65)', fontSize: 12, marginTop: 3 }}>
+                    Same pieces for everyone · {todayDate}
+                  </Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.mustard, letterSpacing: 1.6 }}>
+                    ENDS IN
+                  </Text>
+                  <Text style={{ fontSize: 22, fontWeight: fontWeight.black, color: colors.paper, marginTop: 4 }}>
+                    14:32
+                  </Text>
+                </View>
+              </View>
+
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
+                {[
+                  { label: 'YOUR BEST', value: '—' },
+                  { label: 'RANK', value: '—' },
+                  { label: 'PRIZE', value: '10k ◆', highlight: true },
+                ].map((s) => (
+                  <View
+                    key={s.label}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 8,
+                      paddingHorizontal: 10,
+                      backgroundColor: 'rgba(255,255,255,0.05)',
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      borderColor: 'rgba(255,255,255,0.06)',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 9,
+                        fontWeight: fontWeight.bold,
+                        color: s.highlight ? colors.mustard : 'rgba(243,239,231,0.55)',
+                        letterSpacing: 1.6,
+                      }}
+                    >
+                      {s.label}
+                    </Text>
+                    <Text style={{ color: colors.paper, fontSize: 16, fontWeight: fontWeight.black, marginTop: 2 }}>
+                      {s.value}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              <TactileButton variant="primary" style={{ marginTop: 14 }}>
+                Enter today's tournament →
+              </TactileButton>
+            </DeepCard>
+          </Pressable>
+        </Link>
+
+        {/* Quick play row */}
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+          <Link href="/game" asChild>
+            <Pressable testID="endless-mode-button" style={{ flex: 1 }}>
+              <GlassCard style={{ padding: 14 }}>
+                <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.ember, letterSpacing: 1.6 }}>
+                  ENDLESS
+                </Text>
+                <Text style={{ fontSize: 16, fontWeight: fontWeight.heavy, color: colors.ink, marginTop: 4 }}>
+                  Solo run
+                </Text>
+                <Text style={{ fontSize: 22, fontWeight: fontWeight.black, color: colors.ink, marginTop: 6 }}>
+                  48,210
+                </Text>
+                <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>
+                  BEST
+                </Text>
+              </GlassCard>
+            </Pressable>
+          </Link>
+          <Link href="/friends" asChild>
+            <Pressable testID="friends-button" style={{ flex: 1 }}>
+              <GlassCard style={{ padding: 14 }}>
+                <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.cobalt, letterSpacing: 1.6 }}>
+                  FRIENDS
+                </Text>
+                <Text style={{ fontSize: 16, fontWeight: fontWeight.heavy, color: colors.ink, marginTop: 4 }}>
+                  Beat Jules
+                </Text>
+                <Text style={{ fontSize: 22, fontWeight: fontWeight.black, color: colors.ink, marginTop: 6 }}>
+                  32,400
+                </Text>
+                <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>
+                  SENT 22M AGO
+                </Text>
+              </GlassCard>
+            </Pressable>
+          </Link>
+        </View>
+
+        {/* Week chart */}
+        <GlassCard style={{ padding: 14, marginTop: 12 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+            <Text style={{ fontSize: 10, fontWeight: fontWeight.bold, letterSpacing: 1.6, color: colors.ink }}>
+              YOUR WEEK
+            </Text>
+            <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.inkSoft, letterSpacing: 1.4 }}>
+              +38% VS LAST
+            </Text>
+          </View>
+          <Sparkline />
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: 12,
+              paddingTop: 12,
+              marginTop: 10,
+              borderTopWidth: 1,
+              borderTopColor: 'rgba(22,20,15,0.06)',
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 22, fontWeight: fontWeight.black, color: colors.ink }}>4.8k</Text>
+              <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>BEST</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 22, fontWeight: fontWeight.black, color: colors.ink }}>12</Text>
+              <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>STREAK</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 22, fontWeight: fontWeight.black, color: colors.ember }}>×7</Text>
+              <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>COMBO</Text>
+            </View>
+          </View>
+        </GlassCard>
+
+        {/* Battle pass */}
+        <Link href="/battlepass" asChild>
+          <Pressable testID="battlepass-button">
+            <GlassCard style={{ padding: 14, marginTop: 12 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 10, fontWeight: fontWeight.bold, color: colors.ember, letterSpacing: 1.6 }}>
+                    SEASON PASS · TIER 14
+                  </Text>
+                  <Text style={{ fontSize: 16, fontWeight: fontWeight.heavy, color: colors.ink, marginTop: 4 }}>
+                    Field Notes — Vol. I
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 11, fontWeight: fontWeight.bold, color: colors.inkSoft, letterSpacing: 1.4 }}>
+                  14 / 30
+                </Text>
+              </View>
+              <View
+                style={{
+                  height: 8,
+                  borderRadius: 999,
+                  backgroundColor: 'rgba(22,20,15,0.08)',
+                  overflow: 'hidden',
+                  marginTop: 10,
+                }}
+              >
+                <LinearGradient
+                  colors={[colors.ember, colors.mustard]}
+                  start={{ x: 0, y: 0.5 }}
+                  end={{ x: 1, y: 0.5 }}
+                  style={{ width: '47%', height: '100%' }}
+                />
+              </View>
+            </GlassCard>
+          </Pressable>
+        </Link>
+
+        {/* Quick navigation grid */}
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+          <NavTile href="/leaderboard" testID="leaderboard-button" label="Leaderboard" hint="Global ranks" accent={colors.cobalt} />
+          <NavTile href="/replays" testID="replays-button" label="Replays" hint="Watch ghosts" accent={colors.plum} />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+          <NavTile href="/shop" testID="shop-button" label="Shop" hint="Themes & skins" accent={colors.mustard} />
+          <NavTile href="/achievements" testID="achievements-button" label="Achievements" hint="20+ badges" accent={colors.forest} />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+          <NavTile href="/tutorials" testID="tutorials-button" label="Tutorials" hint="Learn the merge" accent={colors.teal} />
+          <NavTile href="/ranks" testID="ranks-button" label="Ranks" hint="Bronze → GM" accent={colors.ember} />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+          <NavTile href="/squads" testID="squads-button" label="Squads" hint="10-person clans" accent={colors.cobalt} />
+          <NavTile href="/share" testID="share-button" label="Share" hint="TikTok ready" accent={colors.rose} />
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

@@ -1,12 +1,17 @@
+// Game Screen — Tactile Console redesign.
 import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { GameBoard } from '@/components/GameBoard';
-import { PiecesSelector } from '@/components/BlockPiece';
 import { ScoreDisplay } from '@/components/ScoreDisplay';
-import { GemCounter } from '@/components/GemDisplay';
 import { ComboAnimation, LineClearEffect, GemMergeEffect } from '@/components/ComboAnimation';
-import { PowerUpBar, ColorSelector } from '@/components/PowerUpButton';
+import { ColorSelector } from '@/components/PowerUpButton';
+import { TactileCell } from '@/components/design/TactileCell';
+import { GlassCard } from '@/components/design/GlassCard';
+import { Pill } from '@/components/design/Pill';
+import { TactileButton } from '@/components/design/TactileButton';
+import { colors, fontWeight, radii, resolveBlockColor, blockColors } from '@/lib/design/tokens';
 import { createEmptyBoard, canPlacePiece, placePiece, clearLines, hasValidMoves } from '@/lib/game/board';
 import { generatePieces } from '@/lib/game/pieces';
 import {
@@ -14,7 +19,7 @@ import {
   placeGemsOnBoard,
   mergeGems,
   getGemsFromBoard,
-  calculateTotalMultiplier
+  calculateTotalMultiplier,
 } from '@/lib/game/merge';
 import {
   getStartingPowerUps,
@@ -24,10 +29,302 @@ import {
   applyColorBomb,
   getColorsOnBoard,
   consumePowerUp,
-  canUsePowerUp
+  canUsePowerUp,
 } from '@/lib/game/powerups';
 import { saveScore } from '@/lib/utils/leaderboard';
-import type { GameBoard as GameBoardType, GamePiece, Gem, PowerUp, BlockColor } from '@/lib/types/game';
+import type {
+  GameBoard as GameBoardType,
+  GamePiece,
+  Gem,
+  PowerUp,
+  BlockColor,
+} from '@/lib/types/game';
+
+// --- Local pieces tray ---
+function TrayPiece({ piece, holding }: { piece: GamePiece; holding?: boolean }) {
+  const cellSize = holding ? 14 : 12;
+  const gridW = piece.width;
+  const gridH = piece.height;
+  const grid: boolean[][] = Array.from({ length: gridH }, () => Array(gridW).fill(false));
+  piece.shape.forEach((p) => {
+    if (p.row < gridH && p.col < gridW) grid[p.row][p.col] = true;
+  });
+  const colorKey = resolveBlockColor(piece.color);
+  return (
+    <View>
+      {grid.map((row, r) => (
+        <View key={r} style={{ flexDirection: 'row' }}>
+          {row.map((filled, c) => (
+            <View
+              key={c}
+              style={{
+                width: cellSize,
+                height: cellSize,
+                margin: 1,
+              }}
+            >
+              {filled ? <TactileCell color={colorKey} size={cellSize} rounded={3} /> : null}
+            </View>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function PiecesTray({
+  pieces,
+  selectedIndex,
+  onSelect,
+}: {
+  pieces: GamePiece[];
+  selectedIndex: number | undefined;
+  onSelect: (p: GamePiece, i: number) => void;
+}) {
+  // Pad to 3 slots so the "holding" slot stays in the middle visually.
+  const slots: (GamePiece | null)[] = [pieces[0] ?? null, pieces[1] ?? null, pieces[2] ?? null];
+  return (
+    <GlassCard style={{ padding: 10 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, paddingHorizontal: 4 }}>
+        <Text style={{ fontSize: 10, fontWeight: fontWeight.bold, letterSpacing: 1.6, color: colors.ink }}>
+          NEXT PIECES
+        </Text>
+        <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, letterSpacing: 1.4, color: colors.inkSoft }}>
+          {pieces.length} / 3
+        </Text>
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', gap: 8 }}>
+        {slots.map((piece, i) => {
+          const active = selectedIndex === i;
+          const isMiddle = i === 1;
+          if (!piece) {
+            return (
+              <View
+                key={i}
+                style={{
+                  flex: isMiddle ? 1.2 : 1,
+                  height: 64,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: 'rgba(22,20,15,0.06)',
+                  backgroundColor: 'rgba(255,255,255,0.5)',
+                }}
+              />
+            );
+          }
+          return (
+            <Pressable
+              key={piece.id}
+              onPress={() => onSelect(piece, i)}
+              style={{
+                flex: isMiddle ? 1.2 : 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingVertical: 10,
+                paddingHorizontal: 8,
+                borderRadius: active ? 14 : 12,
+                borderWidth: active ? 0 : 1,
+                borderColor: 'rgba(22,20,15,0.06)',
+                backgroundColor: active ? 'transparent' : 'rgba(255,255,255,0.5)',
+                overflow: 'hidden',
+                shadowColor: active ? colors.ember : 'transparent',
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: active ? 0.5 : 0,
+                shadowRadius: 18,
+                elevation: active ? 6 : 0,
+              }}
+            >
+              {active && (
+                <LinearGradient
+                  colors={[colors.emberLight, colors.ember]}
+                  start={{ x: 0.5, y: 0 }}
+                  end={{ x: 0.5, y: 1 }}
+                  style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+                />
+              )}
+              <TrayPiece piece={piece} holding={active} />
+              {active && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: -8,
+                    right: -8,
+                    backgroundColor: colors.ink,
+                    paddingHorizontal: 7,
+                    paddingVertical: 2,
+                    borderRadius: 999,
+                  }}
+                >
+                  <Text style={{ color: colors.paper, fontSize: 8, fontWeight: fontWeight.heavy, letterSpacing: 1.2 }}>
+                    HOLDING
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
+    </GlassCard>
+  );
+}
+
+// --- Power-up cards ---
+const POWER_UP_META: Record<string, { icon: string; color: keyof typeof blockColors }> = {
+  reroll: { icon: '↻', color: 'cobalt' },
+  blast: { icon: '✺', color: 'ember' },
+  freeze: { icon: '❄', color: 'teal' },
+  target: { icon: '◎', color: 'forest' },
+  colorBomb: { icon: '✦', color: 'plum' },
+};
+
+function PowerUpCards({
+  powerUps,
+  selectedIndex,
+  onPress,
+  disabled,
+}: {
+  powerUps: PowerUp[];
+  selectedIndex: number | undefined;
+  onPress: (p: PowerUp, i: number) => void;
+  disabled: boolean;
+}) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 8 }}>
+      {powerUps.map((p, i) => {
+        const meta = POWER_UP_META[p.type] ?? { icon: '?', color: 'ink' as const };
+        const tone = blockColors[meta.color];
+        const available = p.uses > 0 && !disabled;
+        const active = selectedIndex === i;
+        return (
+          <Pressable
+            key={`${p.type}-${i}`}
+            onPress={() => available && onPress(p, i)}
+            disabled={!available}
+            style={{
+              flex: 1,
+              opacity: available ? 1 : 0.4,
+            }}
+          >
+            <GlassCard
+              style={{
+                paddingVertical: 10,
+                paddingHorizontal: 6,
+                alignItems: 'center',
+                borderColor: active ? colors.ember : 'rgba(22,20,15,0.08)',
+                borderWidth: active ? 2 : 1,
+              }}
+            >
+              <Text style={{ fontSize: 22, color: tone.base, lineHeight: 24, fontWeight: fontWeight.heavy }}>
+                {meta.icon}
+              </Text>
+              <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, letterSpacing: 1.4, color: colors.ink, marginTop: 4 }}>
+                {p.name.toUpperCase()}
+              </Text>
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 6,
+                  right: 6,
+                  backgroundColor: colors.ink,
+                  paddingHorizontal: 6,
+                  paddingVertical: 1,
+                  borderRadius: 999,
+                }}
+              >
+                <Text style={{ color: colors.paper, fontSize: 9, fontWeight: fontWeight.heavy }}>
+                  ×{p.uses}
+                </Text>
+              </View>
+            </GlassCard>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+// --- Combo theater ---
+function ComboTheater({
+  multiplier,
+  recentPoints,
+  comboCount,
+}: {
+  multiplier: number;
+  recentPoints: number;
+  comboCount: number;
+}) {
+  return (
+    <View
+      style={{
+        borderRadius: radii.xl,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: 'rgba(255,90,54,0.25)',
+        padding: 14,
+        backgroundColor: 'rgba(255,255,255,0.6)',
+        shadowColor: colors.ember,
+        shadowOffset: { width: 0, height: 14 },
+        shadowOpacity: 0.4,
+        shadowRadius: 22,
+        elevation: 6,
+      }}
+    >
+      <LinearGradient
+        colors={['rgba(255,90,54,0.18)', 'transparent', 'rgba(230,169,60,0.18)']}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+      />
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Pill variant="ember">{comboCount > 1 ? `${comboCount}-LINE CLEAR` : 'READY'}</Pill>
+            {multiplier > 1 && (
+              <Text style={{ fontSize: 10, fontWeight: fontWeight.heavy, color: colors.ember, letterSpacing: 1.4 }}>
+                ×{multiplier} COMBO
+              </Text>
+            )}
+          </View>
+          <Text style={{ fontSize: 26, fontWeight: fontWeight.black, color: colors.ember, marginTop: 4, letterSpacing: -1 }}>
+            {recentPoints > 0 ? `+${recentPoints.toLocaleString()}` : 'Place a piece'}
+          </Text>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 4 }}>
+          {(['ember', 'cobalt', 'mustard'] as const).map((c, i) => {
+            const tone = blockColors[c];
+            const m = [2, 3, 5][i];
+            return (
+              <View
+                key={c}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 14,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  shadowColor: tone.base,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.5,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }}
+              >
+                <LinearGradient
+                  colors={[tone.glow, tone.base, tone.deep]}
+                  start={{ x: 0.3, y: 0.2 }}
+                  end={{ x: 0.7, y: 1 }}
+                  style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+                />
+                <Text style={{ color: 'white', fontSize: 11, fontWeight: fontWeight.heavy }}>{m}×</Text>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    </View>
+  );
+}
 
 export default function GameScreen() {
   const [board, setBoard] = useState<GameBoardType>(createEmptyBoard());
@@ -38,18 +335,17 @@ export default function GameScreen() {
   const [multiplier, setMultiplier] = useState<number>(1);
   const [gems, setGems] = useState<Gem[]>([]);
   const [gameOver, setGameOver] = useState<boolean>(false);
+  const [recentPoints, setRecentPoints] = useState<number>(0);
+  const [comboCount, setComboCount] = useState<number>(0);
 
-  // Animation states
   const [showCombo, setShowCombo] = useState<{ points: number; multiplier: number } | null>(null);
   const [showLineClear, setShowLineClear] = useState<number | null>(null);
   const [showGemMerge, setShowGemMerge] = useState<{ count: number; size: 'small' | 'medium' | 'large' | 'mega'; color: string } | null>(null);
 
-  // Power-up states
   const [powerUps, setPowerUps] = useState<PowerUp[]>(getStartingPowerUps());
   const [activePowerUp, setActivePowerUp] = useState<{ type: string; index: number } | null>(null);
   const [showColorSelector, setShowColorSelector] = useState<boolean>(false);
 
-  // Initialize game
   useEffect(() => {
     startNewGame();
   }, []);
@@ -64,195 +360,159 @@ export default function GameScreen() {
     setSelectedPieceIndex(undefined);
     setPowerUps(getStartingPowerUps());
     setActivePowerUp(null);
+    setRecentPoints(0);
+    setComboCount(0);
   };
 
-  const handlePieceSelect = (piece: GamePiece, index: number): void => {
+  const handlePieceSelect = (_p: GamePiece, index: number): void => {
     setSelectedPieceIndex(index);
   };
 
   const handlePowerUpPress = (powerUp: PowerUp, index: number): void => {
     if (!canUsePowerUp(powerUp) || gameOver) return;
-
     if (powerUp.type === 'colorBomb') {
-      // Color Bomb requires color selection
       setActivePowerUp({ type: powerUp.type, index });
       setShowColorSelector(true);
     } else if (powerUp.type === 'reroll') {
-      // Reroll requires piece selection
       if (selectedPieceIndex !== undefined) {
         const newPiece = applyReroll(pieces[selectedPieceIndex]);
         const newPieces = [...pieces];
         newPieces[selectedPieceIndex] = newPiece;
         setPieces(newPieces);
-
-        // Use power-up
-        const newPowerUps = [...powerUps];
-        newPowerUps[index] = consumePowerUp(powerUp);
-        setPowerUps(newPowerUps);
+        const next = [...powerUps];
+        next[index] = consumePowerUp(powerUp);
+        setPowerUps(next);
       }
     } else {
-      // Other power-ups (Blast, Target) require board interaction
       setActivePowerUp({ type: powerUp.type, index });
     }
   };
 
   const handleColorSelect = (color: BlockColor): void => {
     if (!activePowerUp) return;
-
     const { newBoard, clearedCells } = applyColorBomb(board, color);
     setBoard(newBoard);
-
     if (clearedCells.length > 0) {
       const points = clearedCells.length * 10;
       setScore(score + points);
+      setRecentPoints(points);
       setShowCombo({ points, multiplier: 1 });
     }
-
-    // Use power-up
-    const newPowerUps = [...powerUps];
-    newPowerUps[activePowerUp.index] = consumePowerUp(powerUps[activePowerUp.index]);
-    setPowerUps(newPowerUps);
-
+    const next = [...powerUps];
+    next[activePowerUp.index] = consumePowerUp(powerUps[activePowerUp.index]);
+    setPowerUps(next);
     setShowColorSelector(false);
     setActivePowerUp(null);
   };
 
   const handleCellPress = (row: number, col: number): void => {
-    // Handle power-up activation on board
     if (activePowerUp && activePowerUp.type === 'blast') {
       const { newBoard, clearedCells } = applyBlast(board, row, col);
       setBoard(newBoard);
-
       if (clearedCells.length > 0) {
         const points = clearedCells.length * 10;
         setScore(score + points);
+        setRecentPoints(points);
         setShowCombo({ points, multiplier: 1 });
       }
-
-      // Use power-up
-      const newPowerUps = [...powerUps];
-      newPowerUps[activePowerUp.index] = consumePowerUp(powerUps[activePowerUp.index]);
-      setPowerUps(newPowerUps);
-
+      const next = [...powerUps];
+      next[activePowerUp.index] = consumePowerUp(powerUps[activePowerUp.index]);
+      setPowerUps(next);
       setActivePowerUp(null);
       return;
     }
 
     if (selectedPieceIndex === undefined || gameOver) return;
-
     const selectedPiece = pieces[selectedPieceIndex];
 
-    // Target power-up suggests best placement
     if (activePowerUp && activePowerUp.type === 'target') {
-      const bestPlacement = applyTarget(board, selectedPiece);
-      if (bestPlacement) {
-        row = bestPlacement.row;
-        col = bestPlacement.col;
+      const best = applyTarget(board, selectedPiece);
+      if (best) {
+        row = best.row;
+        col = best.col;
       }
-
-      // Use power-up
-      const newPowerUps = [...powerUps];
-      newPowerUps[activePowerUp.index] = consumePowerUp(powerUps[activePowerUp.index]);
-      setPowerUps(newPowerUps);
-
+      const next = [...powerUps];
+      next[activePowerUp.index] = consumePowerUp(powerUps[activePowerUp.index]);
+      setPowerUps(next);
       setActivePowerUp(null);
     }
 
-    if (!canPlacePiece(board, selectedPiece, row, col)) {
-      return;
-    }
+    if (!canPlacePiece(board, selectedPiece, row, col)) return;
 
-    // Place the piece
     let newBoard = placePiece(board, selectedPiece, row, col);
-
-    // Clear any complete lines
     const { newBoard: clearedBoard, clearedCells } = clearLines(newBoard);
 
     let newMultiplier = multiplier;
-
     if (clearedCells.length > 0) {
       newBoard = clearedBoard;
-
-      // Show line clear animation
-      const linesCleared = clearedCells.length / 8; // Approximate number of lines
+      const linesCleared = clearedCells.length / 8;
       setShowLineClear(Math.ceil(linesCleared));
+      setComboCount(Math.ceil(linesCleared));
 
-      // Generate gems from cleared cells
       const newDroppedGems = generateGemsFromClearedCells(clearedCells);
-
-      // Place gems on board
       newBoard = placeGemsOnBoard(newBoard, newDroppedGems);
-
-      // Get all gems from board (including existing ones)
       const allGems = getGemsFromBoard(newBoard);
-
-      // Merge adjacent same-color gems
       const mergedGems = mergeGems(allGems);
 
-      // Check for large merged gems and show animation
-      const largeGems = mergedGems.filter((g: Gem) => g.size !== 'small');
+      const largeGems = mergedGems.filter((g) => g.size !== 'small');
       if (largeGems.length > 0) {
-        const bestGem = largeGems.reduce((best: Gem, current: Gem) => {
-          const sizeOrder = { small: 0, medium: 1, large: 2, mega: 3 };
-          return sizeOrder[current.size] > sizeOrder[best.size] ? current : best;
-        }, largeGems[0]);
-
-        setShowGemMerge({
-          count: bestGem.multiplier,
-          size: bestGem.size,
-          color: bestGem.color
-        });
+        const sizeOrder = { small: 0, medium: 1, large: 2, mega: 3 };
+        const bestGem = largeGems.reduce((best, current) =>
+          sizeOrder[current.size] > sizeOrder[best.size] ? current : best,
+        largeGems[0]);
+        setShowGemMerge({ count: bestGem.multiplier, size: bestGem.size, color: bestGem.color });
       }
 
-      // Calculate multiplier from merged gems
       newMultiplier = calculateTotalMultiplier(mergedGems);
-
-      // Calculate score with current multiplier (before applying new multiplier)
       const points = clearedCells.length * 10 * multiplier;
       setScore(score + points);
-
-      // Show combo animation
+      setRecentPoints(points);
       setShowCombo({ points, multiplier });
-
-      // Set new multiplier for next move
       setMultiplier(newMultiplier);
       setGems(mergedGems);
-
-      // Update board with merged gems
       newBoard = placeGemsOnBoard(newBoard, mergedGems);
+    } else {
+      setComboCount(0);
     }
 
     setBoard(newBoard);
 
-    // Remove used piece and generate new ones if all pieces are used
-    const newPieces = pieces.filter((_: GamePiece, i: number) => i !== selectedPieceIndex);
-    if (newPieces.length === 0) {
-      newPieces.push(...generatePieces(3));
-    }
+    const newPieces = pieces.filter((_, i) => i !== selectedPieceIndex);
+    if (newPieces.length === 0) newPieces.push(...generatePieces(3));
     setPieces(newPieces);
     setSelectedPieceIndex(undefined);
 
-    // Check for game over
     if (!hasValidMoves(newBoard, newPieces)) {
       setGameOver(true);
-      if (score > highScore) {
-        setHighScore(score);
-      }
-
-      // Save score to leaderboard
+      if (score > highScore) setHighScore(score);
       saveScore({
         id: `game-${Date.now()}`,
         score,
         mode: 'endless',
         date: new Date().toISOString(),
-        maxMultiplier: multiplier
+        maxMultiplier: multiplier,
       });
     }
   };
 
   return (
-    <SafeAreaView testID="game-screen" className="flex-1 bg-black">
-      {/* Animations Overlay */}
+    <SafeAreaView testID="game-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+      {/* Ambient blobs */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: -80,
+          right: -60,
+          width: 240,
+          height: 240,
+          borderRadius: 120,
+          backgroundColor: colors.ember,
+          opacity: 0.14,
+        }}
+      />
+
+      {/* Animations overlay */}
       {showCombo && (
         <ComboAnimation
           points={showCombo.points}
@@ -261,10 +521,7 @@ export default function GameScreen() {
         />
       )}
       {showLineClear && (
-        <LineClearEffect
-          linesCleared={showLineClear}
-          onComplete={() => setShowLineClear(null)}
-        />
+        <LineClearEffect linesCleared={showLineClear} onComplete={() => setShowLineClear(null)} />
       )}
       {showGemMerge && (
         <GemMergeEffect
@@ -275,79 +532,124 @@ export default function GameScreen() {
         />
       )}
 
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }}>
-        {/* Score Display */}
-        <ScoreDisplay score={score} highScore={highScore} multiplier={multiplier} />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 24 }}>
+        {/* Top HUD */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingTop: 4 }}>
+          <Pressable
+            onPress={startNewGame}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              backgroundColor: 'rgba(255,255,255,0.7)',
+              borderWidth: 1,
+              borderColor: 'rgba(22,20,15,0.1)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ fontSize: 16, fontWeight: fontWeight.heavy, color: colors.ink }}>⏸</Text>
+          </Pressable>
+          <View style={{ flex: 1 }}>
+            <ScoreDisplay score={score} highScore={highScore} multiplier={multiplier} />
+          </View>
+        </View>
 
-        {/* Game Status */}
-        <View className="px-6 mb-4">
-          <Text className="text-center text-2xl font-bold text-purple-400">
-            Block Merge Arena
-          </Text>
-          {gameOver && (
-            <View testID="game-over-banner" className="mt-4 bg-red-500/20 border border-red-500 rounded-xl p-4">
-              <Text className="text-red-400 text-center text-lg font-bold">
-                Game Over!
+        {/* Combo theater */}
+        <View style={{ paddingHorizontal: 14, paddingTop: 4 }}>
+          <ComboTheater multiplier={multiplier} recentPoints={recentPoints} comboCount={comboCount} />
+        </View>
+
+        {/* Board */}
+        <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 8, paddingHorizontal: 16 }}>
+          <View style={{ position: 'relative' }}>
+            <GameBoard board={board} onCellPress={handleCellPress} />
+            {multiplier > 1 && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: -12,
+                  right: -12,
+                  paddingHorizontal: 12,
+                  paddingVertical: 5,
+                  backgroundColor: colors.ember,
+                  borderRadius: 999,
+                  borderWidth: 1.5,
+                  borderColor: 'white',
+                  shadowColor: colors.ember,
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.6,
+                  shadowRadius: 16,
+                  elevation: 8,
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: fontWeight.black, fontSize: 14 }}>×{multiplier}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {gameOver && (
+          <View style={{ paddingHorizontal: 14 }}>
+            <View
+              testID="game-over-banner"
+              style={{
+                backgroundColor: colors.ink,
+                borderRadius: radii.lg,
+                padding: 16,
+                marginBottom: 12,
+              }}
+            >
+              <Text style={{ color: colors.ember, fontSize: 18, fontWeight: fontWeight.black, letterSpacing: -0.5 }}>
+                Game Over
               </Text>
-              <Text className="text-gray-300 text-center mt-2">
-                No more valid moves
+              <Text style={{ color: 'rgba(243,239,231,0.7)', fontSize: 13, marginTop: 4 }}>
+                No more valid moves. Final score {score.toLocaleString()}.
               </Text>
             </View>
-          )}
-        </View>
-
-        {/* Gem Counter */}
-        {gems.length > 0 && (
-          <View className="px-6 mb-4">
-            <GemCounter gems={gems} />
+            <TactileButton testID="new-game-button" onPress={startNewGame} variant="primary">
+              New game
+            </TactileButton>
           </View>
         )}
 
-        {/* Game Board */}
-        <View className="items-center mb-6">
-          <GameBoard
-            board={board}
-            onCellPress={handleCellPress}
-          />
-        </View>
-
-        {/* Instructions */}
-        {selectedPieceIndex === undefined && !gameOver && (
-          <Text className="text-gray-400 text-center text-sm px-6 mb-4">
-            Select a piece below, then tap the board to place it
-          </Text>
-        )}
-
-        {selectedPieceIndex !== undefined && !gameOver && (
-          <Text className="text-purple-400 text-center text-sm px-6 mb-4 font-semibold">
-            Tap the board to place your piece
-          </Text>
-        )}
-
-        {/* Pieces Selector */}
-        {pieces.length > 0 && (
-          <View className="px-6 mb-6">
-            <PiecesSelector
-              pieces={pieces}
-              onPieceSelect={handlePieceSelect}
-              selectedIndex={selectedPieceIndex}
-            />
-          </View>
-        )}
-
-        {/* Power-ups Bar */}
         {!gameOver && (
-          <View className="px-6 mb-6">
-            <PowerUpBar
-              powerUps={powerUps}
-              onPowerUpPress={handlePowerUpPress}
-              selectedIndex={activePowerUp?.index}
-              disabled={gameOver}
-            />
-          </View>
+          <>
+            {/* Pieces tray */}
+            <View style={{ paddingHorizontal: 14, marginTop: 6 }}>
+              {pieces.length > 0 && (
+                <PiecesTray pieces={pieces} selectedIndex={selectedPieceIndex} onSelect={handlePieceSelect} />
+              )}
+            </View>
+
+            {/* Hint */}
+            <Text
+              style={{
+                color: selectedPieceIndex !== undefined ? colors.ember : colors.inkSoft,
+                textAlign: 'center',
+                fontSize: 12,
+                fontWeight: fontWeight.semibold,
+                marginTop: 8,
+                paddingHorizontal: 14,
+              }}
+            >
+              {selectedPieceIndex !== undefined
+                ? 'Tap the board to place your piece'
+                : 'Select a piece, then tap the board'}
+            </Text>
+
+            {/* Power-ups */}
+            <View style={{ paddingHorizontal: 14, marginTop: 12 }}>
+              <PowerUpCards
+                powerUps={powerUps}
+                selectedIndex={activePowerUp?.index}
+                onPress={handlePowerUpPress}
+                disabled={gameOver}
+              />
+            </View>
+          </>
         )}
 
-        {/* Color Selector Overlay for Color Bomb */}
         {showColorSelector && (
           <ColorSelector
             colors={getColorsOnBoard(board)}
@@ -357,21 +659,6 @@ export default function GameScreen() {
               setActivePowerUp(null);
             }}
           />
-        )}
-
-        {/* New Game Button */}
-        {gameOver && (
-          <View className="px-6">
-            <Pressable
-              testID="new-game-button"
-              onPress={startNewGame}
-              className="bg-purple-500 rounded-xl py-4 px-8"
-            >
-              <Text className="text-white text-center text-lg font-bold">
-                New Game
-              </Text>
-            </Pressable>
-          </View>
         )}
       </ScrollView>
     </SafeAreaView>

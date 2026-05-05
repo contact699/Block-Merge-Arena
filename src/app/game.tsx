@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { track } from '@/lib/analytics/events';
 import { GameBoard } from '@/components/GameBoard';
 import { ScoreDisplay } from '@/components/ScoreDisplay';
 import { ComboAnimation, LineClearEffect, GemMergeEffect } from '@/components/ComboAnimation';
@@ -362,6 +363,7 @@ export default function GameScreen() {
     setActivePowerUp(null);
     setRecentPoints(0);
     setComboCount(0);
+    track('endless_started', {});
   };
 
   const handlePieceSelect = (_p: GamePiece, index: number): void => {

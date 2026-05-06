@@ -6,6 +6,8 @@ import { initAnalytics, identify, track } from '@/lib/analytics/events';
 import { getOrCreateUser } from '@/lib/firebase/auth';
 import { migrateStorageKeys } from '@/lib/storage/migrate';
 import { initSfx } from '@/lib/audio/sfx';
+import { initRevenueCat } from '@/lib/subscription/revenuecat';
+import { SubscriptionProvider } from '@/lib/subscription/state';
 import '../../global.css';
 
 export default function RootLayout() {
@@ -15,6 +17,7 @@ export default function RootLayout() {
       await Promise.all([initAnalytics(), initSfx()]);
       const userId = await getOrCreateUser();
       identify(userId);
+      await initRevenueCat(userId);
       track('app_opened', { source: 'cold_launch' });
     })();
   }, []);
@@ -22,16 +25,18 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: '#f3efe7' },
-          }}
-        >
-          <Stack.Screen name="index" />
-          <Stack.Screen name="game" />
-          <Stack.Screen name="daily" />
-        </Stack>
+        <SubscriptionProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: '#f3efe7' },
+            }}
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="game" />
+            <Stack.Screen name="daily" />
+          </Stack>
+        </SubscriptionProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

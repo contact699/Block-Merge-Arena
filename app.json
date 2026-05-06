@@ -60,6 +60,8 @@
       }
     },
     "owner": "patrob316",
+    "privacyPolicyUrl": "https://blockmerge.app/privacy",
+    "termsOfServiceUrl": "https://blockmerge.app/terms",
     "runtimeVersion": {
       "policy": "appVersion"
     },

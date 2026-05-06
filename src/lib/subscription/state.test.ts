@@ -1,4 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
+import { deriveSubscriptionState } from './state';
+import type { CustomerInfo } from 'react-native-purchases';
 
 jest.mock('react-native-purchases', () => ({}));
 jest.mock('./revenuecat', () => ({
@@ -8,9 +10,6 @@ jest.mock('./revenuecat', () => ({
   purchasePackage: jest.fn(),
   restorePurchases: jest.fn(),
 }));
-
-import { deriveSubscriptionState } from './state';
-import type { CustomerInfo } from 'react-native-purchases';
 
 function makeCustomerInfo(activeEntitlements: string[]): CustomerInfo {
   return {

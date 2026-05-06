@@ -30,7 +30,7 @@ import {
   hasCompletedDaily,
 } from '@/lib/daily/seed';
 import { getArchive, type ArchiveEntry } from '@/lib/daily/archive';
-import { requireSubscription } from '@/lib/subscription/gate';
+import { useRequireSubscription } from '@/lib/subscription/gate';
 import { saveScore } from '@/lib/utils/leaderboard';
 import {
   getTournamentStandings,
@@ -92,9 +92,10 @@ export default function DailyScreen() {
   const [showArchive, setShowArchive] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [archive, setArchive] = useState<ArchiveEntry[]>([]);
+  const isSubscribed = useRequireSubscription();
 
   const onArchivePress = async (): Promise<void> => {
-    if (!requireSubscription()) {
+    if (!isSubscribed) {
       setShowPaywall(true);
       track('paywall_viewed', { source: 'archive' });
       return;

@@ -8,6 +8,8 @@ import type { UserSettings } from '@/lib/types/settings';
 import { colors, fontWeight } from '@/lib/design/tokens';
 import { useThemePalette, useThemeControls } from '@/lib/themes/provider';
 import { useRequireSubscription } from '@/lib/subscription/gate';
+import { useSubscription } from '@/lib/subscription/state';
+import * as Burnt from 'burnt';
 import { PaywallModal } from '@/components/paywall/PaywallModal';
 import type { ThemeId } from '@/lib/themes/catalog';
 import { Pill } from '@/components/design/Pill';
@@ -87,6 +89,17 @@ export default function SettingsScreen() {
   const palette = useThemePalette();
   const { available, activeId, setActive } = useThemeControls();
   const isSubscribed = useRequireSubscription();
+  const { restore } = useSubscription();
+
+  const onRestore = async (): Promise<void> => {
+    const success = await restore();
+    Burnt.alert({
+      title: success ? 'Restored' : 'Nothing to restore',
+      message: success ? 'Your subscription is active.' : 'No previous purchase found.',
+      preset: success ? 'done' : 'none',
+      duration: 2,
+    });
+  };
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [showThemePicker, setShowThemePicker] = useState(false);
@@ -336,9 +349,10 @@ export default function SettingsScreen() {
             }
           />
           <SettingsRow
+            testID="restore-purchases-row"
             label="Restore purchases"
             right={<Text style={{ fontSize: 14, color: colors.inkSoft }}>›</Text>}
-            onPress={() => console.warn('restore not implemented yet')}
+            onPress={() => { void onRestore(); }}
           />
           <SettingsRow
             label="Reset to defaults"

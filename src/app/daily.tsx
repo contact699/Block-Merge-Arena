@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { track } from '@/lib/analytics/events';
 import { GameBoard } from '@/components/GameBoard';
-import { PiecesSelector } from '@/components/BlockPiece';
+import { PiecesTray } from '@/components/design/PiecesTray';
 import { ScoreDisplay } from '@/components/ScoreDisplay';
 import { GemCounter } from '@/components/GemDisplay';
 import { ComboAnimation, LineClearEffect, GemMergeEffect } from '@/components/ComboAnimation';
@@ -1000,10 +1000,10 @@ export default function DailyScreen() {
         {/* Pieces Selector */}
         {pieces.length > 0 && tournamentStarted && !gameOver && (
           <View style={{ paddingHorizontal: 14, marginTop: 8, marginBottom: 8 }}>
-            <PiecesSelector
+            <PiecesTray
               pieces={pieces}
-              onPieceSelect={handlePieceSelect}
               selectedIndex={selectedPieceIndex}
+              onSelect={handlePieceSelect}
             />
           </View>
         )}

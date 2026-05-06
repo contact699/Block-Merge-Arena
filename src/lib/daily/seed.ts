@@ -98,25 +98,41 @@ const DAILY_LAST_PLAYED_KEY = '@block_merge:daily_last_played';
 const DAILY_STREAK_KEY = '@block_merge:daily_streak';
 
 export async function recordDailyCompletion(puzzleId: string): Promise<{ totalPlayed: number; streakDays: number }> {
-  const totalRaw = await AsyncStorage.getItem(DAILIES_PLAYED_KEY);
-  const totalPlayed = (totalRaw ? parseInt(totalRaw, 10) : 0) + 1;
-  await AsyncStorage.setItem(DAILIES_PLAYED_KEY, String(totalPlayed));
-
   const lastPlayed = await AsyncStorage.getItem(DAILY_LAST_PLAYED_KEY);
+  const prevTotalRaw = await AsyncStorage.getItem(DAILIES_PLAYED_KEY);
+  const prevTotal = prevTotalRaw ? parseInt(prevTotalRaw, 10) : 0;
   const prevStreakRaw = await AsyncStorage.getItem(DAILY_STREAK_KEY);
   const prevStreak = prevStreakRaw ? parseInt(prevStreakRaw, 10) : 0;
+
+  // Same-puzzle replays (same-day OR returning to today's puzzle later)
+  // must not inflate totalPlayed or alter streak.
+  const sameAsLast = lastPlayed === puzzleId;
+  const totalPlayed = sameAsLast ? prevTotal : prevTotal + 1;
+
   let streakDays: number;
-  if (lastPlayed === puzzleId) {
-    // Same day replay — keep existing streak, don't double-count
+  if (sameAsLast) {
     streakDays = prevStreak;
   } else if (lastPlayed && isYesterday(lastPlayed, puzzleId)) {
     streakDays = prevStreak + 1;
   } else {
     streakDays = 1;
   }
+
+  if (!sameAsLast) {
+    await AsyncStorage.setItem(DAILIES_PLAYED_KEY, String(totalPlayed));
+  }
   await AsyncStorage.setItem(DAILY_LAST_PLAYED_KEY, puzzleId);
   await AsyncStorage.setItem(DAILY_STREAK_KEY, String(streakDays));
   return { totalPlayed, streakDays };
+}
+
+/**
+ * Returns true if the player has already completed a run on the given puzzle.
+ * Used to enforce the one-run-per-day rule (no retries until tomorrow).
+ */
+export async function hasCompletedDaily(puzzleId: string): Promise<boolean> {
+  const lastPlayed = await AsyncStorage.getItem(DAILY_LAST_PLAYED_KEY);
+  return lastPlayed === puzzleId;
 }
 
 function isYesterday(prevId: string, todayId: string): boolean {

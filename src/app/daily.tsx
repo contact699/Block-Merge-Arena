@@ -10,7 +10,6 @@ import { ScoreDisplay } from '@/components/ScoreDisplay';
 import { GemCounter } from '@/components/GemDisplay';
 import { ComboAnimation, LineClearEffect } from '@/components/ComboAnimation';
 import { MergeAnimation } from '@/components/cascade/MergeAnimation';
-import { TournamentInfo } from '@/components/TournamentTimer';
 import { GlassCard, DeepCard } from '@/components/design/GlassCard';
 import { Pill } from '@/components/design/Pill';
 import { TactileButton } from '@/components/design/TactileButton';
@@ -28,6 +27,7 @@ import {
   getDailySeed,
   getTodayDateString,
   recordDailyCompletion,
+  hasCompletedDaily,
 } from '@/lib/daily/seed';
 import { getArchive, type ArchiveEntry } from '@/lib/daily/archive';
 import { requireSubscription } from '@/lib/subscription/gate';
@@ -59,6 +59,7 @@ export default function DailyScreen() {
   const [tournamentDate] = useState<string>(getTodayDateString());
   const [seed] = useState<number>(getDailySeed());
   const [pieceSetIndex, setPieceSetIndex] = useState<number>(0);
+  const [hasPlayedToday, setHasPlayedToday] = useState<boolean>(false);
 
   // Animation states
   const [showCombo, setShowCombo] = useState<{ points: number; multiplier: number } | null>(null);
@@ -110,6 +111,14 @@ export default function DailyScreen() {
     const tournamentPieces = generateTournamentPieces(seed, 3);
     setPieces(tournamentPieces);
   }, [seed]);
+
+  // Check whether today's puzzle has already been completed (no retries).
+  useEffect(() => {
+    (async () => {
+      const played = await hasCompletedDaily(tournamentDate);
+      setHasPlayedToday(played);
+    })();
+  }, [tournamentDate]);
 
   const startTournament = async (): Promise<void> => {
     track('daily_started', { puzzle_id: getTodayDateString() });
@@ -294,6 +303,7 @@ export default function DailyScreen() {
     // Check achievements
     const puzzleId = getTodayDateString();
     const { totalPlayed, streakDays } = await recordDailyCompletion(puzzleId);
+    setHasPlayedToday(true);
     const granted = await checkAchievements({
       runMode: 'daily',
       score: finalScore,
@@ -417,9 +427,6 @@ export default function DailyScreen() {
                 <Text style={{ color: 'rgba(243,239,231,0.65)', fontSize: 12, marginTop: 3 }}>
                   Same pieces for everyone {'·'} {tournamentDate}
                 </Text>
-                <View style={{ marginTop: 10 }}>
-                  <TournamentInfo date={tournamentDate} />
-                </View>
                 <Pressable testID="archive-button" onPress={onArchivePress} style={{ marginTop: 8 }}>
                   <Pill variant="ink">ARCHIVE</Pill>
                 </Pressable>
@@ -920,16 +927,31 @@ export default function DailyScreen() {
           </View>
         )}
 
-        {/* Start / Play Again Button — pre-game state */}
-        {!tournamentStarted && (
+        {/* Start Button — pre-game state. Hidden once today's puzzle is done
+            (one-run-no-retries per ADR 0003 / launch design § 3). */}
+        {!tournamentStarted && !hasPlayedToday && (
           <View style={{ paddingHorizontal: 14, marginTop: 16 }}>
             <TactileButton
               testID="start-tournament-button"
               variant="primary"
               onPress={startTournament}
             >
-              {gameOver ? 'Play again' : 'Begin run'}
+              Begin run
             </TactileButton>
+          </View>
+        )}
+
+        {/* Already-played state — replaces the button when today's run is done. */}
+        {!tournamentStarted && hasPlayedToday && (
+          <View testID="already-played-card" style={{ paddingHorizontal: 14, marginTop: 16 }}>
+            <GlassCard style={{ padding: 18, alignItems: 'center' }}>
+              <Text style={{ fontSize: 14, fontWeight: fontWeight.heavy, color: colors.ink, textAlign: 'center' }}>
+                Today's puzzle is done.
+              </Text>
+              <Text style={{ fontSize: 12, color: colors.inkSoft, marginTop: 6, textAlign: 'center' }}>
+                Come back tomorrow for a new daily.
+              </Text>
+            </GlassCard>
           </View>
         )}
       </ScrollView>

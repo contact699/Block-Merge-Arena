@@ -31,6 +31,7 @@ import {
 } from '@/lib/daily/seed';
 import { getArchive, type ArchiveEntry } from '@/lib/daily/archive';
 import { useRequireSubscription } from '@/lib/subscription/gate';
+import { PaywallModal } from '@/components/paywall/PaywallModal';
 import { saveScore } from '@/lib/utils/leaderboard';
 import {
   getTournamentStandings,
@@ -991,39 +992,12 @@ export default function DailyScreen() {
         </View>
       )}
 
-      {/* Paywall overlay */}
-      {showPaywall && (
-        <View style={{
-          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(22,20,15,0.9)',
-          alignItems: 'center', justifyContent: 'center',
-          padding: 24, zIndex: 20,
-        }}>
-          <View style={{ backgroundColor: colors.paper, borderRadius: 18, padding: 24, maxWidth: 360, width: '100%' }}>
-            <Pill variant="ember">SUBSCRIBER</Pill>
-            <Text style={{ fontSize: 24, fontWeight: fontWeight.black, color: colors.ink, marginTop: 14, letterSpacing: -1 }}>
-              Daily Archive
-            </Text>
-            <Text style={{ color: colors.inkSoft, marginTop: 6 }}>
-              Every past puzzle, replayable forever. Subscribers only.
-            </Text>
-            <Text style={{ color: colors.inkDim, marginTop: 12, fontSize: 12 }}>
-              Subscriptions land in Phase 3.
-            </Text>
-            <TactileButton
-              testID="paywall-close-button"
-              variant="ink"
-              style={{ marginTop: 18 }}
-              onPress={() => {
-                setShowPaywall(false);
-                track('paywall_dismissed', { source: 'archive' });
-              }}
-            >
-              Close
-            </TactileButton>
-          </View>
-        </View>
-      )}
+      {/* Paywall overlay — real PaywallModal renders SKUs from RevenueCat */}
+      <PaywallModal
+        visible={showPaywall}
+        source="archive"
+        onDismiss={() => setShowPaywall(false)}
+      />
     </SafeAreaView>
   );
 }

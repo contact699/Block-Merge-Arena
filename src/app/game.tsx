@@ -36,6 +36,7 @@ import {
 } from '@/lib/game/powerups';
 import { saveScore } from '@/lib/utils/leaderboard';
 import { checkAchievements } from '@/lib/utils/achievements';
+import { showAchievementsToasts } from '@/components/feedback/AchievementToast';
 import type {
   GameBoard as GameBoardType,
   GamePiece,
@@ -394,7 +395,7 @@ export default function GameScreen() {
         dailyStreakDays: 0,
         dailiesPlayedTotal: 0,
       }).then((granted) => {
-        if (granted.length > 0) console.log('[achievements] granted', granted);
+        if (granted.length > 0) showAchievementsToasts(granted);
       });
     }
   };

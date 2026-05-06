@@ -43,6 +43,7 @@ import {
 import { ReplayRecorder } from '@/lib/game/replay-recorder';
 import { rewardCoinsForScore } from '@/lib/utils/currency';
 import { checkAchievements } from '@/lib/utils/achievements';
+import { showAchievementsToasts } from '@/components/feedback/AchievementToast';
 
 import type { GameBoard as GameBoardType, GamePiece, Gem } from '@/lib/types/game';
 
@@ -320,7 +321,7 @@ export default function DailyScreen() {
     });
     if (granted.length > 0) {
       setUnlockedAchievements(granted);
-      console.log('[achievements] granted', granted);
+      showAchievementsToasts(granted);
     }
 
     // Load standings after game ends

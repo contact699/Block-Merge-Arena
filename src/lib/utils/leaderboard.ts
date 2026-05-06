@@ -9,6 +9,9 @@ export interface GameScore {
   date: string; // ISO string
   moveCount?: number;
   maxMultiplier?: number;
+  /** Wall-clock duration of the run in milliseconds. Forwarded to Firebase
+   * archive writes (ADR 0006) and the FirebaseScore record. */
+  durationMs?: number;
 }
 
 const LEADERBOARD_KEY = '@block_merge:leaderboard';
@@ -38,7 +41,7 @@ export async function saveScore(score: GameScore): Promise<void> {
         score.mode,
         score.maxMultiplier || 1,
         score.moveCount,
-        undefined // duration - can be added later
+        score.durationMs
       ).catch((err) => {
         console.warn('Failed to submit score to Firebase (using local only):', err);
       });

@@ -19,7 +19,7 @@ export interface PaywallModalProps {
 }
 
 export function PaywallModal({ visible, source, onDismiss }: PaywallModalProps) {
-  const { offering, purchase, restore } = useSubscription();
+  const { offering, purchase, restore, ready } = useSubscription();
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -92,11 +92,19 @@ export function PaywallModal({ visible, source, onDismiss }: PaywallModalProps) 
           Daily archive · cosmetic themes · no ads · GIF replay export.
         </Text>
 
-        {!offering && (
+        {!ready && (
           <View style={{ paddingVertical: 24, alignItems: 'center' }}>
             <ActivityIndicator />
             <Text style={{ color: colors.inkSoft, marginTop: 12, fontSize: 12 }}>
               Loading offers…
+            </Text>
+          </View>
+        )}
+
+        {ready && !offering && (
+          <View style={{ paddingVertical: 18 }}>
+            <Text style={{ color: colors.inkSoft, fontSize: 13, lineHeight: 18, textAlign: 'center' }}>
+              Subscriptions are temporarily unavailable. Try again later, or restore an existing purchase below.
             </Text>
           </View>
         )}

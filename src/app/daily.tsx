@@ -100,8 +100,8 @@ export default function DailyScreen() {
 
   const onArchivePress = async (): Promise<void> => {
     if (!isSubscribed) {
+      // PaywallModal fires paywall_viewed on visible=true — don't track here too.
       setShowPaywall(true);
-      track('paywall_viewed', { source: 'archive' });
       return;
     }
     const entries = await getArchive();
@@ -303,6 +303,7 @@ export default function DailyScreen() {
       mode: 'tournament',
       date: new Date().toISOString(),
       maxMultiplier: finalMultiplier,
+      durationMs: Date.now() - runStartTimestampRef.current,
     });
 
     // Check achievements

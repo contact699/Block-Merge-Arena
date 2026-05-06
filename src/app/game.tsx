@@ -384,6 +384,7 @@ export default function GameScreen() {
         mode: 'endless',
         date: new Date().toISOString(),
         maxMultiplier: multiplier,
+        durationMs: Date.now() - runStartTimestampRef.current,
       });
       void checkAchievements({
         runMode: 'endless',

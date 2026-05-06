@@ -7,6 +7,8 @@ import {
   addCustomerInfoListener,
   purchasePackage,
   restorePurchases,
+  revenueCatReady,
+  isRevenueCatInitialized,
 } from './revenuecat';
 
 const ENTITLEMENT_ID = 'plus';
@@ -23,6 +25,10 @@ export function deriveSubscriptionState(info: CustomerInfo | null): Subscription
 }
 
 interface SubscriptionContextValue extends SubscriptionState {
+  /** True once initRevenueCat() has resolved (success OR failure). Consumers
+   * should treat `ready && !offering` as "subscriptions unavailable" rather
+   * than "still loading". */
+  ready: boolean;
   offering: PurchasesOffering | null;
   refreshOfferings: () => Promise<void>;
   purchase: (pkg: PurchasesPackage) => Promise<boolean>;
@@ -32,6 +38,7 @@ interface SubscriptionContextValue extends SubscriptionState {
 const SubscriptionContext = createContext<SubscriptionContextValue>({
   isSubscribed: false,
   customerInfo: null,
+  ready: false,
   offering: null,
   refreshOfferings: async () => {},
   purchase: async () => false,
@@ -41,17 +48,28 @@ const SubscriptionContext = createContext<SubscriptionContextValue>({
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
   const [offering, setOffering] = useState<PurchasesOffering | null>(null);
+  const [ready, setReady] = useState<boolean>(false);
 
-  // Initial fetch + subscribe to live updates
+  // Wait for initRevenueCat to settle before fetching state. Subscribing to
+  // updates also has to wait — addCustomerInfoListener is a no-op until init
+  // completes, so the listener has to be attached on the post-ready side too.
   useEffect(() => {
     let cancelled = false;
+    let unsub: () => void = () => {};
     (async () => {
-      const info = await getCurrentCustomerInfo();
-      if (!cancelled) setCustomerInfo(info);
-      const off = await getOfferings();
-      if (!cancelled) setOffering(off);
+      await revenueCatReady;
+      if (cancelled) return;
+      setReady(true);
+      // If init resolved without configuring (no API key), the calls below
+      // return null cleanly — that's the no-op fallback.
+      if (isRevenueCatInitialized()) {
+        const info = await getCurrentCustomerInfo();
+        if (!cancelled) setCustomerInfo(info);
+        const off = await getOfferings();
+        if (!cancelled) setOffering(off);
+        unsub = addCustomerInfoListener((next) => setCustomerInfo(next));
+      }
     })();
-    const unsub = addCustomerInfoListener((info) => setCustomerInfo(info));
     return () => {
       cancelled = true;
       unsub();
@@ -62,6 +80,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     const derived = deriveSubscriptionState(customerInfo);
     return {
       ...derived,
+      ready,
       offering,
       refreshOfferings: async () => setOffering(await getOfferings()),
       purchase: async (pkg) => {
@@ -75,7 +94,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         return Boolean(info && info.entitlements.active[ENTITLEMENT_ID]);
       },
     };
-  }, [customerInfo, offering]);
+  }, [customerInfo, offering, ready]);
 
   return createElement(SubscriptionContext.Provider, { value }, children);
 }

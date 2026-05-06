@@ -377,12 +377,12 @@ export default function SettingsScreen() {
           <SettingsRow
             label="Privacy"
             right={<Text style={{ fontSize: 14, color: colors.inkSoft }}>›</Text>}
-            onPress={() => Linking.openURL('https://blockmergearena.com/privacy').catch(() => null)}
+            onPress={() => Linking.openURL('https://blockmerge.app/privacy').catch(() => null)}
           />
           <SettingsRow
             label="Terms"
             right={<Text style={{ fontSize: 14, color: colors.inkSoft }}>›</Text>}
-            onPress={() => Linking.openURL('https://blockmergearena.com/terms').catch(() => null)}
+            onPress={() => Linking.openURL('https://blockmerge.app/terms').catch(() => null)}
             isLast
           />
         </SettingsGroup>

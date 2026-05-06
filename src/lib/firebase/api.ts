@@ -88,7 +88,7 @@ export async function submitScore(
           played: true,
           score,
           multiplier: maxMultiplier,
-          durationMs: 0, // duration param is currently unused upstream; wire when callers pass it
+          durationMs: duration ?? 0,
           completedAt: Date.now(),
         },
         { merge: true }

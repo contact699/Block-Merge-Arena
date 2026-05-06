@@ -2,6 +2,11 @@
 //
 // Thin wrapper over react-native-purchases. No-ops cleanly when API keys are
 // unset (dev mode without RevenueCat credentials).
+//
+// Race avoidance: SubscriptionProvider mounts before _layout.tsx finishes
+// awaiting initRevenueCat(userId). Consumers wait on `revenueCatReady` before
+// calling getOfferings/getCurrentCustomerInfo so they don't bail out with
+// stale `null` returns and never refresh.
 import { Platform } from 'react-native';
 import Purchases, {
   CustomerInfo,
@@ -12,6 +17,10 @@ import Purchases, {
 const ENTITLEMENT_ID = 'plus';
 
 let initialized = false;
+let resolveReady: () => void = () => {};
+export const revenueCatReady: Promise<void> = new Promise((resolve) => {
+  resolveReady = resolve;
+});
 
 function getApiKey(): string | null {
   if (Platform.OS === 'ios') return process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? null;
@@ -19,17 +28,24 @@ function getApiKey(): string | null {
   return null;
 }
 
+export function isRevenueCatInitialized(): boolean {
+  return initialized;
+}
+
 export async function initRevenueCat(userId: string): Promise<void> {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    console.warn('[revenuecat] API key not set — subscription features disabled');
-    return;
-  }
   try {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      console.warn('[revenuecat] API key not set — subscription features disabled');
+      return;
+    }
     Purchases.configure({ apiKey, appUserID: userId });
     initialized = true;
   } catch (e) {
     console.warn('[revenuecat] init failed', e);
+  } finally {
+    // Always resolve — consumers must unblock even when configuration was skipped.
+    resolveReady();
   }
 }
 

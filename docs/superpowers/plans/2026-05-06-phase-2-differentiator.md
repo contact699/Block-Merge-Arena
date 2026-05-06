@@ -197,6 +197,7 @@ const KEY_MAP: Record<string, string> = {
   '@block_merge_arena:inventory':          '@block_merge:inventory',
   '@block_merge_arena:settings':           '@block_merge:settings',
   '@block_merge_arena:leaderboard':        '@block_merge:leaderboard',
+  '@block_merge_arena:user_id':            '@block_merge:user_id',
   'block-merge:welcome-complete':          '@block_merge:welcome-complete',
 };
 
@@ -244,7 +245,7 @@ Read each of these files and change the prefix:
 git grep -l "@block_merge_arena:" src/lib/
 ```
 
-Expected files: `currency.ts`, `achievements.ts`, `replay.ts`, `inventory.ts`, `settings.ts`, `leaderboard.ts`, `social.ts` (already partially `@block_merge`).
+Expected files: `currency.ts`, `achievements.ts`, `replay.ts`, `inventory.ts`, `settings.ts`, `leaderboard.ts`, `firebase/auth.ts` (uses `@block_merge_arena:user_id`), `social.ts` (already partially `@block_merge`).
 
 In each, change the `_KEY` constant's prefix from `@block_merge_arena:` → `@block_merge:`. Example:
 

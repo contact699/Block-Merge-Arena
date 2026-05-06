@@ -11,7 +11,7 @@ export interface GameScore {
   maxMultiplier?: number;
 }
 
-const LEADERBOARD_KEY = '@block_merge_arena:leaderboard';
+const LEADERBOARD_KEY = '@block_merge:leaderboard';
 const MAX_SCORES = 50; // Keep top 50 scores
 
 /**

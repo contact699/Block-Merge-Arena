@@ -2,7 +2,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Replay, CompactReplay, CompactMove, ReplayMove } from '@/lib/types/replay';
 
-const REPLAYS_KEY = '@block_merge_arena:replays';
+const REPLAYS_KEY = '@block_merge:replays';
 const MAX_REPLAYS = 20; // Keep last 20 replays locally
 
 /**

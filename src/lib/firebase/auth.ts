@@ -3,7 +3,7 @@ import { auth, isConfigured } from './config';
 import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const USER_ID_KEY = '@block_merge_arena:user_id';
+const USER_ID_KEY = '@block_merge:user_id';
 
 /**
  * Get or create anonymous user

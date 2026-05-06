@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { UserSettings } from '@/lib/types/settings';
 import { DEFAULT_SETTINGS } from '@/lib/types/settings';
 
-const SETTINGS_KEY = '@block_merge_arena:settings';
+const SETTINGS_KEY = '@block_merge:settings';
 
 /**
  * Get user settings

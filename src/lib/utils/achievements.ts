@@ -3,8 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Achievement, AchievementUnlock } from '@/lib/types/achievements';
 import { addCurrency } from './currency';
 
-const ACHIEVEMENTS_KEY = '@block_merge_arena:achievements';
-const UNLOCKS_KEY = '@block_merge_arena:achievement_unlocks';
+const ACHIEVEMENTS_KEY = '@block_merge:achievements';
+const UNLOCKS_KEY = '@block_merge:achievement_unlocks';
 
 /**
  * Slim achievements catalog — six tasteful badges.

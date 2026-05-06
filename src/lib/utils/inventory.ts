@@ -4,7 +4,7 @@ import type { UserInventory, BoardTheme, BlockSkin, GemSkin, ShopCategory } from
 import { DEFAULT_THEMES, DEFAULT_BLOCK_SKINS, DEFAULT_GEM_SKINS } from '@/lib/shop/catalog';
 import { spendCurrency, logTransaction } from './currency';
 
-const INVENTORY_KEY = '@block_merge_arena:inventory';
+const INVENTORY_KEY = '@block_merge:inventory';
 
 /**
  * Get user's inventory

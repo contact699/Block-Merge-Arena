@@ -4,11 +4,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { initAnalytics, identify, track } from '@/lib/analytics/events';
 import { getOrCreateUser } from '@/lib/firebase/auth';
+import { migrateStorageKeys } from '@/lib/storage/migrate';
 import '../../global.css';
 
 export default function RootLayout() {
   useEffect(() => {
     (async () => {
+      await migrateStorageKeys();
       await initAnalytics();
       const userId = await getOrCreateUser();
       identify(userId);

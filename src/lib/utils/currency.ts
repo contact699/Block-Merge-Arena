@@ -2,8 +2,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Currency, Reward } from '@/lib/types/shop';
 
-const CURRENCY_KEY = '@block_merge_arena:currency';
-const TRANSACTIONS_KEY = '@block_merge_arena:transactions';
+const CURRENCY_KEY = '@block_merge:currency';
+const TRANSACTIONS_KEY = '@block_merge:transactions';
 
 /**
  * Get user's current currency balance

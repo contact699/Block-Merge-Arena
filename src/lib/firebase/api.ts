@@ -1,5 +1,5 @@
 // Firebase API Layer - Score Submission & Leaderboards
-import { db, isConfigured } from './config';
+import { auth, db, isConfigured } from './config';
 import { getOrCreateUser, getCurrentUserId } from './auth';
 import {
   collection,
@@ -13,6 +13,8 @@ import {
   limit,
   increment,
   updateDoc,
+  runTransaction,
+  serverTimestamp,
 } from 'firebase/firestore';
 import type {
   FirebaseScore,
@@ -71,6 +73,42 @@ export async function submitScore(
     // If tournament mode, also update tournament entry
     if (mode === 'tournament') {
       await submitTournamentEntry(userId, dateString, score, maxMultiplier, duration);
+    }
+
+    // Archive writes (ADR 0006): upsert puzzles/{id} and users/{uid}/archive/{id}
+    if (mode === 'tournament' && db && auth?.currentUser) {
+      const puzzleId = getTodayDateString();
+      const uid = auth.currentUser.uid;
+
+      // 1) Per-user archive entry. Owned by the user, no race risk.
+      const archiveRef = doc(db, 'users', uid, 'archive', puzzleId);
+      await setDoc(
+        archiveRef,
+        {
+          played: true,
+          score,
+          multiplier: maxMultiplier,
+          durationMs: 0, // duration param is currently unused upstream; wire when callers pass it
+          completedAt: Date.now(),
+        },
+        { merge: true }
+      );
+
+      // 2) Public puzzle metadata. Use a transaction so concurrent finishers
+      //    don't trample each other's topScore. Other fields (date, seed,
+      //    playCount) merge cleanly.
+      const puzzleRef = doc(db, 'puzzles', puzzleId);
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(puzzleRef);
+        const current = snap.exists() ? ((snap.data().topScore as number) ?? 0) : 0;
+        const update: Record<string, unknown> = {
+          date: serverTimestamp(),
+          seed: String(puzzleId),
+          playCount: increment(1),
+        };
+        if (score > current) update.topScore = score;
+        tx.set(puzzleRef, update, { merge: true });
+      });
     }
 
     console.log('✅ Score submitted successfully:', scoreId);

@@ -47,7 +47,6 @@ import type {
 const POWER_UP_META: Record<string, { icon: string; color: keyof typeof blockColors }> = {
   reroll: { icon: '↻', color: 'cobalt' },
   blast: { icon: '✺', color: 'ember' },
-  freeze: { icon: '❄', color: 'teal' },
   target: { icon: '◎', color: 'forest' },
   colorBomb: { icon: '✦', color: 'plum' },
 };

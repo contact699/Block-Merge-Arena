@@ -3,7 +3,7 @@ import { View, Text, Pressable, ScrollView } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { getTodayDateString } from '@/lib/utils/tournament';
+import { getTodayDateString } from '@/lib/daily/seed';
 import { hasCompletedWelcome } from '@/lib/utils/tutorial';
 import { colors, fontWeight } from '@/lib/design/tokens';
 import { GlassCard, DeepCard } from '@/components/design/GlassCard';

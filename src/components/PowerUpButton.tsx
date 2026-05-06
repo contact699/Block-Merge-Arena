@@ -15,7 +15,6 @@ interface PowerUpButtonProps {
 const POWER_UP_ICONS: Record<string, string> = {
   reroll: '🔄',
   blast: '💣',
-  freeze: '⏱️',
   target: '🎯',
   colorBomb: '🌈'
 };
@@ -24,7 +23,6 @@ const POWER_UP_ICONS: Record<string, string> = {
 const POWER_UP_COLORS: Record<string, { bg: string; border: string; text: string }> = {
   reroll: { bg: 'bg-blue-500/20', border: 'border-blue-500', text: 'text-blue-400' },
   blast: { bg: 'bg-red-500/20', border: 'border-red-500', text: 'text-red-400' },
-  freeze: { bg: 'bg-cyan-500/20', border: 'border-cyan-500', text: 'text-cyan-400' },
   target: { bg: 'bg-green-500/20', border: 'border-green-500', text: 'text-green-400' },
   colorBomb: { bg: 'bg-purple-500/20', border: 'border-purple-500', text: 'text-purple-400' }
 };

@@ -269,7 +269,6 @@ export const DEFAULT_POWERUP_BUNDLES: PowerUpBundle[] = [
       { type: 'blast', count: 10 },
       { type: 'target', count: 10 },
       { type: 'color_bomb', count: 10 },
-      { type: 'freeze', count: 10 },
     ],
     price: { gems: 100 },
     discount: 20,

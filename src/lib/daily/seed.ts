@@ -1,6 +1,7 @@
-// Daily Tournament System - Seeded Piece Generation
+// Daily Mode — Seeded Piece Generation & Streak Tracking
 import type { GamePiece } from '@/lib/types/game';
 import { generatePieceByType, getAllShapeTypes } from '@/lib/game/pieces';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * Simple seeded random number generator (LCG)
@@ -50,7 +51,7 @@ export function getTodayDateString(): string {
 }
 
 /**
- * Generate tournament pieces using a seeded random generator
+ * Generate daily pieces using a seeded random generator
  * All players get the same 3 starting pieces on the same day
  */
 export function generateTournamentPieces(seed: number, count: number = 3): GamePiece[] {
@@ -73,7 +74,7 @@ export function generateTournamentPieces(seed: number, count: number = 3): GameP
 }
 
 /**
- * Generate all pieces for a tournament (multiple sets)
+ * Generate all pieces for a daily run (multiple sets)
  * Used for testing to ensure fair piece distribution
  */
 export function generateTournamentPieceSets(seed: number, sets: number = 10): GamePiece[][] {
@@ -88,54 +89,39 @@ export function generateTournamentPieceSets(seed: number, sets: number = 10): Ga
   return allPieces;
 }
 
-/**
- * Tournament state interface
- */
-export interface TournamentState {
-  id: string;
-  date: string;
-  seed: number;
-  startingPieces: GamePiece[];
-  timeLimit: number; // in milliseconds (5 minutes = 300000)
-  playerScore: number;
-  isActive: boolean;
-  timeRemaining: number;
+// ---------------------------------------------------------------------------
+// Streak & completion tracking (moved from daily.tsx per T8)
+// ---------------------------------------------------------------------------
+
+const DAILIES_PLAYED_KEY = '@block_merge:dailies_played_total';
+const DAILY_LAST_PLAYED_KEY = '@block_merge:daily_last_played';
+const DAILY_STREAK_KEY = '@block_merge:daily_streak';
+
+export async function recordDailyCompletion(puzzleId: string): Promise<{ totalPlayed: number; streakDays: number }> {
+  const totalRaw = await AsyncStorage.getItem(DAILIES_PLAYED_KEY);
+  const totalPlayed = (totalRaw ? parseInt(totalRaw, 10) : 0) + 1;
+  await AsyncStorage.setItem(DAILIES_PLAYED_KEY, String(totalPlayed));
+
+  const lastPlayed = await AsyncStorage.getItem(DAILY_LAST_PLAYED_KEY);
+  const prevStreakRaw = await AsyncStorage.getItem(DAILY_STREAK_KEY);
+  const prevStreak = prevStreakRaw ? parseInt(prevStreakRaw, 10) : 0;
+  let streakDays: number;
+  if (lastPlayed === puzzleId) {
+    // Same day replay — keep existing streak, don't double-count
+    streakDays = prevStreak;
+  } else if (lastPlayed && isYesterday(lastPlayed, puzzleId)) {
+    streakDays = prevStreak + 1;
+  } else {
+    streakDays = 1;
+  }
+  await AsyncStorage.setItem(DAILY_LAST_PLAYED_KEY, puzzleId);
+  await AsyncStorage.setItem(DAILY_STREAK_KEY, String(streakDays));
+  return { totalPlayed, streakDays };
 }
 
-/**
- * Create a new daily tournament
- */
-export function createDailyTournament(): TournamentState {
-  const dateString = getTodayDateString();
-  const seed = getDailySeed();
-  const pieces = generateTournamentPieces(seed, 3);
-
-  return {
-    id: `tournament-${dateString}`,
-    date: dateString,
-    seed,
-    startingPieces: pieces,
-    timeLimit: 5 * 60 * 1000, // 5 minutes
-    playerScore: 0,
-    isActive: false,
-    timeRemaining: 5 * 60 * 1000
-  };
-}
-
-/**
- * Check if a tournament is still valid (same day)
- */
-export function isTournamentValid(tournament: TournamentState): boolean {
-  return tournament.date === getTodayDateString();
-}
-
-/**
- * Get formatted time remaining
- */
-export function formatTimeRemaining(milliseconds: number): string {
-  const totalSeconds = Math.ceil(milliseconds / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+function isYesterday(prevId: string, todayId: string): boolean {
+  const prev = new Date(prevId + 'T00:00:00Z').getTime();
+  const today = new Date(todayId + 'T00:00:00Z').getTime();
+  const diff = today - prev;
+  return diff > 0 && diff <= 36 * 60 * 60 * 1000;
 }

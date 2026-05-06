@@ -17,11 +17,6 @@ export const POWER_UPS: Record<string, Omit<PowerUp, 'uses'>> = {
     name: 'Blast',
     description: 'Clear a 3x3 area on the board'
   },
-  freeze: {
-    type: 'freeze',
-    name: 'Freeze',
-    description: 'Pause the timer for 30 seconds'
-  },
   target: {
     type: 'target',
     name: 'Target',

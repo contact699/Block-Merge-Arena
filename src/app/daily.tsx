@@ -3,14 +3,13 @@ import { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track } from '@/lib/analytics/events';
 import { GameBoard } from '@/components/GameBoard';
 import { PiecesTray } from '@/components/design/PiecesTray';
 import { ScoreDisplay } from '@/components/ScoreDisplay';
 import { GemCounter } from '@/components/GemDisplay';
 import { ComboAnimation, LineClearEffect, GemMergeEffect } from '@/components/ComboAnimation';
-import { TournamentTimer, TournamentInfo } from '@/components/TournamentTimer';
+import { TournamentInfo } from '@/components/TournamentTimer';
 import { GlassCard, DeepCard } from '@/components/design/GlassCard';
 import { Pill } from '@/components/design/Pill';
 import { TactileButton } from '@/components/design/TactileButton';
@@ -26,8 +25,9 @@ import {
 import {
   generateTournamentPieces,
   getDailySeed,
-  getTodayDateString
-} from '@/lib/utils/tournament';
+  getTodayDateString,
+  recordDailyCompletion,
+} from '@/lib/daily/seed';
 import { saveScore } from '@/lib/utils/leaderboard';
 import {
   getTournamentStandings,
@@ -41,43 +41,6 @@ import { checkAchievements } from '@/lib/utils/achievements';
 
 import type { GameBoard as GameBoardType, GamePiece, Gem } from '@/lib/types/game';
 
-// --- Daily streak / total tracking helpers (T8 will move these to src/lib/daily/seed.ts) ---
-const DAILIES_PLAYED_KEY = '@block_merge:dailies_played_total';
-const DAILY_LAST_PLAYED_KEY = '@block_merge:daily_last_played';
-const DAILY_STREAK_KEY = '@block_merge:daily_streak';
-
-function isYesterday(prevId: string, todayId: string): boolean {
-  const prev = new Date(prevId + 'T00:00:00Z').getTime();
-  const today = new Date(todayId + 'T00:00:00Z').getTime();
-  const diff = today - prev;
-  return diff > 0 && diff <= 36 * 60 * 60 * 1000;
-}
-
-async function recordDailyCompletion(
-  puzzleId: string,
-): Promise<{ totalPlayed: number; streakDays: number }> {
-  const totalRaw = await AsyncStorage.getItem(DAILIES_PLAYED_KEY);
-  const totalPlayed = (totalRaw ? parseInt(totalRaw, 10) : 0) + 1;
-  await AsyncStorage.setItem(DAILIES_PLAYED_KEY, String(totalPlayed));
-
-  const lastPlayed = await AsyncStorage.getItem(DAILY_LAST_PLAYED_KEY);
-  const prevStreakRaw = await AsyncStorage.getItem(DAILY_STREAK_KEY);
-  const prevStreak = prevStreakRaw ? parseInt(prevStreakRaw, 10) : 0;
-  let streakDays: number;
-  if (lastPlayed === puzzleId) {
-    // Same day replay — keep existing streak, don't double-count
-    streakDays = prevStreak;
-  } else if (lastPlayed && isYesterday(lastPlayed, puzzleId)) {
-    streakDays = prevStreak + 1;
-  } else {
-    streakDays = 1;
-  }
-  await AsyncStorage.setItem(DAILY_LAST_PLAYED_KEY, puzzleId);
-  await AsyncStorage.setItem(DAILY_STREAK_KEY, String(streakDays));
-  return { totalPlayed, streakDays };
-}
-// ---------------------------------------------------------------------------
-
 export default function DailyScreen() {
   const router = useRouter();
   const [board, setBoard] = useState<GameBoardType>(createEmptyBoard());
@@ -88,9 +51,8 @@ export default function DailyScreen() {
   const [gems, setGems] = useState<Gem[]>([]);
   const [gameOver, setGameOver] = useState<boolean>(false);
 
-  // Daily tournament specific
+  // Daily mode state
   const [tournamentStarted, setTournamentStarted] = useState<boolean>(false);
-  const [timeRemaining, setTimeRemaining] = useState<number>(5 * 60 * 1000);
   const [tournamentDate] = useState<string>(getTodayDateString());
   const [seed] = useState<number>(getDailySeed());
   const [pieceSetIndex, setPieceSetIndex] = useState<number>(0);
@@ -137,7 +99,6 @@ export default function DailyScreen() {
     setGameOver(false);
     setSelectedPieceIndex(undefined);
     setTournamentStarted(true);
-    setTimeRemaining(5 * 60 * 1000);
     setPieceSetIndex(0);
     runStartTimestampRef.current = Date.now();
     setReplayCode(null);
@@ -151,64 +112,6 @@ export default function DailyScreen() {
     recorder.start();
     setReplayRecorder(recorder);
     console.log('Daily replay recording started');
-  };
-
-  const handleTimeUp = async (): Promise<void> => {
-    setGameOver(true);
-    setTournamentStarted(false);
-
-    // Stop replay recording
-    if (replayRecorder && replayRecorder.isRecording()) {
-      const replay = await replayRecorder.stop(score, undefined, undefined, board);
-      if (replay) {
-        setReplayCode(replay.code || null);
-        console.log('Daily replay saved:', replay.code);
-      }
-    }
-
-    // Reward coins based on score
-    const coins = await rewardCoinsForScore(score);
-    setEarnedCoins(coins);
-    console.log('Earned coins:', coins);
-
-    // Save tournament score to leaderboard
-    saveScore({
-      id: `tournament-${Date.now()}`,
-      score,
-      mode: 'tournament',
-      date: new Date().toISOString(),
-      maxMultiplier: maxMultiplierReached
-    });
-
-    // Check achievements
-    const puzzleId = getTodayDateString();
-    const { totalPlayed, streakDays } = await recordDailyCompletion(puzzleId);
-    const granted = await checkAchievements({
-      runMode: 'daily',
-      score,
-      maxMultiplier: maxMultiplierReached,
-      durationMs: Date.now() - runStartTimestampRef.current,
-      didMerge: maxMultiplierReached > 1,
-      didDailyComplete: true,
-      dailyStreakDays: streakDays,
-      dailiesPlayedTotal: totalPlayed,
-    });
-    if (granted.length > 0) {
-      setUnlockedAchievements(granted);
-      console.log('[achievements] granted', granted);
-    }
-
-    // Load standings after game ends
-    if (isFirebaseAvailable) {
-      setTimeout(async () => {
-        await loadStandings();
-        setShowStandings(true);
-      }, 2000); // Wait 2 seconds for score to propagate
-    }
-  };
-
-  const handleTimerTick = (newTime: number): void => {
-    setTimeRemaining(newTime);
   };
 
   const loadStandings = async (): Promise<void> => {
@@ -331,61 +234,63 @@ export default function DailyScreen() {
     setPieces(newPieces);
     setSelectedPieceIndex(undefined);
 
-    // Check for game over
+    // Check for game over (run ends only when no valid moves remain)
     if (!hasValidMoves(newBoard, newPieces)) {
-      setGameOver(true);
-      setTournamentStarted(false);
+      void handleRunEnd(newScore, newMultiplier, newBoard);
+    }
+  };
 
-      // Stop replay recording
-      if (replayRecorder && replayRecorder.isRecording()) {
-        replayRecorder.stop(newScore, undefined, undefined, newBoard).then((replay) => {
-          if (replay) {
-            setReplayCode(replay.code || null);
-            console.log('Daily replay saved:', replay.code);
-          }
-        });
+  const handleRunEnd = async (finalScore: number, finalMultiplier: number, finalBoard: GameBoardType): Promise<void> => {
+    setGameOver(true);
+    setTournamentStarted(false);
+
+    // Stop replay recording
+    if (replayRecorder && replayRecorder.isRecording()) {
+      const replay = await replayRecorder.stop(finalScore, undefined, undefined, finalBoard);
+      if (replay) {
+        setReplayCode(replay.code || null);
+        console.log('Daily replay saved:', replay.code);
       }
+    }
 
-      // Reward coins based on score
-      rewardCoinsForScore(newScore).then((coins: number) => {
-        setEarnedCoins(coins);
-        console.log('Earned coins:', coins);
-      });
+    // Reward coins based on score
+    const coins = await rewardCoinsForScore(finalScore);
+    setEarnedCoins(coins);
+    console.log('Earned coins:', coins);
 
-      // Save tournament score to leaderboard
-      saveScore({
-        id: `tournament-${Date.now()}`,
-        score: newScore,
-        mode: 'tournament',
-        date: new Date().toISOString(),
-        maxMultiplier: newMultiplier
-      });
+    // Save score to leaderboard
+    saveScore({
+      id: `tournament-${Date.now()}`,
+      score: finalScore,
+      mode: 'tournament',
+      date: new Date().toISOString(),
+      maxMultiplier: finalMultiplier,
+    });
 
-      // Check achievements
-      void recordDailyCompletion(getTodayDateString()).then(async ({ totalPlayed, streakDays }) => {
-        const granted = await checkAchievements({
-          runMode: 'daily',
-          score: newScore,
-          maxMultiplier: newMultiplier,
-          durationMs: Date.now() - runStartTimestampRef.current,
-          didMerge: newMultiplier > 1,
-          didDailyComplete: true,
-          dailyStreakDays: streakDays,
-          dailiesPlayedTotal: totalPlayed,
-        });
-        if (granted.length > 0) {
-          setUnlockedAchievements(granted);
-          console.log('[achievements] granted', granted);
-        }
-      });
+    // Check achievements
+    const puzzleId = getTodayDateString();
+    const { totalPlayed, streakDays } = await recordDailyCompletion(puzzleId);
+    const granted = await checkAchievements({
+      runMode: 'daily',
+      score: finalScore,
+      maxMultiplier: finalMultiplier,
+      durationMs: Date.now() - runStartTimestampRef.current,
+      didMerge: finalMultiplier > 1,
+      didDailyComplete: true,
+      dailyStreakDays: streakDays,
+      dailiesPlayedTotal: totalPlayed,
+    });
+    if (granted.length > 0) {
+      setUnlockedAchievements(granted);
+      console.log('[achievements] granted', granted);
+    }
 
-      // Load standings after game ends
-      if (isFirebaseAvailable) {
-        setTimeout(async () => {
-          await loadStandings();
-          setShowStandings(true);
-        }, 2000); // Wait 2 seconds for score to propagate
-      }
+    // Load standings after game ends
+    if (isFirebaseAvailable) {
+      setTimeout(async () => {
+        await loadStandings();
+        setShowStandings(true);
+      }, 2000); // Wait 2 seconds for score to propagate
     }
   };
 
@@ -491,44 +396,7 @@ export default function DailyScreen() {
                   <TournamentInfo date={tournamentDate} />
                 </View>
               </View>
-
-              {/* Timer display in hero */}
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text
-                  style={{
-                    fontSize: 9,
-                    fontWeight: fontWeight.bold,
-                    color: colors.mustard,
-                    letterSpacing: 1.6,
-                  }}
-                >
-                  {tournamentStarted ? 'TIME LEFT' : 'DURATION'}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 22,
-                    fontWeight: fontWeight.black,
-                    color: colors.paper,
-                    marginTop: 4,
-                  }}
-                >
-                  {tournamentStarted
-                    ? `${Math.floor(timeRemaining / 60000)}:${String(Math.floor((timeRemaining % 60000) / 1000)).padStart(2, '0')}`
-                    : '5:00'}
-                </Text>
-              </View>
             </View>
-
-            {tournamentStarted && (
-              <View style={{ marginTop: 12 }}>
-                <TournamentTimer
-                  timeRemaining={timeRemaining}
-                  onTick={handleTimerTick}
-                  onTimeUp={handleTimeUp}
-                  isActive={tournamentStarted && !gameOver}
-                />
-              </View>
-            )}
           </DeepCard>
         </View>
 

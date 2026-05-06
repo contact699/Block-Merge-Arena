@@ -23,7 +23,7 @@ import type {
   LeaderboardResponse,
   TournamentStandingsResponse,
 } from './types';
-import { getTodayDateString } from '@/lib/utils/tournament';
+import { getTodayDateString } from '@/lib/daily/seed';
 
 /**
  * Submit a game score to Firebase

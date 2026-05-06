@@ -38,7 +38,7 @@ export type Gem = {
   multiplier: number; // 1x, 2x, 3x, 5x
 };
 
-export type PowerUpType = 'reroll' | 'blast' | 'freeze' | 'target' | 'colorBomb';
+export type PowerUpType = 'reroll' | 'blast' | 'target' | 'colorBomb';
 
 export type PowerUp = {
   type: PowerUpType;

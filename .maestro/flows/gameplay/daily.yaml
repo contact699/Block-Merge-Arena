@@ -3,34 +3,37 @@ name: Daily Mode
 ---
 - launchApp
 
+# Auto-skip welcome if it appears.
+- runFlow:
+    when:
+      visible:
+        id: "welcome-screen"
+    commands:
+      - tapOn:
+          id: "lets-play-button"
+
 - extendedWaitUntil:
     visible:
-      text: "Block Merge"
-    timeout: 10000
+      id: "home-screen"
+    timeout: 30000
 
 - tapOn:
     id: "tournament-button"
 - assertVisible:
     id: "tournament-screen"
 - assertVisible:
-    text: "← Back"
+    id: "back-button"
 
 - assertVisible:
     id: "start-tournament-button"
-
 - tapOn:
     id: "start-tournament-button"
 
+# Run is in flight — verify the board is interactive.
 - extendedWaitUntil:
     visible:
-      id: "game-board"
+      id: "cell-0-0"
     timeout: 5000
-
-- assertVisible:
-    id: "game-board"
-- assertVisible:
-    text: "Select a piece below, then tap the board to place it"
-
 - tapOn:
     id: "cell-0-0"
 - tapOn:

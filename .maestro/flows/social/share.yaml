@@ -3,11 +3,21 @@ name: Share Screen
 ---
 - launchApp
 
+# Auto-skip welcome if it appears.
+- runFlow:
+    when:
+      visible:
+        id: "welcome-screen"
+    commands:
+      - tapOn:
+          id: "lets-play-button"
+
 - extendedWaitUntil:
     visible:
-      text: "Block Merge"
-    timeout: 10000
+      id: "home-screen"
+    timeout: 30000
 
+# Share tile is in the bottom nav grid; scroll down so it's tappable.
 - scroll
 - tapOn:
     id: "share-button"

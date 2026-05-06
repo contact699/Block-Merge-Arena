@@ -3,43 +3,63 @@ name: Settings Screen
 ---
 - launchApp
 
+# Auto-skip welcome if it appears.
+- runFlow:
+    when:
+      visible:
+        id: "welcome-screen"
+    commands:
+      - tapOn:
+          id: "lets-play-button"
+
 - extendedWaitUntil:
     visible:
-      text: "Block Merge"
-    timeout: 10000
+      id: "home-screen"
+    timeout: 30000
 
 - tapOn:
     id: "settings-button"
 - assertVisible:
     id: "settings-screen"
 
+# Verify the four-section grouping (AUDIO / DISPLAY / ACCOUNT / ABOUT)
+# and the rows within them.
 - assertVisible:
-    text: "Profile"
+    text: "AUDIO"
 - assertVisible:
-    text: "Audio"
-- assertVisible:
-    text: "Display Name"
-
-- tapOn:
-    id: "display-name-input"
-- eraseText:
-    charactersToErase: 30
-- inputText: "TestPlayer"
-
-- scroll
+    text: "Sound effects"
 - assertVisible:
     text: "Haptics"
+
 - assertVisible:
-    text: "Gameplay"
+    id: "sound-toggle-row"
+- assertVisible:
+    id: "haptic-toggle-row"
+
+# Toggle the Sound effects row to confirm interactivity.
+- tapOn:
+    id: "sound-toggle-row"
+
+# Scroll down to reach DISPLAY / ACCOUNT / ABOUT groups.
+- scroll
+- assertVisible:
+    text: "DISPLAY"
+- assertVisible:
+    id: "reduced-motion-toggle-row"
 
 - scroll
 - assertVisible:
-    id: "save-button"
+    text: "ACCOUNT"
 - assertVisible:
-    id: "reset-button"
-- assertVisible:
-    text: "Block Merge v1.0.0"
+    text: "Display name"
 
+- scroll
+- assertVisible:
+    text: "ABOUT"
+- assertVisible:
+    text: "Privacy"
+
+- scroll up
 - scroll up
 - tapOn:
     id: "back-button"

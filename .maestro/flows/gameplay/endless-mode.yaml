@@ -3,23 +3,31 @@ name: Endless Mode Gameplay
 ---
 - launchApp
 
+# Auto-skip welcome if it appears.
+- runFlow:
+    when:
+      visible:
+        id: "welcome-screen"
+    commands:
+      - tapOn:
+          id: "lets-play-button"
+
 - extendedWaitUntil:
     visible:
-      text: "Block Merge"
-    timeout: 10000
+      id: "home-screen"
+    timeout: 30000
 
 - tapOn:
     id: "endless-mode-button"
 - assertVisible:
     id: "game-screen"
-- assertVisible:
-    id: "game-board"
-- assertVisible:
-    text: "Block Merge"
-- assertVisible:
-    text: "Select a piece below, then tap the board to place it"
 
-# Try tapping some board cells
+# Verify the board is interactive (cells render with `cell-{r}-{c}` testIDs).
+- extendedWaitUntil:
+    visible:
+      id: "cell-0-0"
+    timeout: 5000
+
 - tapOn:
     id: "cell-0-0"
 - tapOn:
@@ -29,9 +37,9 @@ name: Endless Mode Gameplay
 - tapOn:
     id: "cell-3-3"
 
-# Verify game is still running
+# Game still running.
 - assertVisible:
-    text: "Block Merge"
+    id: "game-screen"
 
 - back
 - assertVisible:

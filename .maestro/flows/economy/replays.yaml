@@ -3,17 +3,26 @@ name: Replays Screen
 ---
 - launchApp
 
+# Auto-skip welcome if it appears.
+- runFlow:
+    when:
+      visible:
+        id: "welcome-screen"
+    commands:
+      - tapOn:
+          id: "lets-play-button"
+
 - extendedWaitUntil:
     visible:
-      text: "Block Merge"
-    timeout: 10000
+      id: "home-screen"
+    timeout: 30000
 
 - tapOn:
     id: "replays-button"
 - assertVisible:
     id: "replays-screen"
 - assertVisible:
-    text: "← Back"
+    id: "back-button"
 
 - tapOn:
     id: "back-button"

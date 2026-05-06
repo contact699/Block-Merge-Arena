@@ -4,13 +4,15 @@ name: Skip Welcome
 - launchApp:
     clearState: true
 
-# Wait for either the welcome screen or home screen to appear
+# Wait for either the welcome screen or home screen to appear (testID-based,
+# since neither renders the literal text "Block Merge").
 - extendedWaitUntil:
     visible:
-      text: "Block Merge"
+      id: "welcome-screen"
     timeout: 30000
+    optional: true
 
-# Tap "Start playing" if the welcome screen is visible
+# If we landed on welcome, tap "Start playing" and wait for home.
 - runFlow:
     when:
       visible:
@@ -22,3 +24,11 @@ name: Skip Welcome
           visible:
             id: "home-screen"
           timeout: 10000
+
+# If welcome wasn't shown (state already had welcome-complete), just wait for home.
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 30000
+- assertVisible:
+    id: "home-screen"

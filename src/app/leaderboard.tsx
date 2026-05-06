@@ -17,6 +17,7 @@ import {
   type LeaderboardEntry
 } from '@/lib/firebase';
 import { colors, fontWeight } from '@/lib/design/tokens';
+import { useThemePalette } from '@/lib/themes/provider';
 import { Pill } from '@/components/design/Pill';
 import { GlassCard } from '@/components/design/GlassCard';
 
@@ -147,6 +148,7 @@ function LeaderboardRow({
 
 export default function LeaderboardScreen() {
   const router = useRouter();
+  const palette = useThemePalette();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [leaderboardMode, setLeaderboardMode] = useState<LeaderboardMode>('local');
   const [scores, setScores] = useState<GameScore[]>([]);
@@ -209,7 +211,7 @@ export default function LeaderboardScreen() {
   ];
 
   return (
-    <SafeAreaView testID="leaderboard-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+    <SafeAreaView testID="leaderboard-screen" style={{ flex: 1, backgroundColor: palette.paper }}>
       {/* Ambient ember blob top-right */}
       <View
         pointerEvents="none"

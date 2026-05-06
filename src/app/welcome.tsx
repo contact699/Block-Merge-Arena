@@ -3,6 +3,7 @@ import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors, fontWeight } from '@/lib/design/tokens';
+import { useThemePalette } from '@/lib/themes/provider';
 import { TactileCell } from '@/components/design/TactileCell';
 import { TactileButton } from '@/components/design/TactileButton';
 import { Pill } from '@/components/design/Pill';
@@ -76,6 +77,7 @@ function IntroBoardPreview() {
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const palette = useThemePalette();
 
   const handleStart = async (): Promise<void> => {
     await markWelcomeComplete();
@@ -83,7 +85,7 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <SafeAreaView testID="welcome-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+    <SafeAreaView testID="welcome-screen" style={{ flex: 1, backgroundColor: palette.paper }}>
       <View
         pointerEvents="none"
         style={{

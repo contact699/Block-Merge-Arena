@@ -14,6 +14,7 @@ import { GlassCard, DeepCard } from '@/components/design/GlassCard';
 import { Pill } from '@/components/design/Pill';
 import { TactileButton } from '@/components/design/TactileButton';
 import { colors, fontWeight, radii, resolveBlockColor, blockColors } from '@/lib/design/tokens';
+import { useThemePalette } from '@/lib/themes/provider';
 import { createEmptyBoard, canPlacePiece, placePiece, clearLines, hasValidMoves } from '@/lib/game/board';
 import {
   generateGemsFromClearedCells,
@@ -47,6 +48,7 @@ import type { GameBoard as GameBoardType, GamePiece, Gem } from '@/lib/types/gam
 
 export default function DailyScreen() {
   const router = useRouter();
+  const palette = useThemePalette();
   const [board, setBoard] = useState<GameBoardType>(createEmptyBoard());
   const [pieces, setPieces] = useState<GamePiece[]>([]);
   const [selectedPieceIndex, setSelectedPieceIndex] = useState<number | undefined>(undefined);
@@ -331,7 +333,7 @@ export default function DailyScreen() {
   };
 
   return (
-    <SafeAreaView testID="tournament-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+    <SafeAreaView testID="tournament-screen" style={{ flex: 1, backgroundColor: palette.paper }}>
       {/* Ambient blobs */}
       <View
         pointerEvents="none"

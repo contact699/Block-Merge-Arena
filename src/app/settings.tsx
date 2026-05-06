@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { getSettings, saveSettings, resetSettings } from '@/lib/utils/settings';
 import type { UserSettings } from '@/lib/types/settings';
 import { colors, fontWeight } from '@/lib/design/tokens';
+import { useThemePalette } from '@/lib/themes/provider';
 import { Pill } from '@/components/design/Pill';
 import { GlassCard } from '@/components/design/GlassCard';
 
@@ -80,6 +81,7 @@ function SettingsRow({
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const palette = useThemePalette();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -127,7 +129,7 @@ export default function SettingsScreen() {
 
   if (loading || !settings) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper, alignItems: 'center', justifyContent: 'center' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: palette.paper, alignItems: 'center', justifyContent: 'center' }}>
         <Text style={{ color: colors.inkDim }}>Loading settings…</Text>
       </SafeAreaView>
     );
@@ -141,7 +143,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView testID="settings-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+    <SafeAreaView testID="settings-screen" style={{ flex: 1, backgroundColor: palette.paper }}>
       {/* Ambient blob */}
       <View
         pointerEvents="none"

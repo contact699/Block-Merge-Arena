@@ -15,6 +15,7 @@ import {
 } from '@/lib/utils/social';
 import type { ShareableHighlight, RecordingConfig, SocialStats, SharePlatform } from '@/lib/types/social';
 import { colors, fontWeight, radii } from '@/lib/design/tokens';
+import { useThemePalette } from '@/lib/themes/provider';
 import { Pill } from '@/components/design/Pill';
 import { GlassCard } from '@/components/design/GlassCard';
 import { TactileButton } from '@/components/design/TactileButton';
@@ -24,6 +25,7 @@ import { track } from '@/lib/analytics/events';
 
 export default function ShareScreen() {
   const router = useRouter();
+  const palette = useThemePalette();
   const [loading, setLoading] = useState<boolean>(true);
   const [highlights, setHighlights] = useState<ShareableHighlight[]>([]);
   const [config, setConfig] = useState<RecordingConfig | null>(null);
@@ -378,7 +380,7 @@ export default function ShareScreen() {
   };
 
   return (
-    <SafeAreaView testID="share-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+    <SafeAreaView testID="share-screen" style={{ flex: 1, backgroundColor: palette.paper }}>
       {/* Decorative orb */}
       <View
         pointerEvents="none"

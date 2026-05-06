@@ -8,6 +8,7 @@ import { getInventory, purchaseItem, equipItem } from '@/lib/utils/inventory';
 import { getRarityColor, getRarityBadge } from '@/lib/shop/catalog';
 import type { Currency, ShopCategory, BoardTheme, BlockSkin, GemSkin } from '@/lib/types/shop';
 import { colors, fontWeight, radii } from '@/lib/design/tokens';
+import { useThemePalette } from '@/lib/themes/provider';
 import { Pill } from '@/components/design/Pill';
 import { GlassCard } from '@/components/design/GlassCard';
 import { TactileButton } from '@/components/design/TactileButton';
@@ -23,6 +24,7 @@ const TAB_ACCENT: Record<TabType, string> = {
 
 export default function ShopScreen() {
   const router = useRouter();
+  const palette = useThemePalette();
   const [activeTab, setActiveTab] = useState<TabType>('themes');
   const [currency, setCurrency] = useState<Currency>({ gems: 0, coins: 0 });
   const [themes, setThemes] = useState<BoardTheme[]>([]);
@@ -275,7 +277,7 @@ export default function ShopScreen() {
   ];
 
   return (
-    <SafeAreaView testID="shop-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+    <SafeAreaView testID="shop-screen" style={{ flex: 1, backgroundColor: palette.paper }}>
       {/* Decorative orb */}
       <View
         pointerEvents="none"

@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getTodayDateString } from '@/lib/daily/seed';
 import { hasCompletedWelcome } from '@/lib/utils/tutorial';
 import { colors, fontWeight } from '@/lib/design/tokens';
+import { useThemePalette } from '@/lib/themes/provider';
 import { GlassCard, DeepCard } from '@/components/design/GlassCard';
 import { Pill } from '@/components/design/Pill';
 import { TactileButton } from '@/components/design/TactileButton';
@@ -107,6 +108,7 @@ function NavTile({
 
 export default function HomeScreen() {
   const router = useRouter();
+  const palette = useThemePalette();
   const todayDate = getTodayDateString();
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -121,14 +123,14 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper, alignItems: 'center', justifyContent: 'center' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: palette.paper, alignItems: 'center', justifyContent: 'center' }}>
         <Text style={{ color: colors.ember, fontSize: 16, fontWeight: fontWeight.bold }}>Loading…</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView testID="home-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+    <SafeAreaView testID="home-screen" style={{ flex: 1, backgroundColor: palette.paper }}>
       {/* Ambient blobs */}
       <View
         pointerEvents="none"

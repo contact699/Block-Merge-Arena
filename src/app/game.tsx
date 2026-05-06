@@ -14,6 +14,7 @@ import { Pill } from '@/components/design/Pill';
 import { TactileButton } from '@/components/design/TactileButton';
 import { PiecesTray } from '@/components/design/PiecesTray';
 import { colors, fontWeight, radii, resolveBlockColor, blockColors } from '@/lib/design/tokens';
+import { useThemePalette } from '@/lib/themes/provider';
 import { createEmptyBoard, canPlacePiece, placePiece, clearLines, hasValidMoves } from '@/lib/game/board';
 import { generatePieces } from '@/lib/game/pieces';
 import {
@@ -201,6 +202,7 @@ function ComboTheater({
 }
 
 export default function GameScreen() {
+  const palette = useThemePalette();
   const [board, setBoard] = useState<GameBoardType>(createEmptyBoard());
   const [pieces, setPieces] = useState<GamePiece[]>([]);
   const [selectedPieceIndex, setSelectedPieceIndex] = useState<number | undefined>(undefined);
@@ -398,7 +400,7 @@ export default function GameScreen() {
   };
 
   return (
-    <SafeAreaView testID="game-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+    <SafeAreaView testID="game-screen" style={{ flex: 1, backgroundColor: palette.paper }}>
       {/* Ambient blobs */}
       <View
         pointerEvents="none"

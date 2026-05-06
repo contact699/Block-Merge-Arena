@@ -7,6 +7,7 @@ import { Sparkles, Trophy, Calendar, Flame, Timer, Award } from 'lucide-react-na
 import { GlassCard } from '@/components/design/GlassCard';
 import { Pill } from '@/components/design/Pill';
 import { colors, fontWeight } from '@/lib/design/tokens';
+import { useThemePalette } from '@/lib/themes/provider';
 import { DEFAULT_ACHIEVEMENTS, getAchievements } from '@/lib/utils/achievements';
 import type { Achievement } from '@/lib/types/achievements';
 
@@ -69,6 +70,7 @@ function AchievementBadge({
 
 export default function AchievementsScreen() {
   const router = useRouter();
+  const palette = useThemePalette();
   const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -81,7 +83,7 @@ export default function AchievementsScreen() {
   const isUnlocked = (id: string) => unlockedIds.has(id);
 
   return (
-    <SafeAreaView testID="achievements-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+    <SafeAreaView testID="achievements-screen" style={{ flex: 1, backgroundColor: palette.paper }}>
       {/* Background glow blob */}
       <View
         pointerEvents="none"

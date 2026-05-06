@@ -13,6 +13,7 @@ import {
 import { ReplayPlayer } from '@/components/ReplayPlayer';
 import type { Replay } from '@/lib/types/replay';
 import { colors, fontWeight } from '@/lib/design/tokens';
+import { useThemePalette } from '@/lib/themes/provider';
 import { Pill } from '@/components/design/Pill';
 import { TactileButton } from '@/components/design/TactileButton';
 import { GlassCard } from '@/components/design/GlassCard';
@@ -177,6 +178,7 @@ function TabButton({
 
 export default function ReplaysScreen() {
   const router = useRouter();
+  const palette = useThemePalette();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [replays, setReplays] = useState<Replay[]>([]);
   const [filteredReplays, setFilteredReplays] = useState<Replay[]>([]);
@@ -265,7 +267,7 @@ export default function ReplaysScreen() {
   }
 
   return (
-    <SafeAreaView testID="replays-screen" style={{ flex: 1, backgroundColor: colors.paper }}>
+    <SafeAreaView testID="replays-screen" style={{ flex: 1, backgroundColor: palette.paper }}>
       {/* Ambient ember blob */}
       <View
         pointerEvents="none"

@@ -8,6 +8,7 @@ import { migrateStorageKeys } from '@/lib/storage/migrate';
 import { initSfx } from '@/lib/audio/sfx';
 import { initRevenueCat } from '@/lib/subscription/revenuecat';
 import { SubscriptionProvider } from '@/lib/subscription/state';
+import { ThemeProvider } from '@/lib/themes/provider';
 import '../../global.css';
 
 export default function RootLayout() {
@@ -26,16 +27,18 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <SubscriptionProvider>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: '#f3efe7' },
-            }}
-          >
-            <Stack.Screen name="index" />
-            <Stack.Screen name="game" />
-            <Stack.Screen name="daily" />
-          </Stack>
+          <ThemeProvider>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: '#f3efe7' },
+              }}
+            >
+              <Stack.Screen name="index" />
+              <Stack.Screen name="game" />
+              <Stack.Screen name="daily" />
+            </Stack>
+          </ThemeProvider>
         </SubscriptionProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

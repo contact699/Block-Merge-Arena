@@ -6,7 +6,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { track } from '@/lib/analytics/events';
 import { GameBoard } from '@/components/GameBoard';
 import { ScoreDisplay } from '@/components/ScoreDisplay';
-import { ComboAnimation, LineClearEffect, GemMergeEffect } from '@/components/ComboAnimation';
+import { ComboAnimation, LineClearEffect } from '@/components/ComboAnimation';
+import { MergeAnimation } from '@/components/cascade/MergeAnimation';
 import { ColorSelector } from '@/components/PowerUpButton';
 import { TactileCell } from '@/components/design/TactileCell';
 import { GlassCard } from '@/components/design/GlassCard';
@@ -216,7 +217,12 @@ export default function GameScreen() {
 
   const [showCombo, setShowCombo] = useState<{ points: number; multiplier: number } | null>(null);
   const [showLineClear, setShowLineClear] = useState<number | null>(null);
-  const [showGemMerge, setShowGemMerge] = useState<{ count: number; size: 'small' | 'medium' | 'large' | 'mega'; color: string } | null>(null);
+  const [activeCascade, setActiveCascade] = useState<{
+    id: number;
+    multiplier: number;
+    color: keyof typeof blockColors;
+    origin: { x: number; y: number };
+  } | null>(null);
 
   const [powerUps, setPowerUps] = useState<PowerUp[]>(getStartingPowerUps());
   const [activePowerUp, setActivePowerUp] = useState<{ type: string; index: number } | null>(null);
@@ -340,7 +346,12 @@ export default function GameScreen() {
         const bestGem = largeGems.reduce((best, current) =>
           sizeOrder[current.size] > sizeOrder[best.size] ? current : best,
         largeGems[0]);
-        setShowGemMerge({ count: bestGem.multiplier, size: bestGem.size, color: bestGem.color });
+        setActiveCascade({
+          id: Date.now(),
+          multiplier: bestGem.multiplier,
+          color: resolveBlockColor(bestGem.color),
+          origin: { x: 0, y: 200 },
+        });
       }
 
       newMultiplier = calculateTotalMultiplier(mergedGems);
@@ -415,12 +426,13 @@ export default function GameScreen() {
       {showLineClear && (
         <LineClearEffect linesCleared={showLineClear} onComplete={() => setShowLineClear(null)} />
       )}
-      {showGemMerge && (
-        <GemMergeEffect
-          gemCount={showGemMerge.count}
-          gemSize={showGemMerge.size}
-          color={showGemMerge.color}
-          onComplete={() => setShowGemMerge(null)}
+      {activeCascade && (
+        <MergeAnimation
+          key={activeCascade.id}
+          multiplier={activeCascade.multiplier}
+          color={activeCascade.color}
+          origin={activeCascade.origin}
+          onComplete={() => setActiveCascade(null)}
         />
       )}
 

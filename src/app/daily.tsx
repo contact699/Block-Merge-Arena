@@ -8,12 +8,13 @@ import { GameBoard } from '@/components/GameBoard';
 import { PiecesTray } from '@/components/design/PiecesTray';
 import { ScoreDisplay } from '@/components/ScoreDisplay';
 import { GemCounter } from '@/components/GemDisplay';
-import { ComboAnimation, LineClearEffect, GemMergeEffect } from '@/components/ComboAnimation';
+import { ComboAnimation, LineClearEffect } from '@/components/ComboAnimation';
+import { MergeAnimation } from '@/components/cascade/MergeAnimation';
 import { TournamentInfo } from '@/components/TournamentTimer';
 import { GlassCard, DeepCard } from '@/components/design/GlassCard';
 import { Pill } from '@/components/design/Pill';
 import { TactileButton } from '@/components/design/TactileButton';
-import { colors, fontWeight, radii } from '@/lib/design/tokens';
+import { colors, fontWeight, radii, resolveBlockColor, blockColors } from '@/lib/design/tokens';
 import { createEmptyBoard, canPlacePiece, placePiece, clearLines, hasValidMoves } from '@/lib/game/board';
 import {
   generateGemsFromClearedCells,
@@ -60,7 +61,12 @@ export default function DailyScreen() {
   // Animation states
   const [showCombo, setShowCombo] = useState<{ points: number; multiplier: number } | null>(null);
   const [showLineClear, setShowLineClear] = useState<number | null>(null);
-  const [showGemMerge, setShowGemMerge] = useState<{ count: number; size: 'small' | 'medium' | 'large' | 'mega'; color: string } | null>(null);
+  const [activeCascade, setActiveCascade] = useState<{
+    id: number;
+    multiplier: number;
+    color: keyof typeof blockColors;
+    origin: { x: number; y: number };
+  } | null>(null);
 
   // Tournament standings
   const [showStandings, setShowStandings] = useState<boolean>(false);
@@ -174,15 +180,15 @@ export default function DailyScreen() {
       // Check for large merged gems
       const largeGems = mergedGems.filter((g: Gem) => g.size !== 'small');
       if (largeGems.length > 0) {
-        const bestGem = largeGems.reduce((best: Gem, current: Gem) => {
-          const sizeOrder = { small: 0, medium: 1, large: 2, mega: 3 };
-          return sizeOrder[current.size] > sizeOrder[best.size] ? current : best;
-        }, largeGems[0]);
-
-        setShowGemMerge({
-          count: bestGem.multiplier,
-          size: bestGem.size,
-          color: bestGem.color
+        const sizeOrder = { small: 0, medium: 1, large: 2, mega: 3 };
+        const bestGem = largeGems.reduce((best: Gem, current: Gem) =>
+          sizeOrder[current.size] > sizeOrder[best.size] ? current : best,
+        largeGems[0]);
+        setActiveCascade({
+          id: Date.now(),
+          multiplier: bestGem.multiplier,
+          color: resolveBlockColor(bestGem.color),
+          origin: { x: 0, y: 200 },
         });
       }
 
@@ -338,12 +344,13 @@ export default function DailyScreen() {
           onComplete={() => setShowLineClear(null)}
         />
       )}
-      {showGemMerge && (
-        <GemMergeEffect
-          gemCount={showGemMerge.count}
-          gemSize={showGemMerge.size}
-          color={showGemMerge.color}
-          onComplete={() => setShowGemMerge(null)}
+      {activeCascade && (
+        <MergeAnimation
+          key={activeCascade.id}
+          multiplier={activeCascade.multiplier}
+          color={activeCascade.color}
+          origin={activeCascade.origin}
+          onComplete={() => setActiveCascade(null)}
         />
       )}
 

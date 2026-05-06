@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { renderShareGrid, ShareGridInput } from './grid';
+import { renderShareGrid } from './grid';
 
 const empty = (): (null | { color: string; gem?: boolean; mult?: number })[][] =>
   Array.from({ length: 8 }, () => Array(8).fill(null));

@@ -1,4 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
+import { tierForMultiplier, AudioTier } from './sfx';
 
 jest.mock('expo-av', () => ({
   Audio: {
@@ -6,8 +7,6 @@ jest.mock('expo-av', () => ({
     Sound: { createAsync: jest.fn() },
   },
 }));
-
-import { tierForMultiplier, AudioTier } from './sfx';
 
 describe('tierForMultiplier', () => {
   it.each([

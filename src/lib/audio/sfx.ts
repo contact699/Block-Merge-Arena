@@ -20,7 +20,7 @@ function tryRequireTier(tier: AudioTier): number | null {
       case '5x': return require('../../../assets/sounds/merge-5x.m4a');
       case '7x': return require('../../../assets/sounds/merge-7x.m4a');
     }
-  } catch (e) {
+  } catch {
     return null;
   }
   return null;

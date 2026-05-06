@@ -1,11 +1,10 @@
 import { describe, it, expect } from '@jest/globals';
+import { hapticTierFor } from './cascade';
 
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(),
   ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
 }));
-
-import { hapticTierFor } from './cascade';
 
 describe('hapticTierFor', () => {
   it.each([

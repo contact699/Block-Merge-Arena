@@ -9,7 +9,6 @@ import { ScoreDisplay } from '@/components/ScoreDisplay';
 import { ComboAnimation, LineClearEffect } from '@/components/ComboAnimation';
 import { MergeAnimation } from '@/components/cascade/MergeAnimation';
 import { ColorSelector } from '@/components/PowerUpButton';
-import { TactileCell } from '@/components/design/TactileCell';
 import { GlassCard } from '@/components/design/GlassCard';
 import { Pill } from '@/components/design/Pill';
 import { TactileButton } from '@/components/design/TactileButton';

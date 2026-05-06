@@ -1,5 +1,5 @@
 // Game Screen — Tactile Console redesign.
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -34,6 +34,7 @@ import {
   canUsePowerUp,
 } from '@/lib/game/powerups';
 import { saveScore } from '@/lib/utils/leaderboard';
+import { checkAchievements } from '@/lib/utils/achievements';
 import type {
   GameBoard as GameBoardType,
   GamePiece,
@@ -222,6 +223,8 @@ export default function GameScreen() {
   const [activePowerUp, setActivePowerUp] = useState<{ type: string; index: number } | null>(null);
   const [showColorSelector, setShowColorSelector] = useState<boolean>(false);
 
+  const runStartTimestampRef = useRef<number>(Date.now());
+
   useEffect(() => {
     startNewGame();
   }, []);
@@ -238,6 +241,7 @@ export default function GameScreen() {
     setActivePowerUp(null);
     setRecentPoints(0);
     setComboCount(0);
+    runStartTimestampRef.current = Date.now();
     track('endless_started', {});
   };
 
@@ -368,6 +372,18 @@ export default function GameScreen() {
         mode: 'endless',
         date: new Date().toISOString(),
         maxMultiplier: multiplier,
+      });
+      void checkAchievements({
+        runMode: 'endless',
+        score,
+        maxMultiplier: multiplier,
+        durationMs: Date.now() - runStartTimestampRef.current,
+        didMerge: multiplier > 1,
+        didDailyComplete: false,
+        dailyStreakDays: 0,
+        dailiesPlayedTotal: 0,
+      }).then((granted) => {
+        if (granted.length > 0) console.log('[achievements] granted', granted);
       });
     }
   };

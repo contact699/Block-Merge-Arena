@@ -1,8 +1,9 @@
 // Daily Screen — renamed from tournament.tsx, restyled with tactile-console aesthetic.
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track } from '@/lib/analytics/events';
 import { GameBoard } from '@/components/GameBoard';
 import { PiecesTray } from '@/components/design/PiecesTray';
@@ -27,7 +28,7 @@ import {
   getDailySeed,
   getTodayDateString
 } from '@/lib/utils/tournament';
-import { saveScore, getGameStats } from '@/lib/utils/leaderboard';
+import { saveScore } from '@/lib/utils/leaderboard';
 import {
   getTournamentStandings,
   isConfigured as isFirebaseConfigured,
@@ -39,7 +40,43 @@ import { rewardCoinsForScore } from '@/lib/utils/currency';
 import { checkAchievements } from '@/lib/utils/achievements';
 
 import type { GameBoard as GameBoardType, GamePiece, Gem } from '@/lib/types/game';
-import type { Achievement } from '@/lib/types/achievements';
+
+// --- Daily streak / total tracking helpers (T8 will move these to src/lib/daily/seed.ts) ---
+const DAILIES_PLAYED_KEY = '@block_merge:dailies_played_total';
+const DAILY_LAST_PLAYED_KEY = '@block_merge:daily_last_played';
+const DAILY_STREAK_KEY = '@block_merge:daily_streak';
+
+function isYesterday(prevId: string, todayId: string): boolean {
+  const prev = new Date(prevId + 'T00:00:00Z').getTime();
+  const today = new Date(todayId + 'T00:00:00Z').getTime();
+  const diff = today - prev;
+  return diff > 0 && diff <= 36 * 60 * 60 * 1000;
+}
+
+async function recordDailyCompletion(
+  puzzleId: string,
+): Promise<{ totalPlayed: number; streakDays: number }> {
+  const totalRaw = await AsyncStorage.getItem(DAILIES_PLAYED_KEY);
+  const totalPlayed = (totalRaw ? parseInt(totalRaw, 10) : 0) + 1;
+  await AsyncStorage.setItem(DAILIES_PLAYED_KEY, String(totalPlayed));
+
+  const lastPlayed = await AsyncStorage.getItem(DAILY_LAST_PLAYED_KEY);
+  const prevStreakRaw = await AsyncStorage.getItem(DAILY_STREAK_KEY);
+  const prevStreak = prevStreakRaw ? parseInt(prevStreakRaw, 10) : 0;
+  let streakDays: number;
+  if (lastPlayed === puzzleId) {
+    // Same day replay — keep existing streak, don't double-count
+    streakDays = prevStreak;
+  } else if (lastPlayed && isYesterday(lastPlayed, puzzleId)) {
+    streakDays = prevStreak + 1;
+  } else {
+    streakDays = 1;
+  }
+  await AsyncStorage.setItem(DAILY_LAST_PLAYED_KEY, puzzleId);
+  await AsyncStorage.setItem(DAILY_STREAK_KEY, String(streakDays));
+  return { totalPlayed, streakDays };
+}
+// ---------------------------------------------------------------------------
 
 export default function DailyScreen() {
   const router = useRouter();
@@ -78,7 +115,9 @@ export default function DailyScreen() {
 
   // Achievements
   const [maxMultiplierReached, setMaxMultiplierReached] = useState<number>(1);
-  const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([]);
+  const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
+
+  const runStartTimestampRef = useRef<number>(Date.now());
 
   // Initialize with tournament pieces
   useEffect(() => {
@@ -100,6 +139,7 @@ export default function DailyScreen() {
     setTournamentStarted(true);
     setTimeRemaining(5 * 60 * 1000);
     setPieceSetIndex(0);
+    runStartTimestampRef.current = Date.now();
     setReplayCode(null);
     setMaxMultiplierReached(1);
     setUnlockedAchievements([]);
@@ -141,16 +181,21 @@ export default function DailyScreen() {
     });
 
     // Check achievements
-    const stats = await getGameStats();
-    const achievementsUnlocked = await checkAchievements({
+    const puzzleId = getTodayDateString();
+    const { totalPlayed, streakDays } = await recordDailyCompletion(puzzleId);
+    const granted = await checkAchievements({
+      runMode: 'daily',
       score,
-      gamesPlayed: stats.totalGames,
-      multiplier: maxMultiplierReached,
+      maxMultiplier: maxMultiplierReached,
+      durationMs: Date.now() - runStartTimestampRef.current,
+      didMerge: maxMultiplierReached > 1,
+      didDailyComplete: true,
+      dailyStreakDays: streakDays,
+      dailiesPlayedTotal: totalPlayed,
     });
-
-    if (achievementsUnlocked.length > 0) {
-      setUnlockedAchievements(achievementsUnlocked);
-      console.log('Achievements unlocked:', achievementsUnlocked.map((a: Achievement) => a.name).join(', '));
+    if (granted.length > 0) {
+      setUnlockedAchievements(granted);
+      console.log('[achievements] granted', granted);
     }
 
     // Load standings after game ends
@@ -317,16 +362,20 @@ export default function DailyScreen() {
       });
 
       // Check achievements
-      getGameStats().then(async (stats) => {
-        const achievementsUnlocked = await checkAchievements({
+      void recordDailyCompletion(getTodayDateString()).then(async ({ totalPlayed, streakDays }) => {
+        const granted = await checkAchievements({
+          runMode: 'daily',
           score: newScore,
-          gamesPlayed: stats.totalGames,
-          multiplier: maxMultiplierReached,
+          maxMultiplier: newMultiplier,
+          durationMs: Date.now() - runStartTimestampRef.current,
+          didMerge: newMultiplier > 1,
+          didDailyComplete: true,
+          dailyStreakDays: streakDays,
+          dailiesPlayedTotal: totalPlayed,
         });
-
-        if (achievementsUnlocked.length > 0) {
-          setUnlockedAchievements(achievementsUnlocked);
-          console.log('Achievements unlocked:', achievementsUnlocked.map((a: Achievement) => a.name).join(', '));
+        if (granted.length > 0) {
+          setUnlockedAchievements(granted);
+          console.log('[achievements] granted', granted);
         }
       });
 
@@ -829,9 +878,9 @@ export default function DailyScreen() {
                   >
                     ACHIEVEMENTS UNLOCKED
                   </Text>
-                  {unlockedAchievements.map((achievement: Achievement) => (
+                  {unlockedAchievements.map((id: string) => (
                     <View
-                      key={achievement.id}
+                      key={id}
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
@@ -844,7 +893,7 @@ export default function DailyScreen() {
                         marginBottom: 8,
                       }}
                     >
-                      <Text style={{ fontSize: 28 }}>{achievement.icon}</Text>
+                      <Text style={{ fontSize: 28 }}>🏆</Text>
                       <View style={{ flex: 1 }}>
                         <Text
                           style={{
@@ -853,7 +902,7 @@ export default function DailyScreen() {
                             fontWeight: fontWeight.heavy,
                           }}
                         >
-                          {achievement.name}
+                          Achievement Unlocked
                         </Text>
                         <Text
                           style={{
@@ -862,41 +911,8 @@ export default function DailyScreen() {
                             marginTop: 2,
                           }}
                         >
-                          {achievement.description}
+                          {id}
                         </Text>
-                        {(achievement.rewards.coins || achievement.rewards.gems) && (
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              gap: 10,
-                              marginTop: 6,
-                            }}
-                          >
-                            {achievement.rewards.coins && (
-                              <Text
-                                style={{
-                                  color: colors.mustard,
-                                  fontSize: 11,
-                                  fontWeight: fontWeight.bold,
-                                }}
-                              >
-                                +{achievement.rewards.coins} coins
-                              </Text>
-                            )}
-                            {achievement.rewards.gems && (
-                              <Text
-                                style={{
-                                  color: colors.plum,
-                                  fontSize: 11,
-                                  fontWeight: fontWeight.bold,
-                                }}
-                              >
-                                +{achievement.rewards.gems} gems
-                              </Text>
-                            )}
-                          </View>
-                        )}
                       </View>
                     </View>
                   ))}

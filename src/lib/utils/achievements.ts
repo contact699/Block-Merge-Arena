@@ -2,6 +2,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Achievement, AchievementUnlock } from '@/lib/types/achievements';
 import { addCurrency } from './currency';
+import { evaluateGrants } from '@/lib/achievements/grants';
+import type { GrantContext } from '@/lib/achievements/grants';
 
 const ACHIEVEMENTS_KEY = '@block_merge:achievements';
 const UNLOCKS_KEY = '@block_merge:achievement_unlocks';
@@ -159,67 +161,31 @@ export async function updateAchievementProgress(
 }
 
 /**
- * Check and update multiple achievements
+ * Check and grant achievements based on a completed run.
+ * Returns the IDs of newly granted achievements.
  */
-export async function checkAchievements(data: {
-  score?: number;
-  gamesPlayed?: number;
-  multiplier?: number;
-  tournamentRank?: number;
-  perfectClear?: boolean;
-}): Promise<Achievement[]> {
-  const unlockedAchievements: Achievement[] = [];
+export async function checkAchievements(
+  ctx: Omit<GrantContext, 'alreadyUnlocked'>,
+): Promise<string[]> {
+  try {
+    const existing = await getAchievements();
+    const alreadyUnlocked = new Set(
+      existing.filter((a) => a.completed).map((a) => a.id),
+    );
+    const newlyGranted = evaluateGrants({ ...ctx, alreadyUnlocked });
+    if (newlyGranted.length === 0) return [];
 
-  // TODO(phase-2): rewrite achievement grants for the slim catalog
-  // The old grants below referenced IDs that no longer exist and have been
-  // commented out. Wire new grant logic once Phase 2 defines the events.
-
-  // // Score achievements
-  // if (data.score !== undefined) {
-  //   const scoreAchievements = ['score_1k', 'score_5k', 'score_10k', 'score_25k', 'score_50k'];
-  //   for (const id of scoreAchievements) {
-  //     const unlocked = await updateAchievementProgress(id, data.score);
-  //     if (unlocked) unlockedAchievements.push(unlocked);
-  //   }
-  // }
-
-  // // Games played
-  // if (data.gamesPlayed !== undefined) {
-  //   const gamesAchievements = ['games_10', 'games_50', 'games_100', 'first_game'];
-  //   for (const id of gamesAchievements) {
-  //     const unlocked = await updateAchievementProgress(id, data.gamesPlayed);
-  //     if (unlocked) unlockedAchievements.push(unlocked);
-  //   }
-  // }
-
-  // // Multiplier/Combo
-  // if (data.multiplier !== undefined) {
-  //   const comboAchievements = ['combo_5x', 'combo_10x'];
-  //   for (const id of comboAchievements) {
-  //     const unlocked = await updateAchievementProgress(id, data.multiplier);
-  //     if (unlocked) unlockedAchievements.push(unlocked);
-  //   }
-  // }
-
-  // // Tournament rank
-  // if (data.tournamentRank !== undefined) {
-  //   if (data.tournamentRank === 1) {
-  //     const unlocked = await updateAchievementProgress('tournament_win', 1);
-  //     if (unlocked) unlockedAchievements.push(unlocked);
-  //   }
-  //   if (data.tournamentRank <= 10) {
-  //     const unlocked = await updateAchievementProgress('tournament_top10', 1);
-  //     if (unlocked) unlockedAchievements.push(unlocked);
-  //   }
-  // }
-
-  // // Perfect clear
-  // if (data.perfectClear) {
-  //   const unlocked = await updateAchievementProgress('perfect_clear', 1);
-  //   if (unlocked) unlockedAchievements.push(unlocked);
-  // }
-
-  return unlockedAchievements;
+    const updated = existing.map((a) =>
+      newlyGranted.includes(a.id)
+        ? { ...a, completed: true, currentProgress: 100, unlockedAt: Date.now() }
+        : a,
+    );
+    await AsyncStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(updated));
+    return newlyGranted;
+  } catch (error) {
+    console.error('Error checking achievements:', error);
+    return [];
+  }
 }
 
 /**

@@ -6,7 +6,10 @@ import { useRouter } from 'expo-router';
 import { getSettings, saveSettings, resetSettings } from '@/lib/utils/settings';
 import type { UserSettings } from '@/lib/types/settings';
 import { colors, fontWeight } from '@/lib/design/tokens';
-import { useThemePalette } from '@/lib/themes/provider';
+import { useThemePalette, useThemeControls } from '@/lib/themes/provider';
+import { useRequireSubscription } from '@/lib/subscription/gate';
+import { PaywallModal } from '@/components/paywall/PaywallModal';
+import type { ThemeId } from '@/lib/themes/catalog';
 import { Pill } from '@/components/design/Pill';
 import { GlassCard } from '@/components/design/GlassCard';
 
@@ -82,8 +85,23 @@ function SettingsRow({
 export default function SettingsScreen() {
   const router = useRouter();
   const palette = useThemePalette();
+  const { available, activeId, setActive } = useThemeControls();
+  const isSubscribed = useRequireSubscription();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showThemePicker, setShowThemePicker] = useState(false);
+  const [showThemePaywall, setShowThemePaywall] = useState(false);
+
+  const onPickTheme = async (id: ThemeId) => {
+    const ok = await setActive(id);
+    if (!ok) {
+      setShowThemePaywall(true);
+      return;
+    }
+    setShowThemePicker(false);
+  };
+
+  const activeName = available.find((t) => t.id === activeId)?.name ?? 'Default';
 
   useEffect(() => {
     loadSettings();
@@ -258,6 +276,12 @@ export default function SettingsScreen() {
             }
           />
           <SettingsRow
+            testID="theme-row"
+            label="Theme"
+            right={<Text style={{ color: colors.inkSoft, fontSize: 14 }}>{`${activeName} ›`}</Text>}
+            onPress={() => setShowThemePicker(true)}
+          />
+          <SettingsRow
             testID="reduced-motion-toggle-row"
             label="Reduced motion"
             right={
@@ -350,6 +374,49 @@ export default function SettingsScreen() {
         </SettingsGroup>
 
       </ScrollView>
+
+      {showThemePicker && (
+        <View style={{
+          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(22,20,15,0.9)',
+          alignItems: 'center', justifyContent: 'center',
+          padding: 24, zIndex: 30,
+        }}>
+          <GlassCard style={{ padding: 20, width: '100%', maxWidth: 360 }}>
+            <Pill variant="ember">THEMES</Pill>
+            <Text style={{ fontSize: 22, fontWeight: fontWeight.black, color: colors.ink, marginTop: 12, letterSpacing: -0.6 }}>
+              Pick a theme
+            </Text>
+            {available.map((t) => (
+              <Pressable
+                key={t.id}
+                testID={`theme-option-${t.id}`}
+                onPress={() => { void onPickTheme(t.id); }}
+                style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(22,20,15,0.06)' }}
+              >
+                <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: t.paper, borderWidth: 1, borderColor: 'rgba(22,20,15,0.1)', marginRight: 10 }} />
+                <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: t.accent, marginRight: 12 }} />
+                <Text style={{ flex: 1, fontSize: 14, fontWeight: fontWeight.semibold, color: colors.ink }}>{t.name}</Text>
+                {t.locked && !isSubscribed && (
+                  <Text style={{ fontSize: 11, color: colors.inkSoft, marginRight: 6 }}>🔒</Text>
+                )}
+                {t.id === activeId && (
+                  <Text style={{ fontSize: 11, color: colors.ember, fontWeight: fontWeight.heavy }}>✓</Text>
+                )}
+              </Pressable>
+            ))}
+            <Pressable onPress={() => setShowThemePicker(false)} style={{ paddingTop: 16, alignItems: 'center' }}>
+              <Text style={{ color: colors.inkSoft, fontWeight: fontWeight.semibold }}>Close</Text>
+            </Pressable>
+          </GlassCard>
+        </View>
+      )}
+
+      <PaywallModal
+        visible={showThemePaywall}
+        source="theme_apply"
+        onDismiss={() => setShowThemePaywall(false)}
+      />
     </SafeAreaView>
   );
 }

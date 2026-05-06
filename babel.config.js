@@ -1,5 +1,9 @@
 module.exports = function (api) {
+  const isTest = api.env('test');
   api.cache(true);
+  if (isTest) {
+    return { presets: ['@babel/preset-env', '@babel/preset-typescript'] };
+  }
   return {
     presets: [
       ["babel-preset-expo", { jsxImportSource: "nativewind", unstable_transformImportMeta: true }],

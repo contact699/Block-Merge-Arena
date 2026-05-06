@@ -114,7 +114,6 @@ export default function ShareScreen() {
     switch (type) {
       case 'combo': return '🔥';
       case 'high_score': return '🏆';
-      case 'rank_up': return '📈';
       case 'achievement': return '🏅';
       case 'tournament_win': return '👑';
       default: return '🎮';

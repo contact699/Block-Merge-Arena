@@ -13,19 +13,13 @@ name: Home Screen Navigation
           text: "Wait"
 
 # Handle welcome screen if present
-- extendedWaitUntil:
-    visible:
-      text: "Skip Tutorial"
-    timeout: 60000
-    optional: true
-
 - runFlow:
     when:
       visible:
-        text: "Skip Tutorial"
+        id: "welcome-screen"
     commands:
       - tapOn:
-          text: "Skip Tutorial"
+          id: "lets-play-button"
       - extendedWaitUntil:
           visible:
             id: "home-screen"
@@ -122,81 +116,8 @@ name: Home Screen Navigation
       id: "home-screen"
     timeout: 10000
 
-# 8. Tutorials
-- tapOn:
-    id: "tutorials-button"
-- extendedWaitUntil:
-    visible:
-      id: "tutorials-screen"
-    timeout: 10000
-- tapOn:
-    id: "back-button"
-- extendedWaitUntil:
-    visible:
-      id: "home-screen"
-    timeout: 10000
-
-# 9. Ranks (scroll needed)
-- scroll
-- tapOn:
-    id: "ranks-button"
-- extendedWaitUntil:
-    visible:
-      id: "ranks-screen"
-    timeout: 10000
-- tapOn:
-    id: "back-button"
-- extendedWaitUntil:
-    visible:
-      id: "home-screen"
-    timeout: 10000
-
-# 10. Battle Pass (scroll needed)
-- scroll
-- tapOn:
-    id: "battlepass-button"
-- extendedWaitUntil:
-    visible:
-      id: "battlepass-screen"
-    timeout: 10000
-- tapOn:
-    id: "back-button"
-- extendedWaitUntil:
-    visible:
-      id: "home-screen"
-    timeout: 10000
-
-# 11. Squads (scroll needed)
-- scroll
-- tapOn:
-    id: "squads-button"
-- extendedWaitUntil:
-    visible:
-      id: "squads-screen"
-    timeout: 10000
-- tapOn:
-    id: "back-button"
-- extendedWaitUntil:
-    visible:
-      id: "home-screen"
-    timeout: 10000
-
-# 12. Friends (scroll needed)
-- scroll
-- tapOn:
-    id: "friends-button"
-- extendedWaitUntil:
-    visible:
-      id: "friends-screen"
-    timeout: 10000
-- tapOn:
-    id: "back-button"
-- extendedWaitUntil:
-    visible:
-      id: "home-screen"
-    timeout: 10000
-
 # Note: Share button and Settings button are skipped in this flow.
 # - Share: nested gradient wrapper makes testID/text invisible to Maestro
 # - Settings: positioned too close to status bar, triggers notification shade
 # Both screens are tested individually in their own flow files.
+# Cut from v1: tutorials, ranks, battlepass, squads, friends.

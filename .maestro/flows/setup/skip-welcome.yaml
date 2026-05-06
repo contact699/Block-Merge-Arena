@@ -1,23 +1,23 @@
 appId: com.blockmergearena.app
-name: Skip Welcome Tutorial
+name: Skip Welcome
 ---
 - launchApp:
     clearState: true
 
-# Wait for app to fully load (welcome or home screen)
+# Wait for either the welcome screen or home screen to appear
 - extendedWaitUntil:
     visible:
       text: "Block Merge"
     timeout: 30000
 
-# Skip the tutorial if it appears
+# Tap "Start playing" if the welcome screen is visible
 - runFlow:
     when:
       visible:
-        text: "Skip Tutorial"
+        id: "welcome-screen"
     commands:
       - tapOn:
-          text: "Skip Tutorial"
+          id: "lets-play-button"
       - extendedWaitUntil:
           visible:
             id: "home-screen"

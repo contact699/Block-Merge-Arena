@@ -4,7 +4,7 @@ export type SharePlatform = 'tiktok' | 'instagram' | 'twitter' | 'facebook' | 'g
 
 export interface ShareableHighlight {
   id: string;
-  type: 'combo' | 'high_score' | 'rank_up' | 'achievement' | 'tournament_win';
+  type: 'combo' | 'high_score' | 'achievement' | 'tournament_win';
   title: string;
   description: string;
   score?: number;
@@ -83,11 +83,11 @@ export const DEFAULT_SOCIAL_STATS: SocialStats = {
  * Hashtags for different platforms
  */
 export const HASHTAGS = {
-  default: ['BlockMergeArena', 'MobileGaming', 'PuzzleGame'],
+  default: ['BlockMerge', 'DailyPuzzle', 'PuzzleGame'],
   combo: ['EpicCombo', 'GamingClip', 'SatisfyingGaming'],
-  highScore: ['HighScore', 'NewRecord', 'GamerLife'],
-  tournament: ['TournamentWin', 'Esports', 'CompetitiveGaming'],
-  achievement: ['Achievement', 'GamingGoals', 'Unlocked'],
+  highScore: ['HighScore', 'NewRecord', 'PuzzleLife'],
+  tournament: ['DailyChallenge', 'PuzzleGame', 'BlockMerge'],
+  achievement: ['Achievement', 'PuzzleGoals', 'Unlocked'],
 };
 
 /**
@@ -105,12 +105,8 @@ export const CAPTION_TEMPLATES = {
     '{score} points?! I\'m on fire! 🔥 #{hashtag}',
   ],
   tournament: [
-    '🥇 Tournament CHAMPION! #{hashtag}',
-    'Just won the daily tournament with {score} points! 🏆',
+    '🥇 Top of the daily leaderboard! #{hashtag}',
+    'Just put up {score} on today\'s daily puzzle! 🏆',
     'TOP OF THE LEADERBOARD! Can you beat my {score}? 👑',
-  ],
-  rankUp: [
-    '📈 Just ranked up to {rank}! The grind is real 💪',
-    'NEW RANK: {rank}! Block Merge is addictive 🎮',
   ],
 };

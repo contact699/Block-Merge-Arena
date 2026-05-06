@@ -2,12 +2,18 @@ import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { initAnalytics, track } from '@/lib/analytics/events';
+import { initAnalytics, identify, track } from '@/lib/analytics/events';
+import { getOrCreateUser } from '@/lib/firebase/auth';
 import '../../global.css';
 
 export default function RootLayout() {
   useEffect(() => {
-    initAnalytics().then(() => track('app_opened', { source: 'cold_launch' }));
+    (async () => {
+      await initAnalytics();
+      const userId = await getOrCreateUser();
+      identify(userId);
+      track('app_opened', { source: 'cold_launch' });
+    })();
   }, []);
 
   return (

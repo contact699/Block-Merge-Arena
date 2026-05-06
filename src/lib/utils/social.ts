@@ -201,22 +201,6 @@ export async function captureTournamentHighlight(
 }
 
 /**
- * Capture a rank up highlight
- */
-export async function captureRankUpHighlight(
-  newRank: string,
-  score: number
-): Promise<ShareableHighlight> {
-  return saveHighlight({
-    type: 'rank_up',
-    title: `Ranked Up: ${newRank}!`,
-    description: `Climbed the ladder with ${score.toLocaleString()} points!`,
-    score,
-    timestamp: Date.now(),
-  });
-}
-
-/**
  * Capture an achievement highlight
  */
 export async function captureAchievementHighlight(
@@ -237,18 +221,16 @@ export async function captureAchievementHighlight(
  * Generate a share caption based on highlight type
  */
 export function generateCaption(highlight: ShareableHighlight): string {
-  const templates = CAPTION_TEMPLATES[highlight.type === 'high_score' ? 'highScore' : 
-                                       highlight.type === 'tournament_win' ? 'tournament' :
-                                       highlight.type === 'rank_up' ? 'rankUp' : 'combo'];
-  
+  const templates = CAPTION_TEMPLATES[highlight.type === 'high_score' ? 'highScore' :
+                                       highlight.type === 'tournament_win' ? 'tournament' : 'combo'];
+
   const template = templates[Math.floor(Math.random() * templates.length)];
-  
+
   return template
     .replace('{combo}', String(highlight.comboCount || 0))
     .replace('{multiplier}', String(highlight.multiplier || 1))
     .replace('{score}', (highlight.score || 0).toLocaleString())
-    .replace('{rank}', highlight.title.replace(/.*: /, ''))
-    .replace('{hashtag}', 'BlockMergeArena');
+    .replace('{hashtag}', 'BlockMerge');
 }
 
 /**
@@ -265,7 +247,6 @@ export function getHashtags(highlight: ShareableHighlight): string[] {
     case 'tournament_win':
       return [...base, ...HASHTAGS.tournament];
     case 'achievement':
-    case 'rank_up':
       return [...base, ...HASHTAGS.achievement];
     default:
       return base;

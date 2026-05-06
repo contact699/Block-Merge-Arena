@@ -183,7 +183,7 @@ export default function HomeScreen() {
               WELCOME BACK
             </Text>
             <Text style={{ fontSize: 16, fontWeight: fontWeight.heavy, color: colors.ink, letterSpacing: -0.4 }}>
-              Player · Gold II
+              Player
             </Text>
           </View>
         </View>
@@ -264,7 +264,6 @@ export default function HomeScreen() {
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
                 {[
                   { label: 'YOUR BEST', value: '—' },
-                  { label: 'RANK', value: '—' },
                   { label: 'PRIZE', value: '10k ◆', highlight: true },
                 ].map((s) => (
                   <View

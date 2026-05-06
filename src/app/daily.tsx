@@ -29,6 +29,8 @@ import {
   getTodayDateString,
   recordDailyCompletion,
 } from '@/lib/daily/seed';
+import { getArchive, type ArchiveEntry } from '@/lib/daily/archive';
+import { requireSubscription } from '@/lib/subscription/gate';
 import { saveScore } from '@/lib/utils/leaderboard';
 import {
   getTournamentStandings,
@@ -84,6 +86,22 @@ export default function DailyScreen() {
   // Achievements
   const [maxMultiplierReached, setMaxMultiplierReached] = useState<number>(1);
   const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
+
+  // Archive
+  const [showArchive, setShowArchive] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [archive, setArchive] = useState<ArchiveEntry[]>([]);
+
+  const onArchivePress = async (): Promise<void> => {
+    if (!requireSubscription()) {
+      setShowPaywall(true);
+      track('paywall_viewed', { source: 'archive' });
+      return;
+    }
+    const entries = await getArchive();
+    setArchive(entries);
+    setShowArchive(true);
+  };
 
   const runStartTimestampRef = useRef<number>(Date.now());
 
@@ -402,6 +420,9 @@ export default function DailyScreen() {
                 <View style={{ marginTop: 10 }}>
                   <TournamentInfo date={tournamentDate} />
                 </View>
+                <Pressable testID="archive-button" onPress={onArchivePress} style={{ marginTop: 8 }}>
+                  <Pill variant="ink">ARCHIVE</Pill>
+                </Pressable>
               </View>
             </View>
           </DeepCard>
@@ -912,6 +933,74 @@ export default function DailyScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Archive overlay */}
+      {showArchive && (
+        <View style={{
+          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: colors.paper, padding: 18, zIndex: 10,
+        }}>
+          <Pressable testID="close-archive-button" onPress={() => setShowArchive(false)} style={{ paddingVertical: 8 }}>
+            <Text style={{ color: colors.inkSoft, fontSize: 14, fontWeight: fontWeight.semibold }}>← back</Text>
+          </Pressable>
+          <Text style={{ fontSize: 28, fontWeight: fontWeight.black, color: colors.ink, marginTop: 12, letterSpacing: -1 }}>
+            Archive
+          </Text>
+          <Text style={{ fontSize: 13, color: colors.inkSoft, marginTop: 4 }}>
+            Every past daily puzzle, replayable.
+          </Text>
+          <ScrollView style={{ flex: 1, marginTop: 16 }}>
+            {archive.length === 0 ? (
+              <Text style={{ color: colors.inkSoft, padding: 32, textAlign: 'center' }}>
+                No archived puzzles yet. Play more dailies to fill this list.
+              </Text>
+            ) : (
+              archive.map((e) => (
+                <GlassCard key={e.puzzleId} style={{ padding: 14, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={{ fontWeight: fontWeight.heavy, color: colors.ink }}>{e.puzzleId}</Text>
+                  <Text style={{ color: e.played ? colors.ember : colors.inkSoft, fontWeight: fontWeight.semibold }}>
+                    {e.played ? `${e.score.toLocaleString()} · ×${e.multiplier}` : 'unplayed'}
+                  </Text>
+                </GlassCard>
+              ))
+            )}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Paywall overlay */}
+      {showPaywall && (
+        <View style={{
+          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(22,20,15,0.9)',
+          alignItems: 'center', justifyContent: 'center',
+          padding: 24, zIndex: 20,
+        }}>
+          <View style={{ backgroundColor: colors.paper, borderRadius: 18, padding: 24, maxWidth: 360, width: '100%' }}>
+            <Pill variant="ember">SUBSCRIBER</Pill>
+            <Text style={{ fontSize: 24, fontWeight: fontWeight.black, color: colors.ink, marginTop: 14, letterSpacing: -1 }}>
+              Daily Archive
+            </Text>
+            <Text style={{ color: colors.inkSoft, marginTop: 6 }}>
+              Every past puzzle, replayable forever. Subscribers only.
+            </Text>
+            <Text style={{ color: colors.inkDim, marginTop: 12, fontSize: 12 }}>
+              Subscriptions land in Phase 3.
+            </Text>
+            <TactileButton
+              testID="paywall-close-button"
+              variant="ink"
+              style={{ marginTop: 18 }}
+              onPress={() => {
+                setShowPaywall(false);
+                track('paywall_dismissed', { source: 'archive' });
+              }}
+            >
+              Close
+            </TactileButton>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

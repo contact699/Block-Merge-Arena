@@ -5,13 +5,14 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { initAnalytics, identify, track } from '@/lib/analytics/events';
 import { getOrCreateUser } from '@/lib/firebase/auth';
 import { migrateStorageKeys } from '@/lib/storage/migrate';
+import { initSfx } from '@/lib/audio/sfx';
 import '../../global.css';
 
 export default function RootLayout() {
   useEffect(() => {
     (async () => {
       await migrateStorageKeys();
-      await initAnalytics();
+      await Promise.all([initAnalytics(), initSfx()]);
       const userId = await getOrCreateUser();
       identify(userId);
       track('app_opened', { source: 'cold_launch' });

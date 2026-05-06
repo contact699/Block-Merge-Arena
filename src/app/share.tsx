@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 import {
   getHighlights,
   deleteHighlight,
@@ -17,6 +18,9 @@ import { colors, fontWeight, radii } from '@/lib/design/tokens';
 import { Pill } from '@/components/design/Pill';
 import { GlassCard } from '@/components/design/GlassCard';
 import { TactileButton } from '@/components/design/TactileButton';
+import { renderShareGrid } from '@/lib/share/grid';
+import { getLastCompletedRun } from '@/lib/utils/replay';
+import { track } from '@/lib/analytics/events';
 
 export default function ShareScreen() {
   const router = useRouter();
@@ -28,9 +32,28 @@ export default function ShareScreen() {
   const [selectedHighlight, setSelectedHighlight] = useState<ShareableHighlight | null>(null);
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
 
+  // Daily grid state
+  const [grid, setGrid] = useState<string | null>(null);
+  const [gridScore, setGridScore] = useState<number>(0);
+
   useEffect(() => {
     loadData();
+    loadGrid();
   }, []);
+
+  const loadGrid = async (): Promise<void> => {
+    const run = await getLastCompletedRun();
+    if (!run) return;
+    setGridScore(run.score);
+    setGrid(renderShareGrid(run));
+  };
+
+  const onCopyGrid = async (): Promise<void> => {
+    if (!grid) return;
+    await Clipboard.setStringAsync(grid);
+    track('share_grid_tapped', { source: 'daily', score: gridScore });
+    Alert.alert('Copied!', 'Grid copied to clipboard.', [{ text: 'OK' }]);
+  };
 
   const loadData = async (): Promise<void> => {
     setLoading(true);
@@ -378,6 +401,35 @@ export default function ShareScreen() {
         <Text style={{ fontSize: 13, color: colors.inkSoft, marginTop: 6, lineHeight: 19 }}>
           Epic moments from your games, ready to share.
         </Text>
+
+        {/* Daily grid section */}
+        <View style={{ marginTop: 20 }}>
+          <Text style={{ fontSize: 12, fontWeight: fontWeight.bold, color: colors.inkSoft, letterSpacing: 0.8, marginBottom: 10 }}>
+            YOUR DAILY GRID
+          </Text>
+          <Text style={{ fontSize: 12, color: colors.inkDim, marginBottom: 12, lineHeight: 18 }}>
+            Your annotated emoji grid from your last run — copy and paste anywhere.
+          </Text>
+          {grid ? (
+            <GlassCard style={{ padding: 20, width: '100%', maxWidth: 360 }}>
+              <Text style={{ fontFamily: 'Courier', fontSize: 12, color: colors.ink, lineHeight: 16 }}>
+                {grid}
+              </Text>
+            </GlassCard>
+          ) : (
+            <Text style={{ color: colors.inkSoft, padding: 24, textAlign: 'center' }}>
+              Finish a run to generate your grid.
+            </Text>
+          )}
+          <TactileButton
+            testID="copy-grid-button"
+            variant="primary"
+            onPress={grid ? onCopyGrid : undefined}
+            style={{ marginTop: 18, maxWidth: 360, opacity: grid ? 1 : 0.4 }}
+          >
+            Copy grid
+          </TactileButton>
+        </View>
 
         {renderStats()}
         {renderSettings()}

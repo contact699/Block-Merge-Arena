@@ -159,7 +159,7 @@ export default function DailyScreen() {
 
     // Stop replay recording
     if (replayRecorder && replayRecorder.isRecording()) {
-      const replay = await replayRecorder.stop(score);
+      const replay = await replayRecorder.stop(score, undefined, undefined, board);
       if (replay) {
         setReplayCode(replay.code || null);
         console.log('Daily replay saved:', replay.code);
@@ -338,7 +338,7 @@ export default function DailyScreen() {
 
       // Stop replay recording
       if (replayRecorder && replayRecorder.isRecording()) {
-        replayRecorder.stop(newScore).then((replay) => {
+        replayRecorder.stop(newScore, undefined, undefined, newBoard).then((replay) => {
           if (replay) {
             setReplayCode(replay.code || null);
             console.log('Daily replay saved:', replay.code);

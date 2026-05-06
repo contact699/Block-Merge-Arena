@@ -1,5 +1,5 @@
 // Replay System Types
-import type { Position } from './game';
+import type { Position, CellState } from './game';
 
 /**
  * A single move in a replay
@@ -32,6 +32,7 @@ export interface Replay {
   duration: number; // milliseconds
   maxMultiplier: number;
   moveCount: number;
+  finalBoardState?: CellState[][]; // board state at game-over for share grid
 
   // Timestamps
   startedAt: number; // Unix timestamp
@@ -62,6 +63,7 @@ export interface CompactReplay {
   ca: number; // createdAt
   dn?: string; // displayName
   r?: number; // rank
+  fb?: CellState[][]; // finalBoardState
 }
 
 /**

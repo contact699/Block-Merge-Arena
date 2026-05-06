@@ -1,6 +1,6 @@
 // Replay Recorder - Records gameplay moves for replay
 import type { Replay, ReplayMove } from '@/lib/types/replay';
-import type { GamePiece, Position } from '@/lib/types/game';
+import type { GamePiece, Position, GameBoard } from '@/lib/types/game';
 import { saveReplay, generateReplayCode } from '@/lib/utils/replay';
 
 export class ReplayRecorder {
@@ -77,7 +77,7 @@ export class ReplayRecorder {
   /**
    * Stop recording and save replay
    */
-  async stop(finalScore?: number, displayName?: string, rank?: number): Promise<Replay | null> {
+  async stop(finalScore?: number, displayName?: string, rank?: number, finalBoard?: GameBoard): Promise<Replay | null> {
     if (!this.recording) return null;
 
     this.recording = false;
@@ -99,6 +99,7 @@ export class ReplayRecorder {
       createdAt: Date.now(),
       displayName,
       rank,
+      finalBoardState: finalBoard,
     };
 
     // Save to local storage

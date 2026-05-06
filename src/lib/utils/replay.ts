@@ -1,6 +1,8 @@
 // Replay Utilities - Compression, Code Generation, Storage
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Replay, CompactReplay, CompactMove, ReplayMove } from '@/lib/types/replay';
+import { resolveBlockColor } from '@/lib/design/tokens';
+import type { ShareGridCell } from '@/lib/share/grid';
 
 const REPLAYS_KEY = '@block_merge:replays';
 const MAX_REPLAYS = 20; // Keep last 20 replays locally
@@ -55,6 +57,7 @@ export function compressReplay(replay: Replay): CompactReplay {
     ca: replay.createdAt,
     dn: replay.displayName,
     r: replay.rank,
+    fb: replay.finalBoardState,
   };
 }
 
@@ -86,6 +89,7 @@ export function decompressReplay(compact: CompactReplay): Replay {
     createdAt: compact.ca,
     displayName: compact.dn,
     rank: compact.r,
+    finalBoardState: compact.fb,
   };
 }
 
@@ -215,6 +219,46 @@ export function formatDuration(milliseconds: number): string {
   }
 
   return `${minutes}m ${seconds}s`;
+}
+
+/**
+ * Get the most recent completed run for the share grid
+ */
+export async function getLastCompletedRun(): Promise<{
+  puzzleId: string;
+  score: number;
+  maxMultiplier: number;
+  board: (ShareGridCell | null)[][];
+} | null> {
+  const replays = await getLocalReplays();
+  if (replays.length === 0) return null;
+
+  // replays are stored newest-first (unshift on save)
+  const latest = replays[0];
+
+  if (!latest.finalBoardState || latest.finalBoardState.length === 0) return null;
+
+  const board: (ShareGridCell | null)[][] = latest.finalBoardState.map((row) =>
+    row.map((cell) => {
+      if (!cell.filled && !cell.color) return null;
+      const color = resolveBlockColor(cell.color ?? '');
+      return {
+        color,
+        gem: !cell.filled && !!cell.color,
+      } satisfies ShareGridCell;
+    })
+  );
+
+  const puzzleId =
+    latest.tournamentDate ??
+    new Date(latest.createdAt).toISOString().slice(0, 10);
+
+  return {
+    puzzleId,
+    score: latest.finalScore,
+    maxMultiplier: latest.maxMultiplier,
+    board,
+  };
 }
 
 /**

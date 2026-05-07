@@ -1,5 +1,6 @@
 module.exports = function (api) {
   const isTest = api.env('test');
+  const isProduction = api.env('production');
   api.cache(true);
   if (isTest) {
     return { presets: ['@babel/preset-env', '@babel/preset-typescript'] };
@@ -25,6 +26,9 @@ module.exports = function (api) {
       ],
       "@babel/plugin-proposal-export-namespace-from",
       "react-native-reanimated/plugin",
+      // Production builds strip console.log/info/debug/trace; warn + error
+      // are kept so on-device crash logs remain useful.
+      ...(isProduction ? [["transform-remove-console", { exclude: ["error", "warn"] }]] : []),
     ],
   };
 };

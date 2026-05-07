@@ -9,15 +9,19 @@ import { initSfx } from '@/lib/audio/sfx';
 import { initRevenueCat } from '@/lib/subscription/revenuecat';
 import { SubscriptionProvider } from '@/lib/subscription/state';
 import { ThemeProvider } from '@/lib/themes/provider';
+import { initSentry, identifySentryUser } from '@/lib/observability/sentry';
+import { ErrorBoundary } from '@/components/observability/ErrorBoundary';
 import '../../global.css';
 
 export default function RootLayout() {
   useEffect(() => {
     (async () => {
+      initSentry();
       await migrateStorageKeys();
       await Promise.all([initAnalytics(), initSfx()]);
       const userId = await getOrCreateUser();
       identify(userId);
+      identifySentryUser(userId);
       await initRevenueCat(userId);
       track('app_opened', { source: 'cold_launch' });
     })();
@@ -26,20 +30,22 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <SubscriptionProvider>
-          <ThemeProvider>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: '#f3efe7' },
-              }}
-            >
-              <Stack.Screen name="index" />
-              <Stack.Screen name="game" />
-              <Stack.Screen name="daily" />
-            </Stack>
-          </ThemeProvider>
-        </SubscriptionProvider>
+        <ErrorBoundary>
+          <SubscriptionProvider>
+            <ThemeProvider>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: '#f3efe7' },
+                }}
+              >
+                <Stack.Screen name="index" />
+                <Stack.Screen name="game" />
+                <Stack.Screen name="daily" />
+              </Stack>
+            </ThemeProvider>
+          </SubscriptionProvider>
+        </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

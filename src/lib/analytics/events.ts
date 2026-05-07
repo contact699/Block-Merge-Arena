@@ -2,6 +2,7 @@
 // All event taxonomy lives here. New events go in `EventMap`; never call
 // posthog.capture() inline anywhere else.
 import PostHog from 'posthog-react-native';
+import { breadcrumb } from '@/lib/observability/sentry';
 
 let client: PostHog | null = null;
 
@@ -34,6 +35,7 @@ type JsonProps = { [key: string]: JsonValue };
 export function track<K extends keyof EventMap>(event: K, props: EventMap[K]): void {
   if (!client) return;
   client.capture(event, props as unknown as JsonProps);
+  breadcrumb('analytics', String(event), props as JsonProps);
 }
 
 export function identify(userId: string, traits?: JsonProps): void {

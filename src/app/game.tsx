@@ -1,6 +1,7 @@
 // Game Screen — Tactile Console redesign.
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { computeCascadeOrigin, type BoardLayout } from '@/lib/cascade/origin';
+import { View, Text, ScrollView, Pressable, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { track } from '@/lib/analytics/events';
@@ -226,6 +227,11 @@ export default function GameScreen() {
     origin: { x: number; y: number };
   } | null>(null);
 
+  const [boardLayout, setBoardLayout] = useState<BoardLayout | null>(null);
+
+  const BOARD_INNER_PADDING = 10;
+  const CELL_GAP = 2;
+
   const [powerUps, setPowerUps] = useState<PowerUp[]>(getStartingPowerUps());
   const [activePowerUp, setActivePowerUp] = useState<{ type: string; index: number } | null>(null);
   const [showColorSelector, setShowColorSelector] = useState<boolean>(false);
@@ -348,11 +354,15 @@ export default function GameScreen() {
         const bestGem = largeGems.reduce((best, current) =>
           sizeOrder[current.size] > sizeOrder[best.size] ? current : best,
         largeGems[0]);
+        const cell = { row: bestGem.position.row, col: bestGem.position.col };
+        const origin = boardLayout
+          ? computeCascadeOrigin(cell, boardLayout)
+          : { x: 0, y: 200 };
         setActiveCascade({
           id: Date.now(),
           multiplier: bestGem.multiplier,
           color: resolveBlockColor(bestGem.color),
-          origin: { x: 0, y: 200 },
+          origin,
         });
       }
 
@@ -470,7 +480,22 @@ export default function GameScreen() {
         {/* Board */}
         <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 8, paddingHorizontal: 16 }}>
           <View style={{ position: 'relative' }}>
-            <GameBoard board={board} onCellPress={handleCellPress} />
+            <View
+              onLayout={(e: LayoutChangeEvent) => {
+                const { x, y, width } = e.nativeEvent.layout;
+                const cellSize = (width - BOARD_INNER_PADDING * 2 - CELL_GAP * 7) / 8;
+                setBoardLayout({
+                  boardX: x,
+                  boardY: y,
+                  boardSize: width,
+                  cellSize,
+                  boardPadding: BOARD_INNER_PADDING,
+                  cellGap: CELL_GAP,
+                });
+              }}
+            >
+              <GameBoard board={board} onCellPress={handleCellPress} />
+            </View>
             {multiplier > 1 && (
               <View
                 style={{

@@ -1,6 +1,7 @@
 // Daily Screen — renamed from tournament.tsx, restyled with tactile-console aesthetic.
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable, type LayoutChangeEvent } from 'react-native';
+import { computeCascadeOrigin, type BoardLayout } from '@/lib/cascade/origin';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { track } from '@/lib/analytics/events';
@@ -74,6 +75,10 @@ export default function DailyScreen() {
     color: keyof typeof blockColors;
     origin: { x: number; y: number };
   } | null>(null);
+
+  const [boardLayout, setBoardLayout] = useState<BoardLayout | null>(null);
+  const BOARD_INNER_PADDING = 10;
+  const CELL_GAP = 2;
 
   // Tournament standings
   const [showStandings, setShowStandings] = useState<boolean>(false);
@@ -216,11 +221,15 @@ export default function DailyScreen() {
         const bestGem = largeGems.reduce((best: Gem, current: Gem) =>
           sizeOrder[current.size] > sizeOrder[best.size] ? current : best,
         largeGems[0]);
+        const cell = { row: bestGem.position.row, col: bestGem.position.col };
+        const origin = boardLayout
+          ? computeCascadeOrigin(cell, boardLayout)
+          : { x: 0, y: 200 };
         setActiveCascade({
           id: Date.now(),
           multiplier: bestGem.multiplier,
           color: resolveBlockColor(bestGem.color),
-          origin: { x: 0, y: 200 },
+          origin,
         });
       }
 
@@ -853,10 +862,25 @@ export default function DailyScreen() {
         {tournamentStarted && (
           <View style={{ alignItems: 'center', marginTop: 14, marginBottom: 8, paddingHorizontal: 16 }}>
             <View style={{ position: 'relative' }}>
-              <GameBoard
-                board={board}
-                onCellPress={handleCellPress}
-              />
+              <View
+                onLayout={(e: LayoutChangeEvent) => {
+                  const { x, y, width } = e.nativeEvent.layout;
+                  const cellSize = (width - BOARD_INNER_PADDING * 2 - CELL_GAP * 7) / 8;
+                  setBoardLayout({
+                    boardX: x,
+                    boardY: y,
+                    boardSize: width,
+                    cellSize,
+                    boardPadding: BOARD_INNER_PADDING,
+                    cellGap: CELL_GAP,
+                  });
+                }}
+              >
+                <GameBoard
+                  board={board}
+                  onCellPress={handleCellPress}
+                />
+              </View>
               {multiplier > 1 && (
                 <View
                   style={{

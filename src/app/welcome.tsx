@@ -2,7 +2,7 @@
 import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontWeight } from '@/lib/design/tokens';
+import { colors, fontWeight, space, fontSize, radii, shadows } from '@/lib/design/tokens';
 import { useThemePalette } from '@/lib/themes/provider';
 import { TactileCell } from '@/components/design/TactileCell';
 import { TactileButton } from '@/components/design/TactileButton';
@@ -31,16 +31,12 @@ function IntroBoardPreview() {
       style={{
         width: boardSize,
         height: boardSize,
-        borderRadius: 14,
+        borderRadius: radii.lg,
         padding,
-        backgroundColor: '#0a0805',
+        backgroundColor: colors.boardBgBottom,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.06)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 24 },
-        shadowOpacity: 0.5,
-        shadowRadius: 30,
-        elevation: 10,
+        borderColor: colors.boardCellBorder,
+        ...shadows.boardLift,
       }}
     >
       {Array.from({ length: 8 }).map((_, r) => (
@@ -55,10 +51,10 @@ function IntroBoardPreview() {
                   height: cell,
                   marginRight: c < 7 ? gap : 0,
                   marginBottom: r < 7 ? gap : 0,
-                  borderRadius: 5,
-                  backgroundColor: 'rgba(255,255,255,0.025)',
+                  borderRadius: radii.sm - 1,
+                  backgroundColor: colors.boardCellBg,
                   borderWidth: 1,
-                  borderColor: 'rgba(255,255,255,0.04)',
+                  borderColor: colors.inkRuleSoft,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
@@ -90,8 +86,8 @@ export default function WelcomeScreen() {
         pointerEvents="none"
         style={{
           position: 'absolute',
-          top: -80,
-          right: -60,
+          top: -(space.xl * 2 + space.lg),
+          right: -(space.xl + space.lg),
           width: 240,
           height: 240,
           borderRadius: 120,
@@ -103,8 +99,8 @@ export default function WelcomeScreen() {
         pointerEvents="none"
         style={{
           position: 'absolute',
-          bottom: 80,
-          left: -60,
+          bottom: space.xl * 2 + space.lg,
+          left: -(space.xl + space.lg),
           width: 200,
           height: 200,
           borderRadius: 100,
@@ -113,14 +109,14 @@ export default function WelcomeScreen() {
         }}
       />
 
-      <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 28, paddingBottom: 24 }}>
+      <View style={{ flex: 1, paddingHorizontal: space.xl, paddingTop: space.lg + space.md, paddingBottom: space.xl }}>
         <Pill variant="ember">NEW · 2026</Pill>
 
         <Text
           style={{
-            marginTop: 18,
-            fontSize: 56,
-            lineHeight: 56,
+            marginTop: space.lg,
+            fontSize: fontSize.hero + space.sm,
+            lineHeight: fontSize.hero + space.sm,
             fontWeight: fontWeight.black,
             letterSpacing: -2,
             color: colors.ink,
@@ -132,9 +128,9 @@ export default function WelcomeScreen() {
 
         <Text
           style={{
-            marginTop: 14,
-            fontSize: 14,
-            lineHeight: 20,
+            marginTop: space.md,
+            fontSize: fontSize.subtitle - 1,
+            lineHeight: fontSize.subtitle + space.sm - 1,
             color: colors.inkSoft,
             maxWidth: 300,
           }}
@@ -143,39 +139,35 @@ export default function WelcomeScreen() {
           leftover gems merge into multipliers.
         </Text>
 
-        <View style={{ alignItems: 'center', marginTop: 28 }}>
+        <View style={{ alignItems: 'center', marginTop: space.xl + space.sm }}>
           <View style={{ position: 'relative' }}>
             <IntroBoardPreview />
             <View
               style={{
                 position: 'absolute',
-                top: -12,
-                right: -12,
-                paddingHorizontal: 12,
-                paddingVertical: 5,
+                top: -(space.md - 2),
+                right: -(space.md - 2),
+                paddingHorizontal: space.md - 2,
+                paddingVertical: space.xs + 1,
                 backgroundColor: colors.ember,
-                borderRadius: 999,
+                borderRadius: radii.pill,
                 borderWidth: 1.5,
-                borderColor: 'white',
-                shadowColor: colors.ember,
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.6,
-                shadowRadius: 16,
-                elevation: 8,
+                borderColor: colors.paper,
+                ...shadows.buttonEmber,
               }}
             >
-              <Text style={{ color: 'white', fontWeight: fontWeight.black, fontSize: 16 }}>3×</Text>
+              <Text style={{ color: colors.paper, fontWeight: fontWeight.black, fontSize: fontSize.subtitle + 1 }}>3×</Text>
             </View>
           </View>
         </View>
 
-        <View style={{ marginTop: 'auto', gap: 10 }}>
+        <View style={{ marginTop: 'auto', gap: space.sm + 2 }}>
           <TactileButton testID="lets-play-button" variant="primary" onPress={handleStart}>
             Start playing
           </TactileButton>
           <Pressable
             onPress={handleStart}
-            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, alignItems: 'center', paddingVertical: 12 })}
+            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, alignItems: 'center', paddingVertical: space.md - 2 })}
           >
             <Text style={{ color: colors.inkSoft, fontWeight: fontWeight.semibold }}>I have an account</Text>
           </Pressable>

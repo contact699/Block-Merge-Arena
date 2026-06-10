@@ -1,8 +1,7 @@
 // Replays Screen - Browse and watch saved replays
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, TextInput, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import {
   getLocalReplays,
   getReplayByCode,
@@ -12,31 +11,16 @@ import {
 } from '@/lib/utils/replay';
 import { ReplayPlayer } from '@/components/ReplayPlayer';
 import type { Replay } from '@/lib/types/replay';
-import { colors, fontWeight } from '@/lib/design/tokens';
+import { colors, fontWeight, space } from '@/lib/design/tokens';
 import { useThemePalette } from '@/lib/themes/provider';
 import { Pill } from '@/components/design/Pill';
 import { TactileButton } from '@/components/design/TactileButton';
 import { GlassCard } from '@/components/design/GlassCard';
+import { ScreenHeader } from '@/components/design/ScreenHeader';
+import { AsyncStateView } from '@/components/design/AsyncStateView';
+import { ModeIcon } from '@/components/design/ModeIcon';
 
 type TabType = 'all' | 'tournament' | 'endless';
-
-// ─── Empty State ───────────────────────────────────────────────────────────────
-
-function EmptyState() {
-  return (
-    <View style={{ alignItems: 'center', padding: 32, marginTop: 24 }}>
-      <Text style={{ fontSize: 18, fontWeight: fontWeight.heavy, color: colors.ink }}>
-        No replays yet
-      </Text>
-      <Text
-        style={{ fontSize: 13, color: colors.inkSoft, marginTop: 6, textAlign: 'center' }}
-      >
-        Finish a daily run and we'll save the replay automatically. Share the
-        6-character code with anyone.
-      </Text>
-    </View>
-  );
-}
 
 // ─── Replay Row ────────────────────────────────────────────────────────────────
 
@@ -123,9 +107,12 @@ function ReplayRow({
           <Text style={{ fontSize: 10, color: colors.inkDim, fontWeight: fontWeight.semibold }}>
             MODE
           </Text>
-          <Text style={{ fontSize: 13, color: colors.ink, fontWeight: fontWeight.bold }}>
-            {replay.mode === 'tournament' ? '🏆' : '🎮'} {replay.mode}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
+            <ModeIcon mode={replay.mode} size={14} />
+            <Text style={{ fontSize: 13, color: colors.ink, fontWeight: fontWeight.bold }}>
+              {replay.mode}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -144,10 +131,12 @@ function ReplayRow({
 
 function TabButton({
   label,
+  icon,
   active,
   onPress,
 }: {
   label: string;
+  icon?: React.ReactNode;
   active: boolean;
   onPress: () => void;
 }) {
@@ -155,12 +144,16 @@ function TabButton({
     <Pressable
       onPress={onPress}
       style={{
-        paddingHorizontal: 16,
-        paddingVertical: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: space.xs,
+        paddingHorizontal: space.md,
+        paddingVertical: space.sm,
         borderRadius: 999,
         backgroundColor: active ? colors.ink : 'rgba(22,20,15,0.07)',
       }}
     >
+      {icon}
       <Text
         style={{
           fontSize: 13,
@@ -177,13 +170,13 @@ function TabButton({
 // ─── Screen ────────────────────────────────────────────────────────────────────
 
 export default function ReplaysScreen() {
-  const router = useRouter();
   const palette = useThemePalette();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [replays, setReplays] = useState<Replay[]>([]);
   const [filteredReplays, setFilteredReplays] = useState<Replay[]>([]);
   const [selectedReplay, setSelectedReplay] = useState<Replay | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Code input modal
   const [showCodeInput, setShowCodeInput] = useState<boolean>(false);
@@ -201,11 +194,13 @@ export default function ReplaysScreen() {
 
   const loadReplays = async (): Promise<void> => {
     setLoading(true);
+    setError(null);
     try {
       const loadedReplays = await getLocalReplays();
       setReplays(loadedReplays);
-    } catch (error) {
-      console.error('Error loading replays:', error);
+    } catch (err) {
+      console.error('Error loading replays:', err);
+      setError("Couldn't load replays.");
     }
     setLoading(false);
   };
@@ -284,14 +279,9 @@ export default function ReplaysScreen() {
       />
 
       {/* Header */}
-      <View style={{ paddingHorizontal: 18, paddingTop: 12 }}>
-        <Pressable testID="back-button" onPress={() => router.back()}>
-          <Text style={{ fontSize: 14, fontWeight: fontWeight.semibold, color: colors.cobalt }}>
-            ← Back
-          </Text>
-        </Pressable>
-
-        <View style={{ marginTop: 14 }}>
+      <ScreenHeader title="Replays" />
+      <View style={{ paddingHorizontal: space.lg, paddingTop: space.xs }}>
+        <View style={{ marginTop: space.sm }}>
           <Pill variant="ember">REPLAYS</Pill>
         </View>
         <Text
@@ -299,13 +289,13 @@ export default function ReplaysScreen() {
             fontSize: 32,
             fontWeight: fontWeight.black,
             color: colors.ink,
-            marginTop: 12,
+            marginTop: space.sm,
             letterSpacing: -1,
           }}
         >
           Watch ghosts
         </Text>
-        <Text style={{ fontSize: 13, color: colors.inkSoft, marginTop: 4 }}>
+        <Text style={{ fontSize: 13, color: colors.inkSoft, marginTop: space.xs }}>
           Every run records a 6-character replay code. Share it with anyone.
         </Text>
       </View>
@@ -322,12 +312,14 @@ export default function ReplaysScreen() {
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <TabButton label="All" active={activeTab === 'all'} onPress={() => setActiveTab('all')} />
           <TabButton
-            label="🏆 Tournament"
+            label="Tournament"
+            icon={<ModeIcon mode="tournament" size={14} color={activeTab === 'tournament' ? colors.paper : colors.inkSoft} />}
             active={activeTab === 'tournament'}
             onPress={() => setActiveTab('tournament')}
           />
           <TabButton
-            label="🎮 Endless"
+            label="Endless"
+            icon={<ModeIcon mode="endless" size={14} color={activeTab === 'endless' ? colors.paper : colors.inkSoft} />}
             active={activeTab === 'endless'}
             onPress={() => setActiveTab('endless')}
           />
@@ -336,25 +328,25 @@ export default function ReplaysScreen() {
 
       {/* List */}
       <ScrollView
-        style={{ flex: 1, marginTop: 12 }}
-        contentContainerStyle={{ padding: 14, paddingBottom: 32 }}
+        style={{ flex: 1, marginTop: space.sm }}
+        contentContainerStyle={{ padding: space.md, paddingBottom: space.xl * 2 }}
       >
-        {loading ? (
-          <View style={{ alignItems: 'center', paddingVertical: 48 }}>
-            <Text style={{ fontSize: 14, color: colors.inkSoft }}>Loading replays…</Text>
-          </View>
-        ) : filteredReplays.length === 0 ? (
-          <EmptyState />
-        ) : (
-          filteredReplays.map((replay: Replay) => (
+        <AsyncStateView
+          loading={loading}
+          error={error}
+          isEmpty={filteredReplays.length === 0}
+          emptyMessage="No replays yet — play a run to record one."
+          onRetry={loadReplays}
+        >
+          {filteredReplays.map((replay: Replay) => (
             <ReplayRow
               key={replay.id}
               replay={replay}
               onWatch={handleReplaySelect}
               onDelete={handleDeleteReplay}
             />
-          ))
-        )}
+          ))}
+        </AsyncStateView>
       </ScrollView>
 
       {/* Code Input Modal */}

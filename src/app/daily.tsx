@@ -5,6 +5,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Trophy } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { track } from '@/lib/analytics/events';
 import { ScoreDisplay } from '@/components/ScoreDisplay';
@@ -761,7 +762,7 @@ export default function DailyScreen() {
                         marginBottom: 8,
                       }}
                     >
-                      <Text style={{ fontSize: 28 }}>🏆</Text>
+                      <Trophy size={26} color={colors.mustard} strokeWidth={2.25} />
                       <View style={{ flex: 1 }}>
                         <Text
                           style={{

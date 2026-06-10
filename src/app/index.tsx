@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getTodayDateString } from '@/lib/daily/seed';
 import { hasCompletedWelcome } from '@/lib/utils/tutorial';
-import { colors, fontWeight } from '@/lib/design/tokens';
+import { colors, fontWeight, space, fontSize, radii } from '@/lib/design/tokens';
 import { useThemePalette } from '@/lib/themes/provider';
 import { GlassCard, DeepCard } from '@/components/design/GlassCard';
 import { Pill } from '@/components/design/Pill';
@@ -52,7 +52,7 @@ function Sparkline() {
           );
         })}
       </View>
-      <View style={{ flexDirection: 'row', marginTop: 6, gap: 4 }}>
+      <View style={{ flexDirection: 'row', marginTop: space.xs, gap: space.xs }}>
         {DAYS.map((d, i) => {
           const isPeak = i === 4;
           return (
@@ -61,7 +61,7 @@ function Sparkline() {
               style={{
                 flex: 1,
                 textAlign: 'center',
-                fontSize: 9,
+                fontSize: fontSize.caption - 1,
                 fontWeight: isPeak ? fontWeight.heavy : fontWeight.bold,
                 color: isPeak ? colors.ember : colors.inkDim,
                 letterSpacing: 1.4,
@@ -92,13 +92,13 @@ function NavTile({
   return (
     <Link href={href as never} asChild>
       <Pressable testID={testID} style={({ pressed }) => ({ flex: 1, transform: [{ translateY: pressed ? 1 : 0 }] })}>
-        <GlassCard style={{ padding: 14 }}>
-          <View style={{ width: 28, height: 4, borderRadius: 2, backgroundColor: accent, marginBottom: 10 }} />
-          <Text style={{ fontSize: 14, fontWeight: fontWeight.heavy, color: colors.ink, letterSpacing: -0.3 }}>
+        <GlassCard style={{ padding: space.md }}>
+          <View style={{ width: 28, height: 4, borderRadius: radii.sm / 3, backgroundColor: accent, marginBottom: space.sm + 2 }} />
+          <Text style={{ fontSize: fontSize.subtitle - 1, fontWeight: fontWeight.heavy, color: colors.ink, letterSpacing: -0.3 }}>
             {label}
           </Text>
           {hint && (
-            <Text style={{ color: colors.inkSoft, fontSize: 11, marginTop: 2 }}>{hint}</Text>
+            <Text style={{ color: colors.inkSoft, fontSize: fontSize.label, marginTop: 2 }}>{hint}</Text>
           )}
         </GlassCard>
       </Pressable>
@@ -123,8 +123,8 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: palette.paper, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: colors.ember, fontSize: 16, fontWeight: fontWeight.bold }}>Loading…</Text>
+      <SafeAreaView testID="home-screen" style={{ flex: 1, backgroundColor: palette.paper, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={colors.ember} size="large" />
       </SafeAreaView>
     );
   }
@@ -160,13 +160,13 @@ export default function HomeScreen() {
       />
 
       {/* Topbar */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 12, paddingBottom: 6 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.lg, paddingTop: radii.md, paddingBottom: space.xs + 2 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm + 2 }}>
           <View
             style={{
               width: 38,
               height: 38,
-              borderRadius: 12,
+              borderRadius: radii.md,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -178,18 +178,18 @@ export default function HomeScreen() {
               end={{ x: 0.5, y: 1 }}
               style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
             />
-            <Text style={{ color: 'white', fontWeight: fontWeight.heavy, fontSize: 16 }}>M</Text>
+            <Text style={{ color: 'white', fontWeight: fontWeight.heavy, fontSize: fontSize.subtitle + 1 }}>M</Text>
           </View>
           <View>
-            <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.inkSoft, letterSpacing: 1.6 }}>
+            <Text style={{ fontSize: fontSize.caption - 1, fontWeight: fontWeight.bold, color: colors.inkSoft, letterSpacing: 1.6 }}>
               WELCOME BACK
             </Text>
-            <Text style={{ fontSize: 16, fontWeight: fontWeight.heavy, color: colors.ink, letterSpacing: -0.4 }}>
+            <Text style={{ fontSize: fontSize.subtitle + 1, fontWeight: fontWeight.heavy, color: colors.ink, letterSpacing: -0.4 }}>
               Player
             </Text>
           </View>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
           <Pill variant="mustard">{`1,420 ◆`}</Pill>
           <Link href="/settings" asChild>
             <Pressable testID="settings-button">
@@ -197,15 +197,15 @@ export default function HomeScreen() {
                 style={{
                   width: 36,
                   height: 36,
-                  borderRadius: 12,
+                  borderRadius: radii.md,
                   backgroundColor: 'rgba(255,255,255,0.7)',
                   borderWidth: 1,
-                  borderColor: 'rgba(22,20,15,0.08)',
+                  borderColor: colors.inkRuleSoft,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Text style={{ fontSize: 16 }}>⚙︎</Text>
+                <Text style={{ fontSize: fontSize.subtitle + 1 }}>⚙︎</Text>
               </View>
             </Pressable>
           </Link>
@@ -214,13 +214,13 @@ export default function HomeScreen() {
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 24 }}
+        contentContainerStyle={{ paddingHorizontal: space.md, paddingBottom: space.xl }}
         showsVerticalScrollIndicator={false}
       >
         {/* HERO — Daily Tournament */}
         <Link href="/daily" asChild>
           <Pressable testID="tournament-button">
-            <DeepCard style={{ padding: 20, marginTop: 8 }}>
+            <DeepCard style={{ padding: space.xl - 4, marginTop: space.sm }}>
               {/* Inner ember radial */}
               <View
                 pointerEvents="none"
@@ -240,8 +240,8 @@ export default function HomeScreen() {
                   <Pill variant="ember">● LIVE · 847K</Pill>
                   <Text
                     style={{
-                      marginTop: 12,
-                      fontSize: 28,
+                      marginTop: radii.md,
+                      fontSize: fontSize.title + 4,
                       fontWeight: fontWeight.black,
                       color: colors.paper,
                       letterSpacing: -1,
@@ -249,21 +249,21 @@ export default function HomeScreen() {
                   >
                     Daily Tournament
                   </Text>
-                  <Text style={{ color: 'rgba(243,239,231,0.65)', fontSize: 12, marginTop: 3 }}>
+                  <Text style={{ color: 'rgba(243,239,231,0.65)', fontSize: fontSize.label + 1, marginTop: 3 }}>
                     Same pieces for everyone · {todayDate}
                   </Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.mustard, letterSpacing: 1.6 }}>
+                  <Text style={{ fontSize: fontSize.caption - 1, fontWeight: fontWeight.bold, color: colors.mustard, letterSpacing: 1.6 }}>
                     ENDS IN
                   </Text>
-                  <Text style={{ fontSize: 22, fontWeight: fontWeight.black, color: colors.paper, marginTop: 4 }}>
+                  <Text style={{ fontSize: fontSize.title - 2, fontWeight: fontWeight.black, color: colors.paper, marginTop: space.xs }}>
                     14:32
                   </Text>
                 </View>
               </View>
 
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
+              <View style={{ flexDirection: 'row', gap: space.sm, marginTop: space.md }}>
                 {[
                   { label: 'YOUR BEST', value: '—' },
                   { label: 'PRIZE', value: '10k ◆', highlight: true },
@@ -272,17 +272,17 @@ export default function HomeScreen() {
                     key={s.label}
                     style={{
                       flex: 1,
-                      paddingVertical: 8,
-                      paddingHorizontal: 10,
+                      paddingVertical: space.sm,
+                      paddingHorizontal: space.sm + 2,
                       backgroundColor: 'rgba(255,255,255,0.05)',
-                      borderRadius: 10,
+                      borderRadius: radii.md - 2,
                       borderWidth: 1,
                       borderColor: 'rgba(255,255,255,0.06)',
                     }}
                   >
                     <Text
                       style={{
-                        fontSize: 9,
+                        fontSize: fontSize.caption - 1,
                         fontWeight: fontWeight.bold,
                         color: s.highlight ? colors.mustard : 'rgba(243,239,231,0.55)',
                         letterSpacing: 1.6,
@@ -290,14 +290,14 @@ export default function HomeScreen() {
                     >
                       {s.label}
                     </Text>
-                    <Text style={{ color: colors.paper, fontSize: 16, fontWeight: fontWeight.black, marginTop: 2 }}>
+                    <Text style={{ color: colors.paper, fontSize: fontSize.subtitle + 1, fontWeight: fontWeight.black, marginTop: 2 }}>
                       {s.value}
                     </Text>
                   </View>
                 ))}
               </View>
 
-              <TactileButton variant="primary" style={{ marginTop: 14 }}>
+              <TactileButton variant="primary" style={{ marginTop: space.md }}>
                 Enter today's tournament →
               </TactileButton>
             </DeepCard>
@@ -305,20 +305,20 @@ export default function HomeScreen() {
         </Link>
 
         {/* Quick play row */}
-        <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+        <View style={{ flexDirection: 'row', gap: space.sm, marginTop: radii.md }}>
           <Link href="/game" asChild>
             <Pressable testID="endless-mode-button" style={{ flex: 1 }}>
-              <GlassCard style={{ padding: 14 }}>
-                <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.ember, letterSpacing: 1.6 }}>
+              <GlassCard style={{ padding: space.md }}>
+                <Text style={{ fontSize: fontSize.caption - 1, fontWeight: fontWeight.bold, color: colors.ember, letterSpacing: 1.6 }}>
                   ENDLESS
                 </Text>
-                <Text style={{ fontSize: 16, fontWeight: fontWeight.heavy, color: colors.ink, marginTop: 4 }}>
+                <Text style={{ fontSize: fontSize.subtitle + 1, fontWeight: fontWeight.heavy, color: colors.ink, marginTop: space.xs }}>
                   Solo run
                 </Text>
-                <Text style={{ fontSize: 22, fontWeight: fontWeight.black, color: colors.ink, marginTop: 6 }}>
+                <Text style={{ fontSize: fontSize.title - 2, fontWeight: fontWeight.black, color: colors.ink, marginTop: space.xs + 2 }}>
                   48,210
                 </Text>
-                <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>
+                <Text style={{ fontSize: fontSize.caption - 1, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>
                   BEST
                 </Text>
               </GlassCard>
@@ -326,17 +326,17 @@ export default function HomeScreen() {
           </Link>
           <Link href="/leaderboard" asChild>
             <Pressable testID="leaderboard-quick-button" style={{ flex: 1 }}>
-              <GlassCard style={{ padding: 14 }}>
-                <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.cobalt, letterSpacing: 1.6 }}>
+              <GlassCard style={{ padding: space.md }}>
+                <Text style={{ fontSize: fontSize.caption - 1, fontWeight: fontWeight.bold, color: colors.cobalt, letterSpacing: 1.6 }}>
                   TODAY
                 </Text>
-                <Text style={{ fontSize: 16, fontWeight: fontWeight.heavy, color: colors.ink, marginTop: 4 }}>
+                <Text style={{ fontSize: fontSize.subtitle + 1, fontWeight: fontWeight.heavy, color: colors.ink, marginTop: space.xs }}>
                   Leaderboard
                 </Text>
-                <Text style={{ fontSize: 22, fontWeight: fontWeight.black, color: colors.ink, marginTop: 6 }}>
+                <Text style={{ fontSize: fontSize.title - 2, fontWeight: fontWeight.black, color: colors.ink, marginTop: space.xs + 2 }}>
                   Top 100
                 </Text>
-                <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>
+                <Text style={{ fontSize: fontSize.caption - 1, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>
                   VIEW STANDINGS
                 </Text>
               </GlassCard>
@@ -345,12 +345,12 @@ export default function HomeScreen() {
         </View>
 
         {/* Week chart */}
-        <GlassCard style={{ padding: 14, marginTop: 12 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-            <Text style={{ fontSize: 10, fontWeight: fontWeight.bold, letterSpacing: 1.6, color: colors.ink }}>
+        <GlassCard style={{ padding: space.md, marginTop: radii.md }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: space.sm + 2 }}>
+            <Text style={{ fontSize: fontSize.caption, fontWeight: fontWeight.bold, letterSpacing: 1.6, color: colors.ink }}>
               YOUR WEEK
             </Text>
-            <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.inkSoft, letterSpacing: 1.4 }}>
+            <Text style={{ fontSize: fontSize.caption - 1, fontWeight: fontWeight.bold, color: colors.inkSoft, letterSpacing: 1.4 }}>
               +38% VS LAST
             </Text>
           </View>
@@ -358,38 +358,38 @@ export default function HomeScreen() {
           <View
             style={{
               flexDirection: 'row',
-              gap: 12,
-              paddingTop: 12,
-              marginTop: 10,
+              gap: radii.md,
+              paddingTop: radii.md,
+              marginTop: space.sm + 2,
               borderTopWidth: 1,
-              borderTopColor: 'rgba(22,20,15,0.06)',
+              borderTopColor: colors.inkRuleSoft,
             }}
           >
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 22, fontWeight: fontWeight.black, color: colors.ink }}>4.8k</Text>
-              <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>BEST</Text>
+              <Text style={{ fontSize: fontSize.title - 2, fontWeight: fontWeight.black, color: colors.ink }}>4.8k</Text>
+              <Text style={{ fontSize: fontSize.caption - 1, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>BEST</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 22, fontWeight: fontWeight.black, color: colors.ink }}>12</Text>
-              <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>STREAK</Text>
+              <Text style={{ fontSize: fontSize.title - 2, fontWeight: fontWeight.black, color: colors.ink }}>12</Text>
+              <Text style={{ fontSize: fontSize.caption - 1, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>STREAK</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 22, fontWeight: fontWeight.black, color: colors.ember }}>×7</Text>
-              <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>COMBO</Text>
+              <Text style={{ fontSize: fontSize.title - 2, fontWeight: fontWeight.black, color: colors.ember }}>×7</Text>
+              <Text style={{ fontSize: fontSize.caption - 1, fontWeight: fontWeight.bold, color: colors.inkSoft, marginTop: 2, letterSpacing: 1.6 }}>COMBO</Text>
             </View>
           </View>
         </GlassCard>
 
         {/* Quick navigation grid */}
-        <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+        <View style={{ flexDirection: 'row', gap: space.sm, marginTop: radii.md }}>
           <NavTile href="/leaderboard" testID="leaderboard-button" label="Leaderboard" hint="Today's standings" accent={colors.cobalt} />
           <NavTile href="/replays" testID="replays-button" label="Replays" hint="Watch ghosts" accent={colors.plum} />
         </View>
-        <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+        <View style={{ flexDirection: 'row', gap: space.sm, marginTop: space.sm }}>
           <NavTile href="/shop" testID="shop-button" label="Shop" hint="Themes" accent={colors.mustard} />
           <NavTile href="/achievements" testID="achievements-button" label="Achievements" hint="6 badges" accent={colors.forest} />
         </View>
-        <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+        <View style={{ flexDirection: 'row', gap: space.sm, marginTop: space.sm }}>
           <NavTile href="/share" testID="share-button" label="Share" hint="Your grid" accent={colors.rose} />
           <NavTile href="/settings" testID="settings-nav" label="Settings" hint="Audio · theme" accent={colors.teal} />
         </View>

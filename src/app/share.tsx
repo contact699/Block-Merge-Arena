@@ -1,9 +1,10 @@
 // Share Screen - View and share game highlights to social media
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
+import { Flame, Trophy, Medal, Crown, Gamepad2, Smartphone, Trash2, X } from 'lucide-react-native';
 import {
   getHighlights,
   deleteHighlight,
@@ -14,11 +15,13 @@ import {
   isTikTokInstalled,
 } from '@/lib/utils/social';
 import type { ShareableHighlight, RecordingConfig, SocialStats, SharePlatform } from '@/lib/types/social';
-import { colors, fontWeight, radii } from '@/lib/design/tokens';
+import { colors, fontSize, fontWeight, radii, space } from '@/lib/design/tokens';
 import { useThemePalette } from '@/lib/themes/provider';
 import { Pill } from '@/components/design/Pill';
 import { GlassCard } from '@/components/design/GlassCard';
 import { TactileButton } from '@/components/design/TactileButton';
+import { ScreenHeader } from '@/components/design/ScreenHeader';
+import { AsyncStateView } from '@/components/design/AsyncStateView';
 import { renderShareGrid } from '@/lib/share/grid';
 import { getLastCompletedRun } from '@/lib/utils/replay';
 import { track } from '@/lib/analytics/events';
@@ -27,6 +30,7 @@ export default function ShareScreen() {
   const router = useRouter();
   const palette = useThemePalette();
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [highlights, setHighlights] = useState<ShareableHighlight[]>([]);
   const [config, setConfig] = useState<RecordingConfig | null>(null);
   const [stats, setStats] = useState<SocialStats | null>(null);
@@ -59,6 +63,7 @@ export default function ShareScreen() {
 
   const loadData = async (): Promise<void> => {
     setLoading(true);
+    setError(null);
     try {
       const [hl, cfg, sts, tikTok] = await Promise.all([
         getHighlights(),
@@ -71,8 +76,9 @@ export default function ShareScreen() {
       setConfig(cfg);
       setStats(sts);
       setTikTokInstalled(tikTok);
-    } catch (error) {
-      console.error('Error loading share data:', error);
+    } catch (err) {
+      console.error('Error loading share data:', err);
+      setError("Couldn't load your share data.");
     }
     setLoading(false);
   };
@@ -135,13 +141,14 @@ export default function ShareScreen() {
     return `${days}d ago`;
   };
 
-  const getHighlightIcon = (type: ShareableHighlight['type']): string => {
+  const getHighlightIcon = (type: ShareableHighlight['type']): React.ReactElement => {
+    const iconProps = { size: 28, strokeWidth: 2 } as const;
     switch (type) {
-      case 'combo': return '🔥';
-      case 'high_score': return '🏆';
-      case 'achievement': return '🏅';
-      case 'tournament_win': return '👑';
-      default: return '🎮';
+      case 'combo': return <Flame {...iconProps} color={colors.ember} />;
+      case 'high_score': return <Trophy {...iconProps} color={colors.mustard} />;
+      case 'achievement': return <Medal {...iconProps} color={colors.forest} />;
+      case 'tournament_win': return <Crown {...iconProps} color={colors.mustard} />;
+      default: return <Gamepad2 {...iconProps} color={colors.inkSoft} />;
     }
   };
 
@@ -229,8 +236,10 @@ export default function ShareScreen() {
     if (highlights.length === 0) {
       return (
         <GlassCard style={{ marginTop: 16, padding: 28, alignItems: 'center' }}>
-          <Text style={{ fontSize: 48, marginBottom: 12 }}>📱</Text>
-          <Text style={{ fontSize: 18, fontWeight: fontWeight.bold, color: colors.ink, marginBottom: 6 }}>No Highlights Yet</Text>
+          <View style={{ marginBottom: space.md }}>
+            <Smartphone size={48} color={colors.inkDim} strokeWidth={1.5} />
+          </View>
+          <Text style={{ fontSize: fontSize.subtitle, fontWeight: fontWeight.bold, color: colors.ink, marginBottom: space.sm }}>No Highlights Yet</Text>
           <Text style={{ fontSize: 13, color: colors.inkSoft, textAlign: 'center', marginBottom: 18, lineHeight: 19 }}>
             Epic moments from your games will{'\n'}appear here for easy sharing!
           </Text>
@@ -262,7 +271,7 @@ export default function ShareScreen() {
             >
               <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                  <Text style={{ fontSize: 28, marginRight: 12 }}>{getHighlightIcon(highlight.type)}</Text>
+                  <View style={{ marginRight: space.md }}>{getHighlightIcon(highlight.type)}</View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 15, fontWeight: fontWeight.bold, color: colors.ink }}>{highlight.title}</Text>
                     <Text style={{ fontSize: 13, color: colors.inkSoft, marginTop: 2 }}>{highlight.description}</Text>
@@ -272,8 +281,8 @@ export default function ShareScreen() {
                     </Text>
                   </View>
                 </View>
-                <Pressable onPress={() => handleDeleteHighlight(highlight.id)} style={{ padding: 6 }}>
-                  <Text style={{ fontSize: 16, color: colors.inkDim }}>🗑️</Text>
+                <Pressable onPress={() => handleDeleteHighlight(highlight.id)} style={{ padding: space.sm }} hitSlop={6}>
+                  <Trash2 size={18} color={colors.inkDim} strokeWidth={2} />
                 </Pressable>
               </View>
 
@@ -333,14 +342,14 @@ export default function ShareScreen() {
         <GlassCard style={{ padding: 20, width: '100%', maxWidth: 400 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <Text style={{ fontSize: 18, fontWeight: fontWeight.bold, color: colors.ink }}>Share Highlight</Text>
-            <Pressable onPress={() => setShowShareModal(false)} style={{ padding: 6 }}>
-              <Text style={{ fontSize: 18, color: colors.inkSoft }}>✕</Text>
+            <Pressable onPress={() => setShowShareModal(false)} style={{ padding: space.sm }} hitSlop={6}>
+              <X size={20} color={colors.inkSoft} strokeWidth={2} />
             </Pressable>
           </View>
 
           {/* Highlight preview */}
-          <View style={{ backgroundColor: colors.paper2, borderRadius: radii.lg, padding: 14, marginBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ fontSize: 28, marginRight: 12 }}>{getHighlightIcon(selectedHighlight.type)}</Text>
+          <View style={{ backgroundColor: colors.paper2, borderRadius: radii.lg, padding: space.md, marginBottom: space.lg, flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ marginRight: space.md }}>{getHighlightIcon(selectedHighlight.type)}</View>
             <View>
               <Text style={{ fontSize: 15, fontWeight: fontWeight.bold, color: colors.ink }}>{selectedHighlight.title}</Text>
               <Text style={{ fontSize: 12, color: colors.inkSoft, marginTop: 2 }}>{selectedHighlight.description}</Text>
@@ -387,20 +396,15 @@ export default function ShareScreen() {
         style={{ position: 'absolute', top: -80, right: -60, width: 240, height: 240, borderRadius: 120, backgroundColor: colors.ember, opacity: 0.14 }}
       />
 
-      {/* Back button */}
-      <View style={{ paddingHorizontal: 18, paddingTop: 8 }}>
-        <Pressable testID="back-button" onPress={() => router.back()} style={{ alignSelf: 'flex-start', paddingVertical: 6, paddingRight: 12 }}>
-          <Text style={{ fontSize: 22, color: colors.ink }}>←</Text>
-        </Pressable>
-      </View>
+      <ScreenHeader title="Share" />
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 32 }}>
-        {/* Header */}
-        <Pill variant="ember">SHARE</Pill>
-        <Text style={{ fontSize: 32, fontWeight: fontWeight.black, color: colors.ink, marginTop: 12, letterSpacing: -1 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: space.lg, paddingBottom: space.xl }}>
+        {/* Sub-header */}
+        <Pill variant="ember">HIGHLIGHTS</Pill>
+        <Text style={{ fontSize: 32, fontWeight: fontWeight.black, color: colors.ink, marginTop: space.md, letterSpacing: -1 }}>
           Your highlights
         </Text>
-        <Text style={{ fontSize: 13, color: colors.inkSoft, marginTop: 6, lineHeight: 19 }}>
+        <Text style={{ fontSize: fontSize.body, color: colors.inkSoft, marginTop: space.sm, lineHeight: 19 }}>
           Epic moments from your games, ready to share.
         </Text>
 
@@ -433,16 +437,18 @@ export default function ShareScreen() {
           </TactileButton>
         </View>
 
-        {renderStats()}
-        {renderSettings()}
-
-        {loading ? (
-          <GlassCard style={{ marginTop: 16, padding: 40, alignItems: 'center' }}>
-            <Text style={{ fontSize: 14, color: colors.inkSoft }}>Loading...</Text>
-          </GlassCard>
-        ) : (
-          renderHighlights()
-        )}
+        {/* Share always has content once loaded (stats + grid); the empty phase never applies here. */}
+        <AsyncStateView
+          loading={loading}
+          error={error}
+          isEmpty={false}
+          emptyMessage="No share data yet — finish a run to get started."
+          onRetry={loadData}
+        >
+          {renderStats()}
+          {renderSettings()}
+          {renderHighlights()}
+        </AsyncStateView>
       </ScrollView>
 
       {renderShareModal()}

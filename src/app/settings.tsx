@@ -2,10 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, Switch, Alert, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { getSettings, saveSettings, resetSettings } from '@/lib/utils/settings';
 import type { UserSettings } from '@/lib/types/settings';
-import { colors, fontWeight } from '@/lib/design/tokens';
+import { colors, fontWeight, space } from '@/lib/design/tokens';
 import { useThemePalette, useThemeControls } from '@/lib/themes/provider';
 import { useRequireSubscription } from '@/lib/subscription/gate';
 import { useSubscription } from '@/lib/subscription/state';
@@ -14,6 +13,8 @@ import { PaywallModal } from '@/components/paywall/PaywallModal';
 import type { ThemeId } from '@/lib/themes/catalog';
 import { Pill } from '@/components/design/Pill';
 import { GlassCard } from '@/components/design/GlassCard';
+import { ScreenHeader } from '@/components/design/ScreenHeader';
+import { resetLocalData } from '@/lib/firebase/auth';
 
 // ─── Inline helpers ───────────────────────────────────────────────────────────
 
@@ -85,7 +86,6 @@ function SettingsRow({
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function SettingsScreen() {
-  const router = useRouter();
   const palette = useThemePalette();
   const { available, activeId, setActive } = useThemeControls();
   const isSubscribed = useRequireSubscription();
@@ -158,6 +158,28 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleResetLocalData = (): void => {
+    Alert.alert(
+      'Reset local data?',
+      'This clears your stored identity and all local progress. A fresh anonymous session will start on next launch. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await resetLocalData();
+              Alert.alert('Done', 'Local data cleared. A new session will start on next launch.', [{ text: 'OK' }]);
+            } catch {
+              Alert.alert('Error', 'Could not reset local data. Please try again.', [{ text: 'OK' }]);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   if (loading || !settings) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: palette.paper, alignItems: 'center', justifyContent: 'center' }}>
@@ -191,24 +213,9 @@ export default function SettingsScreen() {
       />
 
       {/* Header */}
-      <View style={{ paddingHorizontal: 18, paddingTop: 12 }}>
-        <Pressable testID="back-button" onPress={() => router.back()} style={{ marginBottom: 10 }}>
-          <Text style={{ color: colors.ember, fontSize: 14, fontWeight: fontWeight.semibold }}>
-            ← Back
-          </Text>
-        </Pressable>
+      <ScreenHeader title="Settings" />
+      <View style={{ paddingHorizontal: space.lg, paddingBottom: space.sm }}>
         <Pill variant="ember">SETTINGS</Pill>
-        <Text
-          style={{
-            fontSize: 32,
-            fontWeight: fontWeight.black,
-            color: colors.ink,
-            marginTop: 12,
-            letterSpacing: -1,
-          }}
-        >
-          Preferences
-        </Text>
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 14, paddingTop: 24, paddingBottom: 40 }}>
@@ -360,9 +367,10 @@ export default function SettingsScreen() {
             onPress={handleReset}
           />
           <SettingsRow
-            label="Sign out"
+            testID="sign-out-row"
+            label="Reset local data"
             right={<Text style={{ fontSize: 14, color: colors.emberDeep }}>›</Text>}
-            onPress={() => console.warn('sign out not implemented yet')}
+            onPress={handleResetLocalData}
             destructive
             isLast
           />

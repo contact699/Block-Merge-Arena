@@ -1,6 +1,6 @@
 // Firebase Authentication - Anonymous Login
 import { auth, isConfigured } from './config';
-import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
+import { signInAnonymously, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const USER_ID_KEY = '@block_merge:user_id';
@@ -85,4 +85,24 @@ export function isAuthenticated(): boolean {
  */
 export function isUsingFirebase(): boolean {
   return isConfigured() && !!auth;
+}
+
+/**
+ * Reset local identity — clears the cached user ID from AsyncStorage and,
+ * if Firebase is configured, signs out the anonymous Firebase session.
+ * A fresh anonymous identity will be created on the next call to getOrCreateUser().
+ *
+ * NOTE: This app uses anonymous-only auth (no passwords/emails), so there is no
+ * "account" to sign out of in the traditional sense. This action is therefore
+ * surfaced as "Reset local data" in the UI — it wipes the local identity and
+ * associated progress permanently.
+ */
+export async function resetLocalData(): Promise<void> {
+  // Clear the cached local user ID
+  await AsyncStorage.removeItem(USER_ID_KEY);
+
+  // Also sign out of the Firebase anonymous session if active
+  if (auth && isConfigured()) {
+    await signOut(auth);
+  }
 }

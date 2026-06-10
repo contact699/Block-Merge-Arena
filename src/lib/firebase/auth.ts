@@ -88,18 +88,26 @@ export function isUsingFirebase(): boolean {
 }
 
 /**
- * Reset local identity — clears the cached user ID from AsyncStorage and,
- * if Firebase is configured, signs out the anonymous Firebase session.
+ * Reset local progress — sweeps all @block_merge: AsyncStorage keys except
+ * user preferences (settings), then signs out of the Firebase anonymous session.
  * A fresh anonymous identity will be created on the next call to getOrCreateUser().
  *
  * NOTE: This app uses anonymous-only auth (no passwords/emails), so there is no
  * "account" to sign out of in the traditional sense. This action is therefore
  * surfaced as "Reset local data" in the UI — it wipes the local identity and
- * associated progress permanently.
+ * all progress permanently while keeping the user's display/audio/display prefs.
  */
+const STORAGE_PREFIX = '@block_merge:';
+// Keys to PRESERVE across a local-data reset (user preferences, not progress).
+const PRESERVE_KEYS = new Set<string>(['@block_merge:settings']);
+
 export async function resetLocalData(): Promise<void> {
-  // Clear the cached local user ID
-  await AsyncStorage.removeItem(USER_ID_KEY);
+  // Sweep all @block_merge: keys, keeping user preferences
+  const all = await AsyncStorage.getAllKeys();
+  const toRemove = all.filter((k) => k.startsWith(STORAGE_PREFIX) && !PRESERVE_KEYS.has(k));
+  if (toRemove.length > 0) {
+    await AsyncStorage.multiRemove(toRemove);
+  }
 
   // Also sign out of the Firebase anonymous session if active
   if (auth && isConfigured()) {

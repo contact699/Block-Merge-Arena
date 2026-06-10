@@ -161,7 +161,7 @@ export default function SettingsScreen() {
   const handleResetLocalData = (): void => {
     Alert.alert(
       'Reset local data?',
-      'This clears your stored identity and all local progress. A fresh anonymous session will start on next launch. This cannot be undone.',
+      'This clears your identity, scores, replays, and achievements. Your settings are kept. A fresh session starts on next launch. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {

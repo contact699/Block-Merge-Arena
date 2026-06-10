@@ -191,10 +191,12 @@ export default function DailyScreen() {
     setTournamentStarted(false);
 
     // Stop replay recording with final board state.
+    let capturedReplayCode: string | null = null;
     if (replayRecorder && replayRecorder.isRecording()) {
       const replay = await replayRecorder.stop(final.score, undefined, undefined, final.board);
       if (replay) {
-        setReplayCode(replay.code || null);
+        capturedReplayCode = replay.code || null;
+        setReplayCode(capturedReplayCode);
       }
     }
 
@@ -210,6 +212,8 @@ export default function DailyScreen() {
       date: new Date().toISOString(),
       maxMultiplier: final.maxMultiplier,
       durationMs: Date.now() - runStartTimestampRef.current,
+      moveCount: final.moveCount,
+      ...(capturedReplayCode ? { replayCode: capturedReplayCode } : {}),
     });
 
     // Record daily completion + check achievements.

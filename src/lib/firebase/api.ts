@@ -1,6 +1,7 @@
 // Firebase API Layer - Score Submission & Leaderboards
 import { auth, db, isConfigured } from './config';
 import { getOrCreateUser, getCurrentUserId } from './auth';
+import { validateScoreSubmission } from './validation';
 import {
   collection,
   doc,
@@ -45,6 +46,12 @@ export async function submitScore(
     };
   }
 
+  const check = validateScoreSubmission({ score, mode, maxMultiplier, moveCount, duration });
+  if (!check.valid) {
+    console.warn('Rejected implausible score submission:', check.reason);
+    return { success: false, error: `Invalid score: ${check.reason}` };
+  }
+
   try {
     // Get or create user
     const userId = await getOrCreateUser();
@@ -63,6 +70,7 @@ export async function submitScore(
       maxMultiplier,
       moveCount,
       duration,
+      verified: false,
       ...(replayCode ? { replayCode } : {}),
     };
 

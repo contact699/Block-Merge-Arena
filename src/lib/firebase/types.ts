@@ -39,6 +39,7 @@ export interface FirebaseScore {
   maxMultiplier: number;
   moveCount?: number;
   duration?: number; // milliseconds
+  replayCode?: string;
   // For anti-cheat (future feature)
   verified?: boolean;
   deviceInfo?: {
@@ -59,6 +60,8 @@ export interface TournamentEntry {
   maxMultiplier: number;
   submittedAt: number; // timestamp
   duration?: number;
+  moveCount?: number;
+  replayCode?: string;
   // Only best score per user per tournament
   isBestScore: boolean;
 }

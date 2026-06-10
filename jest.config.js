@@ -10,5 +10,5 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  testPathIgnorePatterns: ['/node_modules/', '\\.tsx\\.test\\.ts$'],
+  testPathIgnorePatterns: ['/node_modules/', '\\.tsx\\.test\\.ts$', '/__rules__/'],
 };

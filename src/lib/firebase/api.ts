@@ -1,6 +1,7 @@
 // Firebase API Layer - Score Submission & Leaderboards
 import { auth, db, isConfigured } from './config';
 import { getOrCreateUser, getCurrentUserId } from './auth';
+import { validateScoreSubmission } from './validation';
 import {
   collection,
   doc,
@@ -35,13 +36,20 @@ export async function submitScore(
   mode: 'endless' | 'tournament',
   maxMultiplier: number,
   moveCount?: number,
-  duration?: number
+  duration?: number,
+  replayCode?: string
 ): Promise<SubmitScoreResponse> {
   if (!isConfigured() || !db) {
     return {
       success: false,
       error: 'Firebase not configured',
     };
+  }
+
+  const check = validateScoreSubmission({ score, mode, maxMultiplier, moveCount, duration });
+  if (!check.valid) {
+    console.warn('Rejected implausible score submission:', check.reason);
+    return { success: false, error: `Invalid score: ${check.reason}` };
   }
 
   try {
@@ -62,6 +70,8 @@ export async function submitScore(
       maxMultiplier,
       moveCount,
       duration,
+      verified: false,
+      ...(replayCode ? { replayCode } : {}),
     };
 
     // Save score to Firestore
@@ -72,7 +82,7 @@ export async function submitScore(
 
     // If tournament mode, also update tournament entry
     if (mode === 'tournament') {
-      await submitTournamentEntry(userId, dateString, score, maxMultiplier, duration);
+      await submitTournamentEntry(userId, dateString, score, maxMultiplier, duration, moveCount, replayCode);
     }
 
     // Archive writes (ADR 0006): upsert puzzles/{id} and users/{uid}/archive/{id}
@@ -192,7 +202,9 @@ async function submitTournamentEntry(
   tournamentDate: string,
   score: number,
   maxMultiplier: number,
-  duration?: number
+  duration?: number,
+  moveCount?: number,
+  replayCode?: string
 ): Promise<void> {
   if (!db) return;
 
@@ -209,19 +221,15 @@ async function submitTournamentEntry(
       submittedAt: Date.now(),
       duration,
       isBestScore: true,
+      ...(moveCount !== undefined ? { moveCount } : {}),
+      ...(replayCode ? { replayCode } : {}),
     };
 
     if (entryDoc.exists()) {
-      const existingEntry = entryDoc.data() as TournamentEntry;
-      // Only update if new score is higher
-      if (score > existingEntry.score) {
-        await updateDoc(entryRef, {
-          score,
-          maxMultiplier,
-          submittedAt: Date.now(),
-          duration,
-        });
-      }
+      // Daily is one-run-per-day: the first create is the only write.
+      // The server rules deny `update` on tournament entries (audit M1.4),
+      // so we skip any updateDoc attempt and return early.
+      return;
     } else {
       // First entry for this tournament
       await setDoc(entryRef, entry);

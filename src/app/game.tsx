@@ -291,6 +291,7 @@ export default function GameScreen() {
         date: new Date().toISOString(),
         maxMultiplier: out.state.maxMultiplier,
         durationMs: Date.now() - runStartRef.current,
+        moveCount: out.state.moveCount,
       });
       void checkAchievements({
         runMode: 'endless',

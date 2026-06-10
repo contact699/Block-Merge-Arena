@@ -20,32 +20,15 @@
    - `storageBucket` → `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET`
    - `messagingSenderId` → `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
    - `appId` → `EXPO_PUBLIC_FIREBASE_APP_ID`
-6. Set Firestore security rules. Minimum viable for v1:
-
+6. Set Firestore security rules via the deployable **`firestore.rules`** at the repo root (paired with `firebase.json` and `firestore.indexes.json`). Deploy with:
+   ```bash
+   firebase deploy --only firestore:rules
    ```
-   rules_version = '2';
-   service cloud.firestore {
-     match /databases/{database}/documents {
-       match /scores/{scoreId} {
-         allow read: if true;
-         allow create: if request.auth != null
-           && request.resource.data.userId == request.auth.uid
-           && request.resource.data.score is int
-           && request.resource.data.score >= 0
-           && request.resource.data.score < 1000000;
-       }
-       match /users/{userId} {
-         allow read: if true;
-         allow write: if request.auth != null && request.auth.uid == userId;
-       }
-       match /replays/{replayId} {
-         allow read: if true;
-         allow create: if request.auth != null
-           && request.resource.data.userId == request.auth.uid;
-       }
-     }
-   }
+   Rules unit tests live in `src/lib/firebase/__rules__/rules.test.ts` and run against the Firestore emulator:
+   ```bash
+   firebase emulators:exec --only firestore "npx jest src/lib/firebase/__rules__"
    ```
+   These tests require Java + the emulator and the `@firebase/rules-unit-testing` dev dependency, so they are NOT part of the default `npm test` run.
 
 7. For Android builds, download `google-services.json` from project settings → place at repo root (already gitignored — verify with `cat .gitignore | grep google-services`).
 8. For iOS builds, download `GoogleService-Info.plist` → place at repo root.
@@ -53,6 +36,18 @@
 ## Validation
 
 Run the app on a real device (not simulator). Watch the Metro logs for `✅ Firebase initialized successfully`. Then open Firestore in the console → confirm a document appears under `users/` after the first launch (anonymous auth creates a profile).
+
+## Score integrity (audit S1/M1.3/M1.4)
+
+Client-side validation lives in `src/lib/firebase/validation.ts` (`validateScoreSubmission`), called by `submitScore` before any write. The rules and the validator share the same bounds:
+- `MAX_SCORE_PER_MOVE = 5000`
+- `HARD_SCORE_CEILING = 10,000,000`
+
+The enforcement boundary is: `score <= hard ceiling AND (moveCount <= 0 OR score <= moveCount * 5000)`. **These constants are duplicated in `firestore.rules` (rules cannot import TypeScript) and MUST be kept in sync.**
+
+One-run-per-day is enforced by create-once rules on `tournaments/{date}/entries/{uid}` (`allow update, delete: if false`).
+
+Each tournament entry persists its `replayCode`; this enables a future Phase-3 server-side replay re-simulation job to set `verified: true` (currently always `false`). No Cloud Function in v1 (decision D3).
 
 ## Out of scope for v1
 

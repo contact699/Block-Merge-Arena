@@ -60,10 +60,10 @@ export function buildTimeline(
  *  Haptic wiring (all via lazy require so this module is testable without native mocks):
  *    'light'   → expo-haptics impactAsync(Light)        — piecePlaced settle beat
  *    'medium'  → expo-haptics impactAsync(Medium)       — linesCleared sweep beat
- *    'success' → fireMergeHaptic(multiplier) [cascade]  — mergeFormed beat (multiplier-patterned)
+ *    'success' (mergeFormed) → owned by MergeAnimation overlay, NOT fired here
  *
  *  SFX wiring:
- *    'merge'   → playMergeSound(multiplier) [sfx.ts]    — mergeFormed beat
+ *    'merge'   → owned by MergeAnimation overlay, NOT fired here
  *    'place' / 'clear' → no dedicated sound assets yet (reserved for T16); skipped
  */
 export function playTimeline(
@@ -76,10 +76,6 @@ export function playTimeline(
   // Lazy require keeps native deps out of module parse — buildTimeline stays testable.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Haptics = require('expo-haptics') as typeof import('expo-haptics');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { fireMergeHaptic } = require('@/lib/haptics/cascade') as typeof import('@/lib/haptics/cascade');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { playMergeSound } = require('@/lib/audio/sfx') as typeof import('@/lib/audio/sfx');
 
   const timeouts: ReturnType<typeof setTimeout>[] = [];
 
@@ -91,10 +87,10 @@ export function playTimeline(
         // Haptics — non-critical, swallow errors
         if (beat.haptic) {
           try {
-            if (beat.haptic === 'success' && beat.event.type === 'mergeFormed') {
-              // Use cascade module which patterns the haptic intensity by merge multiplier
-              void fireMergeHaptic(beat.event.multiplier);
-            } else if (beat.haptic === 'light') {
+            // Merge audio + haptic are owned by the MergeAnimation overlay (fired in sync
+            // with its visual). The director only owns placement/clear cues. When the cascade
+            // becomes a canvas effect (plan 2), move merge feedback here.
+            if (beat.haptic === 'light') {
               void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             } else if (beat.haptic === 'medium') {
               void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -104,15 +100,8 @@ export function playTimeline(
           }
         }
 
-        // SFX — only merge has loaded sound assets (sfx.ts covers merge-Nx.m4a)
-        if (beat.sfx === 'merge' && beat.event.type === 'mergeFormed') {
-          try {
-            void playMergeSound(beat.event.multiplier);
-          } catch {
-            // best-effort
-          }
-        }
         // 'place' and 'clear' sfx cues reserved for future sound assets (T16)
+        // merge sfx is owned by MergeAnimation overlay (see comment above)
       }, beat.startMs),
     );
   }

@@ -12,7 +12,7 @@ import { Pill } from '@/components/design/Pill';
 import { TactileButton } from '@/components/design/TactileButton';
 import { colors, fontWeight, radii, blockColors } from '@/lib/design/tokens';
 import { useThemePalette } from '@/lib/themes/provider';
-import { createRun, applyMove, type EngineState } from '@/lib/game/engine';
+import { createRun, applyMove, type EngineState, type EngineEvent } from '@/lib/game/engine';
 import { mathRandomSource } from '@/lib/game/rng';
 import { buildTimeline, playTimeline, isReduceMotion } from '@/components/board/AnimationDirector';
 import { GameSurface } from '@/components/board/GameSurface';
@@ -207,6 +207,10 @@ export default function GameScreen() {
   const [showCombo, setShowCombo] = useState<{ points: number; multiplier: number } | null>(null);
   const [showLineClear, setShowLineClear] = useState<number | null>(null);
 
+  // Cascade burst state — driven by mergeFormed events from the engine.
+  const [cascade, setCascade] = useState<{ id: number; anchor: { row: number; col: number }; multiplier: number; color: string } | null>(null);
+  const cascadeIdRef = useRef(0);
+
   // Timeouts ref — cleared on unmount to prevent setState-after-unmount.
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const runStartRef = useRef<number>(Date.now());
@@ -232,6 +236,7 @@ export default function GameScreen() {
     setComboCount(0);
     setShowCombo(null);
     setShowLineClear(null);
+    setCascade(null);
     runStartRef.current = Date.now();
     track('endless_started', {});
   }, []);
@@ -243,6 +248,16 @@ export default function GameScreen() {
 
     setEngine(out.state);
     setSelectedPieceIndex(undefined);
+
+    // Fire cascade burst for the highest-multiplier merge this move.
+    const mergeEvents = out.events.filter(
+      (e): e is Extract<EngineEvent, { type: 'mergeFormed' }> => e.type === 'mergeFormed'
+    );
+    if (mergeEvents.length > 0) {
+      const best = mergeEvents.reduce((a, b) => (b.multiplier > a.multiplier ? b : a));
+      cascadeIdRef.current += 1;
+      setCascade({ id: cascadeIdRef.current, anchor: best.anchor, multiplier: best.multiplier, color: best.color });
+    }
 
     // Drive animation + haptics via AnimationDirector.
     const beats = buildTimeline(out.events, { reduceMotion: await isReduceMotion() });
@@ -456,6 +471,8 @@ export default function GameScreen() {
             onSelectPiece={(_piece, i) => setSelectedPieceIndex(i)}
             onPlace={handlePlace}
             onCellTap={handlePowerUpCellTap}
+            cascade={cascade}
+            onCascadeComplete={() => setCascade(null)}
           />
         </View>
 

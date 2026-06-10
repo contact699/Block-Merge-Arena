@@ -14,7 +14,7 @@ import { Pill } from '@/components/design/Pill';
 import { TactileButton } from '@/components/design/TactileButton';
 import { colors, fontWeight, radii } from '@/lib/design/tokens';
 import { useThemePalette } from '@/lib/themes/provider';
-import { createRun, applyMove, type EngineState } from '@/lib/game/engine';
+import { createRun, applyMove, type EngineState, type EngineEvent } from '@/lib/game/engine';
 import type { GamePiece } from '@/lib/types/game';
 import { SeededRandom } from '@/lib/game/rng';
 import { buildTimeline, playTimeline, isReduceMotion } from '@/components/board/AnimationDirector';
@@ -60,6 +60,10 @@ export default function DailyScreen() {
   // UI-only animation state
   const [showCombo, setShowCombo] = useState<{ points: number; multiplier: number } | null>(null);
   const [showLineClear, setShowLineClear] = useState<number | null>(null);
+
+  // Cascade burst state — driven by mergeFormed events from the engine.
+  const [cascade, setCascade] = useState<{ id: number; anchor: { row: number; col: number }; multiplier: number; color: string } | null>(null);
+  const cascadeIdRef = useRef(0);
 
   // Tournament standings
   const [showStandings, setShowStandings] = useState<boolean>(false);
@@ -160,6 +164,7 @@ export default function DailyScreen() {
     setSelectedPieceIndex(undefined);
     setShowCombo(null);
     setShowLineClear(null);
+    setCascade(null);
     runStartTimestampRef.current = Date.now();
     setReplayCode(null);
     setUnlockedAchievements([]);
@@ -248,6 +253,16 @@ export default function DailyScreen() {
 
     setEngine(out.state);
     setSelectedPieceIndex(undefined);
+
+    // Fire cascade burst for the highest-multiplier merge this move.
+    const mergeEvents = out.events.filter(
+      (e): e is Extract<EngineEvent, { type: 'mergeFormed' }> => e.type === 'mergeFormed'
+    );
+    if (mergeEvents.length > 0) {
+      const best = mergeEvents.reduce((a, b) => (b.multiplier > a.multiplier ? b : a));
+      cascadeIdRef.current += 1;
+      setCascade({ id: cascadeIdRef.current, anchor: best.anchor, multiplier: best.multiplier, color: best.color });
+    }
 
     // Replay: record move with correct linesCleared count.
     if (replayRecorder?.isRecording()) {
@@ -795,6 +810,8 @@ export default function DailyScreen() {
               selectedPieceIndex={selectedPieceIndex}
               onSelectPiece={handleSelectPiece}
               onPlace={handlePlace}
+              cascade={cascade}
+              onCascadeComplete={() => setCascade(null)}
             />
           </View>
         )}

@@ -21,12 +21,13 @@ import Animated, {
 } from 'react-native-reanimated';
 import { GestureDetector } from 'react-native-gesture-handler';
 import type { GameBoard, GamePiece } from '@/lib/types/game';
-import { makeGeometry } from '@/lib/board/geometry';
+import { makeGeometry, rectForCell } from '@/lib/board/geometry';
 import { blockColors, resolveBlockColor, space } from '@/lib/design/tokens';
 import { BoardCanvas } from './BoardCanvas';
 import { InputLattice } from './InputLattice';
 import { useDragPlacement } from './useDragPlacement';
 import { PiecesTray } from '@/components/design/PiecesTray';
+import { MergeAnimation } from '@/components/cascade/MergeAnimation';
 
 // ---------------------------------------------------------------------------
 // Layout constants
@@ -93,6 +94,8 @@ export function GameSurface({
   onSelectPiece,
   onPlace,
   onCellTap,
+  cascade,
+  onCascadeComplete,
 }: {
   board: GameBoard;
   pieces: GamePiece[];
@@ -101,6 +104,9 @@ export function GameSurface({
   onPlace: (pieceIndex: number, row: number, col: number) => void;
   /** Optional interceptor: return true to suppress normal tap-to-place (e.g. power-ups). */
   onCellTap?: (row: number, col: number) => boolean;
+  /** When set, renders the merge cascade burst at the given board cell. */
+  cascade?: { id: number; anchor: { row: number; col: number }; multiplier: number; color: string } | null;
+  onCascadeComplete?: () => void;
 }) {
   const geometry = useMemo(
     () =>
@@ -203,6 +209,22 @@ export function GameSurface({
           >
             {heldPiece ? <FloatingPieceGrid piece={heldPiece} /> : null}
           </Animated.View>
+
+          {/* Cascade burst overlay — positioned at the anchor cell center via
+              rectForCell; pointerEvents="none" so it never intercepts taps.   */}
+          {cascade && (() => {
+            const rect = rectForCell(geometry, cascade.anchor);
+            const origin = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+            return (
+              <MergeAnimation
+                key={cascade.id}
+                multiplier={cascade.multiplier}
+                color={resolveBlockColor(cascade.color)}
+                origin={origin}
+                onComplete={onCascadeComplete ?? (() => {})}
+              />
+            );
+          })()}
         </View>
 
         {/* Pieces tray — measures its Y offset so the hook can convert

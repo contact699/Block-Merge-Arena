@@ -1,12 +1,12 @@
 // Achievements Screen — tactile-console restyle, slim 6-badge catalog.
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Sparkles, Trophy, Calendar, Flame, Timer, Award } from 'lucide-react-native';
+import { Sparkles, Layers, Calendar, Flame, Zap, Target } from 'lucide-react-native';
 import { GlassCard } from '@/components/design/GlassCard';
 import { Pill } from '@/components/design/Pill';
-import { colors, fontWeight } from '@/lib/design/tokens';
+import { ScreenHeader } from '@/components/design/ScreenHeader';
+import { colors, fontWeight, space, fontSize } from '@/lib/design/tokens';
 import { useThemePalette } from '@/lib/themes/provider';
 import { DEFAULT_ACHIEVEMENTS, getAchievements } from '@/lib/utils/achievements';
 import type { Achievement } from '@/lib/types/achievements';
@@ -15,11 +15,11 @@ type AchievementEntry = (typeof DEFAULT_ACHIEVEMENTS)[number];
 
 const ICON_BY_ID: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   'first-merge': Sparkles,
-  'five-cluster': Flame,
+  'five-cluster': Layers,
   'first-daily': Calendar,
-  'streak-7': Award,
-  'sub-three': Timer,
-  centurion: Trophy,
+  'streak-7': Flame,
+  'sub-three': Zap,
+  centurion: Target,
 };
 
 function AchievementBadge({
@@ -29,13 +29,13 @@ function AchievementBadge({
   achievement: AchievementEntry;
   unlocked: boolean;
 }) {
-  const Icon = ICON_BY_ID[achievement.id] ?? Trophy;
+  const Icon = ICON_BY_ID[achievement.id] ?? Target;
   return (
-    <GlassCard style={{ marginBottom: 10, padding: 0, opacity: unlocked ? 1 : 0.45, overflow: 'hidden' }}>
+    <GlassCard style={{ marginBottom: space.sm, padding: 0, opacity: unlocked ? 1 : 0.35, overflow: 'hidden' }}>
       {unlocked && (
         <View style={{ height: 3, backgroundColor: colors.ember }} />
       )}
-      <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <View style={{ padding: space.md, flexDirection: 'row', alignItems: 'center', gap: space.md }}>
         <View
           style={{
             width: 44,
@@ -46,12 +46,12 @@ function AchievementBadge({
             justifyContent: 'center',
           }}
         >
-          <Icon size={22} color={unlocked ? colors.ember : colors.inkSoft} strokeWidth={2} />
+          <Icon size={22} color={unlocked ? colors.ember : colors.inkDim} strokeWidth={2} />
         </View>
         <View style={{ flex: 1 }}>
           <Text
             style={{
-              fontSize: 16,
+              fontSize: fontSize.subtitle,
               fontWeight: fontWeight.heavy,
               color: colors.ink,
               letterSpacing: -0.3,
@@ -59,7 +59,7 @@ function AchievementBadge({
           >
             {achievement.name}
           </Text>
-          <Text style={{ fontSize: 12, color: colors.inkSoft, marginTop: 2 }}>
+          <Text style={{ fontSize: fontSize.body, color: colors.inkSoft, marginTop: 2 }}>
             {achievement.description}
           </Text>
         </View>
@@ -69,7 +69,6 @@ function AchievementBadge({
 }
 
 export default function AchievementsScreen() {
-  const router = useRouter();
   const palette = useThemePalette();
   const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
 
@@ -99,32 +98,29 @@ export default function AchievementsScreen() {
         }}
       />
 
-      {/* Header */}
-      <View style={{ paddingHorizontal: 18, paddingTop: 12 }}>
-        <Pressable testID="back-button" onPress={() => router.back()} style={{ marginBottom: 12 }}>
-          <Text style={{ fontSize: 14, fontWeight: fontWeight.semibold, color: colors.ember }}>
-            ← Back
-          </Text>
-        </Pressable>
+      {/* Header — back-button testID is provided by ScreenHeader */}
+      <ScreenHeader title="Achievements" />
 
+      {/* Sub-header copy */}
+      <View style={{ paddingHorizontal: space.lg, paddingBottom: space.sm }}>
         <Pill variant="ember">ACHIEVEMENTS</Pill>
         <Text
           style={{
-            fontSize: 32,
+            fontSize: fontSize.title,
             fontWeight: fontWeight.black,
             color: colors.ink,
-            marginTop: 12,
+            marginTop: space.sm,
             letterSpacing: -1,
           }}
         >
           Six tasteful badges
         </Text>
-        <Text style={{ fontSize: 13, color: colors.inkSoft, marginTop: 4 }}>
+        <Text style={{ fontSize: fontSize.body, color: colors.inkSoft, marginTop: space.xs }}>
           Status, not currency. Earned, not bought.
         </Text>
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 14 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: space.md }}>
         {DEFAULT_ACHIEVEMENTS.map((a) => (
           <AchievementBadge key={a.id} achievement={a} unlocked={isUnlocked(a.id)} />
         ))}

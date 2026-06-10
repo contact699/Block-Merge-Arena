@@ -15,6 +15,7 @@ import { TactileButton } from '@/components/design/TactileButton';
 import { colors, fontWeight, radii } from '@/lib/design/tokens';
 import { useThemePalette } from '@/lib/themes/provider';
 import { createRun, applyMove, type EngineState } from '@/lib/game/engine';
+import type { GamePiece } from '@/lib/types/game';
 import { SeededRandom } from '@/lib/game/rng';
 import { buildTimeline, playTimeline, isReduceMotion } from '@/components/board/AnimationDirector';
 import { GameSurface } from '@/components/board/GameSurface';
@@ -137,6 +138,9 @@ export default function DailyScreen() {
     }
   };
 
+  // Memoized piece-selection handler — avoids recreating the lambda every render.
+  const handleSelectPiece = useCallback((_piece: GamePiece, i: number) => setSelectedPieceIndex(i), []);
+
   // ---------------------------------------------------------------------------
   // startTournament — reset to a fresh seeded run
   // ---------------------------------------------------------------------------
@@ -156,17 +160,21 @@ export default function DailyScreen() {
     setSelectedPieceIndex(undefined);
     setShowCombo(null);
     setShowLineClear(null);
-    setTournamentStarted(true);
     runStartTimestampRef.current = Date.now();
     setReplayCode(null);
     setUnlockedAchievements([]);
     setEarnedCoins(0);
 
-    // Initialize and start replay recording.
+    // Initialize and start replay recording BEFORE making the board interactive.
+    // If setTournamentStarted(true) ran first, a fast tap could fire handlePlace
+    // before replayRecorder is set, silently dropping move #1 from the replay.
     const userId = await getOrCreateUser();
     const recorder = new ReplayRecorder(userId, 'tournament', tournamentDate, getDailySeed());
     recorder.start();
     setReplayRecorder(recorder);
+
+    // Board becomes interactive only after recorder is ready.
+    setTournamentStarted(true);
   };
 
   // ---------------------------------------------------------------------------
@@ -785,7 +793,7 @@ export default function DailyScreen() {
               board={engine.board}
               pieces={engine.pieces}
               selectedPieceIndex={selectedPieceIndex}
-              onSelectPiece={(_piece, i) => setSelectedPieceIndex(i)}
+              onSelectPiece={handleSelectPiece}
               onPlace={handlePlace}
             />
           </View>

@@ -1,31 +1,25 @@
-// Daily Screen — renamed from tournament.tsx, restyled with tactile-console aesthetic.
-import { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, Pressable, type LayoutChangeEvent } from 'react-native';
-import { computeCascadeOrigin, type BoardLayout } from '@/lib/cascade/origin';
+// Daily Screen — rebuilt on seeded engine + GameSurface (Task 13).
+// Determinism guarantee: one SeededRandom instance per run, passed to both
+// createRun and every applyMove call, so gem colors are derived from the same
+// stream as piece shapes — two players making identical moves get identical boards.
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { track } from '@/lib/analytics/events';
-import { GameBoard } from '@/components/GameBoard';
-import { PiecesTray } from '@/components/design/PiecesTray';
 import { ScoreDisplay } from '@/components/ScoreDisplay';
-import { GemCounter } from '@/components/GemDisplay';
 import { ComboAnimation, LineClearEffect } from '@/components/ComboAnimation';
-import { MergeAnimation } from '@/components/cascade/MergeAnimation';
 import { GlassCard, DeepCard } from '@/components/design/GlassCard';
 import { Pill } from '@/components/design/Pill';
 import { TactileButton } from '@/components/design/TactileButton';
-import { colors, fontWeight, radii, resolveBlockColor, blockColors } from '@/lib/design/tokens';
+import { colors, fontWeight, radii } from '@/lib/design/tokens';
 import { useThemePalette } from '@/lib/themes/provider';
-import { createEmptyBoard, canPlacePiece, placePiece, clearLines, hasValidMoves } from '@/lib/game/board';
+import { createRun, applyMove, type EngineState, type EngineEvent } from '@/lib/game/engine';
+import type { GamePiece } from '@/lib/types/game';
+import { SeededRandom } from '@/lib/game/rng';
+import { buildTimeline, playTimeline, isReduceMotion } from '@/components/board/AnimationDirector';
+import { GameSurface } from '@/components/board/GameSurface';
 import {
-  generateGemsFromClearedCells,
-  placeGemsOnBoard,
-  mergeGems,
-  getGemsFromBoard,
-  calculateTotalMultiplier
-} from '@/lib/game/merge';
-import {
-  generateTournamentPieces,
   getDailySeed,
   getTodayDateString,
   recordDailyCompletion,
@@ -39,46 +33,37 @@ import {
   getTournamentStandings,
   isConfigured as isFirebaseConfigured,
   type TournamentEntry,
-  getOrCreateUser
+  getOrCreateUser,
 } from '@/lib/firebase';
 import { ReplayRecorder } from '@/lib/game/replay-recorder';
 import { rewardCoinsForScore } from '@/lib/utils/currency';
 import { checkAchievements } from '@/lib/utils/achievements';
 import { showAchievementsToasts } from '@/components/feedback/AchievementToast';
 
-import type { GameBoard as GameBoardType, GamePiece, Gem } from '@/lib/types/game';
-
 export default function DailyScreen() {
   const router = useRouter();
   const palette = useThemePalette();
-  const [board, setBoard] = useState<GameBoardType>(createEmptyBoard());
-  const [pieces, setPieces] = useState<GamePiece[]>([]);
-  const [selectedPieceIndex, setSelectedPieceIndex] = useState<number | undefined>(undefined);
-  const [score, setScore] = useState<number>(0);
-  const [multiplier, setMultiplier] = useState<number>(1);
-  const [gems, setGems] = useState<Gem[]>([]);
-  const [gameOver, setGameOver] = useState<boolean>(false);
 
-  // Daily mode state
+  // ---------------------------------------------------------------------------
+  // Engine state — single source of truth for board, pieces, score, multiplier, gameOver.
+  // Initial createRun uses a throwaway seed; the real run starts in startTournament.
+  // ---------------------------------------------------------------------------
+  const rngRef = useRef<SeededRandom>(new SeededRandom(getDailySeed()));
+  const [engine, setEngine] = useState<EngineState>(() => createRun(new SeededRandom(getDailySeed())));
+  const [selectedPieceIndex, setSelectedPieceIndex] = useState<number | undefined>(undefined);
+
+  // Daily mode meta-state
   const [tournamentStarted, setTournamentStarted] = useState<boolean>(false);
   const [tournamentDate] = useState<string>(getTodayDateString());
-  const [seed] = useState<number>(getDailySeed());
-  const [pieceSetIndex, setPieceSetIndex] = useState<number>(0);
   const [hasPlayedToday, setHasPlayedToday] = useState<boolean>(false);
 
-  // Animation states
+  // UI-only animation state
   const [showCombo, setShowCombo] = useState<{ points: number; multiplier: number } | null>(null);
   const [showLineClear, setShowLineClear] = useState<number | null>(null);
-  const [activeCascade, setActiveCascade] = useState<{
-    id: number;
-    multiplier: number;
-    color: keyof typeof blockColors;
-    origin: { x: number; y: number };
-  } | null>(null);
 
-  const [boardLayout, setBoardLayout] = useState<BoardLayout | null>(null);
-  const BOARD_INNER_PADDING = 10;
-  const CELL_GAP = 2;
+  // Cascade burst state — driven by mergeFormed events from the engine.
+  const [cascade, setCascade] = useState<{ id: number; anchor: { row: number; col: number }; multiplier: number; color: string } | null>(null);
+  const cascadeIdRef = useRef(0);
 
   // Tournament standings
   const [showStandings, setShowStandings] = useState<boolean>(false);
@@ -94,7 +79,6 @@ export default function DailyScreen() {
   const [earnedCoins, setEarnedCoins] = useState<number>(0);
 
   // Achievements
-  const [maxMultiplierReached, setMaxMultiplierReached] = useState<number>(1);
   const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
 
   // Archive
@@ -103,24 +87,15 @@ export default function DailyScreen() {
   const [archive, setArchive] = useState<ArchiveEntry[]>([]);
   const isSubscribed = useRequireSubscription();
 
-  const onArchivePress = async (): Promise<void> => {
-    if (!isSubscribed) {
-      // PaywallModal fires paywall_viewed on visible=true — don't track here too.
-      setShowPaywall(true);
-      return;
-    }
-    const entries = await getArchive();
-    setArchive(entries);
-    setShowArchive(true);
-  };
-
+  // Run timing
   const runStartTimestampRef = useRef<number>(Date.now());
 
-  // Initialize with tournament pieces
-  useEffect(() => {
-    const tournamentPieces = generateTournamentPieces(seed, 3);
-    setPieces(tournamentPieces);
-  }, [seed]);
+  // Timeouts ref — ALL timeouts (animation + standings delay) captured here,
+  // cleared on unmount to prevent setState-after-unmount (fixes audit P2).
+  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // Clear pending timeouts on unmount.
+  useEffect(() => () => { timeoutsRef.current.forEach(clearTimeout); }, []);
 
   // Check whether today's puzzle has already been completed (no retries).
   useEffect(() => {
@@ -130,36 +105,26 @@ export default function DailyScreen() {
     })();
   }, [tournamentDate]);
 
-  const startTournament = async (): Promise<void> => {
-    track('daily_started', { puzzle_id: getTodayDateString() });
+  // ---------------------------------------------------------------------------
+  // Archive / paywall
+  // ---------------------------------------------------------------------------
 
-    setBoard(createEmptyBoard());
-    const tournamentPieces = generateTournamentPieces(seed, 3);
-    setPieces(tournamentPieces);
-    setScore(0);
-    setMultiplier(1);
-    setGems([]);
-    setGameOver(false);
-    setSelectedPieceIndex(undefined);
-    setTournamentStarted(true);
-    setPieceSetIndex(0);
-    runStartTimestampRef.current = Date.now();
-    setReplayCode(null);
-    setMaxMultiplierReached(1);
-    setUnlockedAchievements([]);
-    setEarnedCoins(0);
-
-    // Initialize and start replay recording
-    const userId = await getOrCreateUser();
-    const recorder = new ReplayRecorder(userId, 'tournament', tournamentDate, seed);
-    recorder.start();
-    setReplayRecorder(recorder);
-    console.log('Daily replay recording started');
+  const onArchivePress = async (): Promise<void> => {
+    if (!isSubscribed) {
+      setShowPaywall(true);
+      return;
+    }
+    const entries = await getArchive();
+    setArchive(entries);
+    setShowArchive(true);
   };
 
-  const loadStandings = async (): Promise<void> => {
-    if (!isFirebaseAvailable) return;
+  // ---------------------------------------------------------------------------
+  // Standings
+  // ---------------------------------------------------------------------------
 
+  const loadStandings = useCallback(async (): Promise<void> => {
+    if (!isFirebaseAvailable) return;
     setLoadingStandings(true);
     try {
       const response = await getTournamentStandings(tournamentDate);
@@ -168,163 +133,94 @@ export default function DailyScreen() {
       console.error('Error loading tournament standings:', error);
     }
     setLoadingStandings(false);
-  };
+  }, [isFirebaseAvailable, tournamentDate]);
 
   const toggleStandings = (): void => {
     setShowStandings(!showStandings);
     if (!showStandings && standings.length === 0) {
-      loadStandings();
+      void loadStandings();
     }
   };
 
-  const handlePieceSelect = (piece: GamePiece, index: number): void => {
-    setSelectedPieceIndex(index);
-  };
+  // Memoized piece-selection handler — avoids recreating the lambda every render.
+  const handleSelectPiece = useCallback((_piece: GamePiece, i: number) => setSelectedPieceIndex(i), []);
 
-  const handleCellPress = (row: number, col: number): void => {
-    if (selectedPieceIndex === undefined || gameOver || !tournamentStarted) return;
+  // ---------------------------------------------------------------------------
+  // startTournament — reset to a fresh seeded run
+  // ---------------------------------------------------------------------------
 
-    const selectedPiece = pieces[selectedPieceIndex];
-    if (!canPlacePiece(board, selectedPiece, row, col)) {
-      return;
-    }
+  const startTournament = async (): Promise<void> => {
+    track('daily_started', { puzzle_id: getTodayDateString() });
 
-    // Place the piece
-    let newBoard = placePiece(board, selectedPiece, row, col);
+    // Clear any pending timeouts from prior runs.
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
 
-    // Clear any complete lines
-    const { newBoard: clearedBoard, clearedCells } = clearLines(newBoard);
-
-    let newMultiplier = multiplier;
-
-    if (clearedCells.length > 0) {
-      newBoard = clearedBoard;
-
-      // Show line clear animation
-      const linesCleared = clearedCells.length / 8;
-      setShowLineClear(Math.ceil(linesCleared));
-
-      // Generate gems from cleared cells
-      const newDroppedGems = generateGemsFromClearedCells(clearedCells);
-      newBoard = placeGemsOnBoard(newBoard, newDroppedGems);
-
-      // Get all gems from board
-      const allGems = getGemsFromBoard(newBoard);
-
-      // Merge adjacent same-color gems
-      const mergedGems = mergeGems(allGems);
-
-      // Check for large merged gems
-      const largeGems = mergedGems.filter((g: Gem) => g.size !== 'small');
-      if (largeGems.length > 0) {
-        const sizeOrder = { small: 0, medium: 1, large: 2, mega: 3 };
-        const bestGem = largeGems.reduce((best: Gem, current: Gem) =>
-          sizeOrder[current.size] > sizeOrder[best.size] ? current : best,
-        largeGems[0]);
-        const cell = { row: bestGem.position.row, col: bestGem.position.col };
-        const origin = boardLayout
-          ? computeCascadeOrigin(cell, boardLayout)
-          : { x: 0, y: 200 };
-        setActiveCascade({
-          id: Date.now(),
-          multiplier: bestGem.multiplier,
-          color: resolveBlockColor(bestGem.color),
-          origin,
-        });
-      }
-
-      // Calculate multiplier
-      newMultiplier = calculateTotalMultiplier(mergedGems);
-
-      // Track max multiplier
-      if (newMultiplier > maxMultiplierReached) {
-        setMaxMultiplierReached(newMultiplier);
-      }
-
-      // Calculate score
-      const points = clearedCells.length * 10 * multiplier;
-      setScore(score + points);
-
-      // Show combo animation
-      setShowCombo({ points, multiplier });
-
-      setMultiplier(newMultiplier);
-      setGems(mergedGems);
-
-      newBoard = placeGemsOnBoard(newBoard, mergedGems);
-    }
-
-    setBoard(newBoard);
-
-    // Record move in replay
-    const linesCleared = clearedCells.length > 0 ? Math.ceil(clearedCells.length / 8) : 0;
-    const newScore = clearedCells.length > 0 ? score + (clearedCells.length * 10 * multiplier) : score;
-    if (replayRecorder && replayRecorder.isRecording()) {
-      replayRecorder.recordMove(
-        selectedPiece,
-        { row, col },
-        newScore,
-        linesCleared,
-        newMultiplier
-      );
-    }
-
-    // Remove used piece and generate new ones
-    const newPieces = pieces.filter((_: GamePiece, i: number) => i !== selectedPieceIndex);
-    if (newPieces.length === 0) {
-      // Generate next set of tournament pieces with offset seed
-      const nextSetIndex = pieceSetIndex + 1;
-      const nextSeed = seed + (nextSetIndex * 1000);
-      newPieces.push(...generateTournamentPieces(nextSeed, 3));
-      setPieceSetIndex(nextSetIndex);
-    }
-    setPieces(newPieces);
+    // SINGLE seeded rng instance for the whole run — createRun consumes it first,
+    // then every applyMove call continues consuming from the same stream.
+    const rng = new SeededRandom(getDailySeed());
+    rngRef.current = rng;
+    setEngine(createRun(rng));
     setSelectedPieceIndex(undefined);
+    setShowCombo(null);
+    setShowLineClear(null);
+    setCascade(null);
+    runStartTimestampRef.current = Date.now();
+    setReplayCode(null);
+    setUnlockedAchievements([]);
+    setEarnedCoins(0);
 
-    // Check for game over (run ends only when no valid moves remain)
-    if (!hasValidMoves(newBoard, newPieces)) {
-      void handleRunEnd(newScore, newMultiplier, newBoard);
-    }
+    // Initialize and start replay recording BEFORE making the board interactive.
+    // If setTournamentStarted(true) ran first, a fast tap could fire handlePlace
+    // before replayRecorder is set, silently dropping move #1 from the replay.
+    const userId = await getOrCreateUser();
+    const recorder = new ReplayRecorder(userId, 'tournament', tournamentDate, getDailySeed());
+    recorder.start();
+    setReplayRecorder(recorder);
+
+    // Board becomes interactive only after recorder is ready.
+    setTournamentStarted(true);
   };
 
-  const handleRunEnd = async (finalScore: number, finalMultiplier: number, finalBoard: GameBoardType): Promise<void> => {
-    setGameOver(true);
+  // ---------------------------------------------------------------------------
+  // handleRunEnd — called with the FINAL EngineState (not stale React state)
+  // ---------------------------------------------------------------------------
+
+  const handleRunEnd = useCallback(async (final: EngineState): Promise<void> => {
     setTournamentStarted(false);
 
-    // Stop replay recording
+    // Stop replay recording with final board state.
     if (replayRecorder && replayRecorder.isRecording()) {
-      const replay = await replayRecorder.stop(finalScore, undefined, undefined, finalBoard);
+      const replay = await replayRecorder.stop(final.score, undefined, undefined, final.board);
       if (replay) {
         setReplayCode(replay.code || null);
-        console.log('Daily replay saved:', replay.code);
       }
     }
 
-    // Reward coins based on score
-    const coins = await rewardCoinsForScore(finalScore);
+    // Reward coins based on score.
+    const coins = await rewardCoinsForScore(final.score);
     setEarnedCoins(coins);
-    console.log('Earned coins:', coins);
 
-    // Save score to leaderboard
+    // Save score to leaderboard.
     saveScore({
       id: `tournament-${Date.now()}`,
-      score: finalScore,
+      score: final.score,
       mode: 'tournament',
       date: new Date().toISOString(),
-      maxMultiplier: finalMultiplier,
+      maxMultiplier: final.maxMultiplier,
       durationMs: Date.now() - runStartTimestampRef.current,
     });
 
-    // Check achievements
+    // Record daily completion + check achievements.
     const puzzleId = getTodayDateString();
     const { totalPlayed, streakDays } = await recordDailyCompletion(puzzleId);
     setHasPlayedToday(true);
     const granted = await checkAchievements({
       runMode: 'daily',
-      score: finalScore,
-      maxMultiplier: finalMultiplier,
+      score: final.score,
+      maxMultiplier: final.maxMultiplier,
       durationMs: Date.now() - runStartTimestampRef.current,
-      didMerge: finalMultiplier > 1,
+      didMerge: final.maxMultiplier > 1,
       didDailyComplete: true,
       dailyStreakDays: streakDays,
       dailiesPlayedTotal: totalPlayed,
@@ -334,14 +230,77 @@ export default function DailyScreen() {
       showAchievementsToasts(granted);
     }
 
-    // Load standings after game ends
+    // Load standings after a short delay (wait for score to propagate).
+    // IMPORTANT: captured into timeoutsRef so it's cleared on unmount (audit P2).
     if (isFirebaseAvailable) {
-      setTimeout(async () => {
+      const tid = setTimeout(async () => {
         await loadStandings();
         setShowStandings(true);
-      }, 2000); // Wait 2 seconds for score to propagate
+      }, 2000);
+      timeoutsRef.current.push(tid);
     }
-  };
+  }, [replayRecorder, isFirebaseAvailable, loadStandings]);
+
+  // ---------------------------------------------------------------------------
+  // handlePlace — main placement handler (mirrors Endless + replay recording)
+  // ---------------------------------------------------------------------------
+
+  const handlePlace = useCallback(async (pieceIndex: number, row: number, col: number) => {
+    // Capture piece BEFORE applyMove (the piece list may change after).
+    const piece = engine.pieces[pieceIndex];
+    const out = applyMove(engine, { type: 'place', pieceIndex, row, col }, rngRef.current);
+    if (out.events[0]?.type === 'rejected') return;
+
+    setEngine(out.state);
+    setSelectedPieceIndex(undefined);
+
+    // Fire cascade burst for the highest-multiplier merge this move.
+    const mergeEvents = out.events.filter(
+      (e): e is Extract<EngineEvent, { type: 'mergeFormed' }> => e.type === 'mergeFormed'
+    );
+    if (mergeEvents.length > 0) {
+      const best = mergeEvents.reduce((a, b) => (b.multiplier > a.multiplier ? b : a));
+      cascadeIdRef.current += 1;
+      setCascade({ id: cascadeIdRef.current, anchor: best.anchor, multiplier: best.multiplier, color: best.color });
+    }
+
+    // Replay: record move with correct linesCleared count.
+    if (replayRecorder?.isRecording()) {
+      const clearedEv = out.events.find((e) => e.type === 'linesCleared');
+      const linesCleared =
+        clearedEv && clearedEv.type === 'linesCleared'
+          ? clearedEv.rows.length + clearedEv.cols.length
+          : 0;
+      replayRecorder.recordMove(piece, { row, col }, out.state.score, linesCleared, out.state.multiplier);
+    }
+
+    // Drive animation + haptics via AnimationDirector.
+    const beats = buildTimeline(out.events, { reduceMotion: await isReduceMotion() });
+    if (beats.length > 0) {
+      const { timeouts } = playTimeline(beats, () => {});
+      timeoutsRef.current.push(...timeouts);
+    }
+
+    // UI feedback from events.
+    const scoreEvent = out.events.find((e) => e.type === 'scoreAwarded');
+    if (scoreEvent && scoreEvent.type === 'scoreAwarded') {
+      setShowCombo({ points: scoreEvent.points, multiplier: scoreEvent.multiplier });
+    }
+    const linesClearedEvent = out.events.find((e) => e.type === 'linesCleared');
+    if (linesClearedEvent && linesClearedEvent.type === 'linesCleared') {
+      const linesCount = linesClearedEvent.rows.length + linesClearedEvent.cols.length;
+      setShowLineClear(linesCount);
+    }
+
+    // Game over — pass final EngineState to handleRunEnd (no stale reads).
+    if (out.state.gameOver) {
+      void handleRunEnd(out.state);
+    }
+  }, [engine, replayRecorder, handleRunEnd]);
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
   return (
     <SafeAreaView testID="tournament-screen" style={{ flex: 1, backgroundColor: palette.paper }}>
@@ -373,7 +332,7 @@ export default function DailyScreen() {
         }}
       />
 
-      {/* Animations Overlay */}
+      {/* Animation overlays */}
       {showCombo && (
         <ComboAnimation
           points={showCombo.points}
@@ -385,15 +344,6 @@ export default function DailyScreen() {
         <LineClearEffect
           linesCleared={showLineClear}
           onComplete={() => setShowLineClear(null)}
-        />
-      )}
-      {activeCascade && (
-        <MergeAnimation
-          key={activeCascade.id}
-          multiplier={activeCascade.multiplier}
-          color={activeCascade.color}
-          origin={activeCascade.origin}
-          onComplete={() => setActiveCascade(null)}
         />
       )}
 
@@ -592,12 +542,12 @@ export default function DailyScreen() {
         {/* Score Display (during game) */}
         {tournamentStarted && (
           <View style={{ marginTop: 12 }}>
-            <ScoreDisplay score={score} multiplier={multiplier} />
+            <ScoreDisplay score={engine.score} multiplier={engine.multiplier} />
           </View>
         )}
 
         {/* Result card (after run) */}
-        {gameOver && (
+        {engine.gameOver && (
           <View style={{ paddingHorizontal: 14, marginTop: 10 }}>
             <GlassCard style={{ padding: 20 }}>
               <Text
@@ -627,7 +577,7 @@ export default function DailyScreen() {
                   shadowRadius: 18,
                 }}
               >
-                {score.toLocaleString()}
+                {engine.score.toLocaleString()}
               </Text>
               <Text
                 style={{
@@ -649,7 +599,7 @@ export default function DailyScreen() {
                   marginTop: 10,
                 }}
               >
-                <Pill variant="ember">{`×${maxMultiplierReached} MAX COMBO`}</Pill>
+                <Pill variant="ember">{`×${engine.maxMultiplier} MAX COMBO`}</Pill>
               </View>
 
               <Text
@@ -851,115 +801,41 @@ export default function DailyScreen() {
           </View>
         )}
 
-        {/* Gem Counter */}
-        {gems.length > 0 && tournamentStarted && (
-          <View style={{ paddingHorizontal: 14, marginTop: 10 }}>
-            <GemCounter gems={gems} />
-          </View>
-        )}
-
-        {/* Game Board */}
+        {/* Board + pieces tray (GameSurface owns both) — shown during active run */}
         {tournamentStarted && (
-          <View style={{ alignItems: 'center', marginTop: 14, marginBottom: 8, paddingHorizontal: 16 }}>
-            <View style={{ position: 'relative' }}>
-              <View
-                onLayout={(e: LayoutChangeEvent) => {
-                  const { x, y, width } = e.nativeEvent.layout;
-                  const cellSize = (width - BOARD_INNER_PADDING * 2 - CELL_GAP * 7) / 8;
-                  setBoardLayout({
-                    boardX: x,
-                    boardY: y,
-                    boardSize: width,
-                    cellSize,
-                    boardPadding: BOARD_INNER_PADDING,
-                    cellGap: CELL_GAP,
-                  });
-                }}
-              >
-                <GameBoard
-                  board={board}
-                  onCellPress={handleCellPress}
-                />
-              </View>
-              {multiplier > 1 && (
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: -12,
-                    right: -12,
-                    paddingHorizontal: 12,
-                    paddingVertical: 5,
-                    backgroundColor: colors.ember,
-                    borderRadius: 999,
-                    borderWidth: 1.5,
-                    borderColor: 'white',
-                    shadowColor: colors.ember,
-                    shadowOffset: { width: 0, height: 6 },
-                    shadowOpacity: 0.6,
-                    shadowRadius: 16,
-                    elevation: 8,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: 'white',
-                      fontWeight: fontWeight.black,
-                      fontSize: 14,
-                    }}
-                  >
-                    {'×'}{multiplier}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-        )}
-
-        {/* Instructions */}
-        {tournamentStarted && selectedPieceIndex === undefined && !gameOver && (
-          <Text
-            style={{
-              color: colors.inkSoft,
-              textAlign: 'center',
-              fontSize: 12,
-              fontWeight: fontWeight.semibold,
-              marginTop: 8,
-              paddingHorizontal: 14,
-            }}
-          >
-            Select a piece below, then tap the board to place it
-          </Text>
-        )}
-
-        {tournamentStarted && selectedPieceIndex !== undefined && !gameOver && (
-          <Text
-            style={{
-              color: colors.ember,
-              textAlign: 'center',
-              fontSize: 12,
-              fontWeight: fontWeight.semibold,
-              marginTop: 8,
-              paddingHorizontal: 14,
-            }}
-          >
-            Tap the board to place your piece
-          </Text>
-        )}
-
-        {/* Pieces Selector */}
-        {pieces.length > 0 && tournamentStarted && !gameOver && (
-          <View style={{ paddingHorizontal: 14, marginTop: 8, marginBottom: 8 }}>
-            <PiecesTray
-              pieces={pieces}
-              selectedIndex={selectedPieceIndex}
-              onSelect={handlePieceSelect}
+          <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 8 }}>
+            <GameSurface
+              board={engine.board}
+              pieces={engine.pieces}
+              selectedPieceIndex={selectedPieceIndex}
+              onSelectPiece={handleSelectPiece}
+              onPlace={handlePlace}
+              cascade={cascade}
+              onCascadeComplete={() => setCascade(null)}
             />
           </View>
         )}
 
-        {/* Start Button — pre-game state. Hidden once today's puzzle is done
-            (one-run-no-retries per ADR 0003 / launch design § 3). */}
-        {!tournamentStarted && !hasPlayedToday && (
+        {/* Hint text (mirrors Endless) */}
+        {tournamentStarted && !engine.gameOver && (
+          <Text
+            style={{
+              color: selectedPieceIndex !== undefined ? colors.ember : colors.inkSoft,
+              textAlign: 'center',
+              fontSize: 12,
+              fontWeight: fontWeight.semibold,
+              marginTop: 8,
+              paddingHorizontal: 14,
+            }}
+          >
+            {selectedPieceIndex !== undefined
+              ? 'Tap the board to place your piece'
+              : 'Select a piece, then tap the board'}
+          </Text>
+        )}
+
+        {/* Start Button — pre-game state. Hidden once today's puzzle is done. */}
+        {!tournamentStarted && !hasPlayedToday && !engine.gameOver && (
           <View style={{ paddingHorizontal: 14, marginTop: 16 }}>
             <TactileButton
               testID="start-tournament-button"
@@ -972,7 +848,7 @@ export default function DailyScreen() {
         )}
 
         {/* Already-played state — replaces the button when today's run is done. */}
-        {!tournamentStarted && hasPlayedToday && (
+        {!tournamentStarted && hasPlayedToday && !engine.gameOver && (
           <View testID="already-played-card" style={{ paddingHorizontal: 14, marginTop: 16 }}>
             <GlassCard style={{ padding: 18, alignItems: 'center' }}>
               <Text style={{ fontSize: 14, fontWeight: fontWeight.heavy, color: colors.ink, textAlign: 'center' }}>
@@ -1020,7 +896,7 @@ export default function DailyScreen() {
         </View>
       )}
 
-      {/* Paywall overlay — real PaywallModal renders SKUs from RevenueCat */}
+      {/* Paywall overlay */}
       <PaywallModal
         visible={showPaywall}
         source="archive"

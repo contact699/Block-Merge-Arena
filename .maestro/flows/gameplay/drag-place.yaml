@@ -1,0 +1,16 @@
+appId: com.blockmergearena.app
+name: Drag-to-Place Smoke Test
+---
+# Verifies the new gesture surface mounts and a swipe from the tray onto the
+# board doesn't crash the screen.
+- runFlow: ../setup/skip-welcome.yaml
+- tapOn:
+    id: "endless-mode-button"
+- assertVisible:
+    id: "game-screen"
+- swipe:
+    start: 50%, 88%        # middle tray slot (approx)
+    end: 50%, 40%          # board area
+    duration: 800
+- assertVisible:
+    id: "game-screen"      # screen survived the drag (placement committed or sprang back)

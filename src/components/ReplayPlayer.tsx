@@ -1,8 +1,10 @@
 // Replay Player Component - Plays back recorded replays with ghost visualization
-import { useState, useEffect, useRef } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { View, Text, Pressable, Dimensions } from 'react-native';
 import type { Replay, ReplayMove, ReplayPlaybackState } from '@/lib/types/replay';
-import { GameBoard } from './GameBoard';
+import { BoardCanvas, type GhostState } from '@/components/board/BoardCanvas';
+import { makeGeometry } from '@/lib/board/geometry';
+import { useSharedValue } from 'react-native-reanimated';
 import { ScoreDisplay } from './ScoreDisplay';
 import { createEmptyBoard, placePiece } from '@/lib/game/board';
 import { BLOCK_SHAPES } from '@/lib/game/pieces';
@@ -34,6 +36,12 @@ export function ReplayPlayer({
   const [currentMultiplier, setCurrentMultiplier] = useState<number>(1);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const geometry = useMemo(
+    () => makeGeometry({ boardX: 0, boardY: 0, boardSize: Dimensions.get('window').width - 48, padding: 10, gap: 2, cells: 8 }),
+    []
+  );
+  const noGhost = useSharedValue<GhostState>({ row: -1, col: -1, valid: false, pieceIndex: -1 });
 
   // Playback loop
   useEffect(() => {
@@ -167,7 +175,7 @@ export function ReplayPlayer({
 
       {/* Game Board */}
       <View className="items-center mt-6 mb-6">
-        <GameBoard board={board} />
+        <BoardCanvas board={board} geometry={geometry} pieces={[]} ghost={noGhost} />
       </View>
 
       {/* Progress Bar */}

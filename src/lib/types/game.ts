@@ -2,9 +2,15 @@
 
 export type BlockColor = 'red' | 'blue' | 'green' | 'yellow' | 'purple' | 'orange';
 
+export type GemTier = 'small' | 'medium' | 'large' | 'mega';
+
 export type CellState = {
   filled: boolean;
   color?: BlockColor;
+  /** Present only on gem cells (filled === false && color set). Spec §2.1 / audit D1:
+   *  merged gems persist their tier + multiplier on the board. */
+  gemTier?: GemTier;
+  gemMultiplier?: number;
 };
 
 export type Position = {

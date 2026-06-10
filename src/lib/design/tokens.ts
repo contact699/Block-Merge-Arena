@@ -121,3 +121,16 @@ export const shadows = {
     elevation: 14,
   },
 } as const;
+
+export const space = { xs: 4, sm: 8, md: 14, lg: 18, xl: 24 } as const;
+
+export const fontSize = {
+  caption: 10, label: 11, body: 13, subtitle: 15,
+  title: 24, score: 34, hero: 52,
+} as const;
+
+export const motion = {
+  instant: 80, fast: 140, base: 220, slow: 320,
+  spring: { damping: 18, stiffness: 220 },
+  springSoft: { damping: 14, stiffness: 160 },
+} as const;

@@ -2,28 +2,7 @@
 import type { GamePiece } from '@/lib/types/game';
 import { generatePieceByType, getAllShapeTypes } from '@/lib/game/pieces';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-/**
- * Simple seeded random number generator (LCG)
- * Same seed = same sequence of random numbers
- */
-class SeededRandom {
-  private seed: number;
-
-  constructor(seed: number) {
-    this.seed = seed % 2147483647;
-    if (this.seed <= 0) this.seed += 2147483646;
-  }
-
-  next(): number {
-    this.seed = (this.seed * 16807) % 2147483647;
-    return (this.seed - 1) / 2147483646;
-  }
-
-  nextInt(min: number, max: number): number {
-    return Math.floor(this.next() * (max - min + 1)) + min;
-  }
-}
+import { SeededRandom } from '@/lib/game/rng';
 
 /**
  * Generate a daily seed based on the date

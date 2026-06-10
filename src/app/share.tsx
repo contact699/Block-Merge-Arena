@@ -437,10 +437,11 @@ export default function ShareScreen() {
           </TactileButton>
         </View>
 
+        {/* Share always has content once loaded (stats + grid); the empty phase never applies here. */}
         <AsyncStateView
           loading={loading}
           error={error}
-          isEmpty={!loading && !error && highlights.length === 0 && stats === null}
+          isEmpty={false}
           emptyMessage="No share data yet — finish a run to get started."
           onRetry={loadData}
         >

@@ -99,7 +99,7 @@ export function isUsingFirebase(): boolean {
  */
 const STORAGE_PREFIX = '@block_merge:';
 // Keys to PRESERVE across a local-data reset (user preferences, not progress).
-const PRESERVE_KEYS = new Set<string>(['@block_merge:settings']);
+const PRESERVE_KEYS = new Set<string>(['@block_merge:settings', '@block_merge:active_theme']);
 
 export async function resetLocalData(): Promise<void> {
   // Sweep all @block_merge: keys, keeping user preferences

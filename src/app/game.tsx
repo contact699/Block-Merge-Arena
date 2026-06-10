@@ -1,30 +1,21 @@
-// Game Screen — Tactile Console redesign.
-import { useState, useEffect, useRef } from 'react';
-import { computeCascadeOrigin, type BoardLayout } from '@/lib/cascade/origin';
-import { View, Text, ScrollView, Pressable, type LayoutChangeEvent } from 'react-native';
+// Game Screen — Tactile Console redesign. Engine-driven endless mode.
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { track } from '@/lib/analytics/events';
-import { GameBoard } from '@/components/GameBoard';
 import { ScoreDisplay } from '@/components/ScoreDisplay';
 import { ComboAnimation, LineClearEffect } from '@/components/ComboAnimation';
-import { MergeAnimation } from '@/components/cascade/MergeAnimation';
 import { ColorSelector } from '@/components/PowerUpButton';
 import { GlassCard } from '@/components/design/GlassCard';
 import { Pill } from '@/components/design/Pill';
 import { TactileButton } from '@/components/design/TactileButton';
-import { PiecesTray } from '@/components/design/PiecesTray';
-import { colors, fontWeight, radii, resolveBlockColor, blockColors } from '@/lib/design/tokens';
+import { colors, fontWeight, radii, blockColors } from '@/lib/design/tokens';
 import { useThemePalette } from '@/lib/themes/provider';
-import { createEmptyBoard, canPlacePiece, placePiece, clearLines, hasValidMoves } from '@/lib/game/board';
-import { generatePieces } from '@/lib/game/pieces';
-import {
-  generateGemsFromClearedCells,
-  placeGemsOnBoard,
-  mergeGems,
-  getGemsFromBoard,
-  calculateTotalMultiplier,
-} from '@/lib/game/merge';
+import { createRun, applyMove, type EngineState } from '@/lib/game/engine';
+import { mathRandomSource } from '@/lib/game/rng';
+import { buildTimeline, playTimeline, isReduceMotion } from '@/components/board/AnimationDirector';
+import { GameSurface } from '@/components/board/GameSurface';
 import {
   getStartingPowerUps,
   applyReroll,
@@ -38,13 +29,7 @@ import {
 import { saveScore } from '@/lib/utils/leaderboard';
 import { checkAchievements } from '@/lib/utils/achievements';
 import { showAchievementsToasts } from '@/components/feedback/AchievementToast';
-import type {
-  GameBoard as GameBoardType,
-  GamePiece,
-  Gem,
-  PowerUp,
-  BlockColor,
-} from '@/lib/types/game';
+import type { PowerUp, BlockColor } from '@/lib/types/game';
 
 // --- Power-up cards ---
 const POWER_UP_META: Record<string, { icon: string; color: keyof typeof blockColors }> = {
@@ -205,90 +190,176 @@ function ComboTheater({
 
 export default function GameScreen() {
   const palette = useThemePalette();
-  const [board, setBoard] = useState<GameBoardType>(createEmptyBoard());
-  const [pieces, setPieces] = useState<GamePiece[]>([]);
+
+  // Engine state — single source of truth for board, pieces, score, multiplier, gameOver.
+  const [engine, setEngine] = useState<EngineState>(() => createRun(mathRandomSource));
   const [selectedPieceIndex, setSelectedPieceIndex] = useState<number | undefined>(undefined);
-  const [score, setScore] = useState<number>(0);
-  const [highScore, setHighScore] = useState<number>(0);
-  const [multiplier, setMultiplier] = useState<number>(1);
-  // gems state is set during merge; the rendered board reads gems via cell state directly.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [gems, setGems] = useState<Gem[]>([]);
-  const [gameOver, setGameOver] = useState<boolean>(false);
-  const [recentPoints, setRecentPoints] = useState<number>(0);
-  const [comboCount, setComboCount] = useState<number>(0);
 
-  const [showCombo, setShowCombo] = useState<{ points: number; multiplier: number } | null>(null);
-  const [showLineClear, setShowLineClear] = useState<number | null>(null);
-  const [activeCascade, setActiveCascade] = useState<{
-    id: number;
-    multiplier: number;
-    color: keyof typeof blockColors;
-    origin: { x: number; y: number };
-  } | null>(null);
-
-  const [boardLayout, setBoardLayout] = useState<BoardLayout | null>(null);
-
-  const BOARD_INNER_PADDING = 10;
-  const CELL_GAP = 2;
-
+  // Power-up state — lives outside the engine (power-ups bypass the merge/clear pipeline).
   const [powerUps, setPowerUps] = useState<PowerUp[]>(getStartingPowerUps());
   const [activePowerUp, setActivePowerUp] = useState<{ type: string; index: number } | null>(null);
   const [showColorSelector, setShowColorSelector] = useState<boolean>(false);
 
-  const runStartTimestampRef = useRef<number>(Date.now());
+  // UI-only animation/display state.
+  const [highScore, setHighScore] = useState<number>(0);
+  const [recentPoints, setRecentPoints] = useState<number>(0);
+  const [comboCount, setComboCount] = useState<number>(0);
+  const [showCombo, setShowCombo] = useState<{ points: number; multiplier: number } | null>(null);
+  const [showLineClear, setShowLineClear] = useState<number | null>(null);
 
+  // Timeouts ref — cleared on unmount to prevent setState-after-unmount.
+  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const runStartRef = useRef<number>(Date.now());
+
+  // Clear pending timeouts on unmount.
+  useEffect(() => () => { timeoutsRef.current.forEach(clearTimeout); }, []);
+
+  // Track game start on mount.
   useEffect(() => {
-    startNewGame();
+    track('endless_started', {});
   }, []);
 
-  const startNewGame = (): void => {
-    setBoard(createEmptyBoard());
-    setPieces(generatePieces(3));
-    setScore(0);
-    setMultiplier(1);
-    setGems([]);
-    setGameOver(false);
+  const startNewGame = useCallback((): void => {
+    // Clear any pending animation timeouts from the previous run.
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
+
+    setEngine(createRun(mathRandomSource));
     setSelectedPieceIndex(undefined);
     setPowerUps(getStartingPowerUps());
     setActivePowerUp(null);
     setRecentPoints(0);
     setComboCount(0);
-    runStartTimestampRef.current = Date.now();
+    setShowCombo(null);
+    setShowLineClear(null);
+    runStartRef.current = Date.now();
     track('endless_started', {});
-  };
+  }, []);
 
-  const handlePieceSelect = (_p: GamePiece, index: number): void => {
-    setSelectedPieceIndex(index);
-  };
+  // Main placement handler — called by GameSurface on tap or drag-commit.
+  const handlePlace = useCallback(async (pieceIndex: number, row: number, col: number) => {
+    const out = applyMove(engine, { type: 'place', pieceIndex, row, col }, mathRandomSource);
+    if (out.events[0]?.type === 'rejected') return;
 
-  const handlePowerUpPress = (powerUp: PowerUp, index: number): void => {
-    if (!canUsePowerUp(powerUp) || gameOver) return;
+    setEngine(out.state);
+    setSelectedPieceIndex(undefined);
+
+    // Drive animation + haptics via AnimationDirector.
+    const beats = buildTimeline(out.events, { reduceMotion: await isReduceMotion() });
+    if (beats.length > 0) {
+      const { timeouts } = playTimeline(beats, () => {});
+      timeoutsRef.current.push(...timeouts);
+    }
+
+    // Update UI display stats from events.
+    const scoreEvent = out.events.find((e) => e.type === 'scoreAwarded');
+    if (scoreEvent && scoreEvent.type === 'scoreAwarded') {
+      setRecentPoints(scoreEvent.points);
+      setShowCombo({ points: scoreEvent.points, multiplier: scoreEvent.multiplier });
+    }
+    const linesClearedEvent = out.events.find((e) => e.type === 'linesCleared');
+    if (linesClearedEvent && linesClearedEvent.type === 'linesCleared') {
+      const linesCount = linesClearedEvent.rows.length + linesClearedEvent.cols.length;
+      setComboCount(linesCount);
+      setShowLineClear(linesCount);
+    } else {
+      setComboCount(0);
+    }
+
+    // Game over — save score using FINAL engine state values (fixes stale-score bug C2).
+    if (out.state.gameOver) {
+      if (out.state.score > highScore) setHighScore(out.state.score);
+      saveScore({
+        id: `game-${Date.now()}`,
+        score: out.state.score,
+        mode: 'endless',
+        date: new Date().toISOString(),
+        maxMultiplier: out.state.maxMultiplier,
+        durationMs: Date.now() - runStartRef.current,
+      });
+      void checkAchievements({
+        runMode: 'endless',
+        score: out.state.score,
+        maxMultiplier: out.state.maxMultiplier,
+        durationMs: Date.now() - runStartRef.current,
+        didMerge: out.state.maxMultiplier > 1,
+        didDailyComplete: false,
+        dailyStreakDays: 0,
+        dailiesPlayedTotal: 0,
+      }).then((granted) => {
+        if (granted.length > 0) showAchievementsToasts(granted);
+      }).catch((e) => console.warn('achievements check failed', e));
+    }
+  }, [engine, highScore]);
+
+  // Power-up: cell tap interceptor (blast / target).
+  // Returns true if the power-up consumed the tap (suppresses normal placement).
+  const handlePowerUpCellTap = useCallback((row: number, col: number): boolean => {
+    if (!activePowerUp) return false;
+
+    if (activePowerUp.type === 'blast') {
+      const { newBoard, clearedCells } = applyBlast(engine.board, row, col);
+      const points = clearedCells.length * 10;
+      setEngine((prev) => ({ ...prev, board: newBoard, score: prev.score + points }));
+      if (points > 0) {
+        setRecentPoints(points);
+        setShowCombo({ points, multiplier: 1 });
+      }
+      const next = [...powerUps];
+      next[activePowerUp.index] = consumePowerUp(powerUps[activePowerUp.index]);
+      setPowerUps(next);
+      setActivePowerUp(null);
+      return true;
+    }
+
+    if (activePowerUp.type === 'target') {
+      if (selectedPieceIndex === undefined) return false;
+      const best = applyTarget(engine.board, engine.pieces[selectedPieceIndex]);
+      const next = [...powerUps];
+      next[activePowerUp.index] = consumePowerUp(powerUps[activePowerUp.index]);
+      setPowerUps(next);
+      setActivePowerUp(null);
+      if (best) {
+        // Trigger placement at the suggested cell; handlePlace is async but we
+        // fire-and-forget here (same pattern as tap-to-place).
+        void handlePlace(selectedPieceIndex, best.row, best.col);
+      }
+      return true;
+    }
+
+    return false;
+  }, [activePowerUp, engine, powerUps, selectedPieceIndex, handlePlace]);
+
+  // Power-up: rail button press (reroll / colorBomb / blast / target activation).
+  const handlePowerUpPress = useCallback((powerUp: PowerUp, index: number): void => {
+    if (!canUsePowerUp(powerUp) || engine.gameOver) return;
+
     if (powerUp.type === 'colorBomb') {
       setActivePowerUp({ type: powerUp.type, index });
       setShowColorSelector(true);
     } else if (powerUp.type === 'reroll') {
       if (selectedPieceIndex !== undefined) {
-        const newPiece = applyReroll(pieces[selectedPieceIndex]);
-        const newPieces = [...pieces];
+        const newPiece = applyReroll(engine.pieces[selectedPieceIndex]);
+        const newPieces = [...engine.pieces];
         newPieces[selectedPieceIndex] = newPiece;
-        setPieces(newPieces);
+        setEngine((prev) => ({ ...prev, pieces: newPieces }));
         const next = [...powerUps];
         next[index] = consumePowerUp(powerUp);
         setPowerUps(next);
       }
     } else {
+      // blast / target: activate and wait for cell tap via handlePowerUpCellTap.
       setActivePowerUp({ type: powerUp.type, index });
     }
-  };
+  }, [engine, powerUps, selectedPieceIndex]);
 
-  const handleColorSelect = (color: BlockColor): void => {
+  // Power-up: color bomb color selection.
+  const handleColorSelect = useCallback((color: BlockColor): void => {
     if (!activePowerUp) return;
-    const { newBoard, clearedCells } = applyColorBomb(board, color);
-    setBoard(newBoard);
-    if (clearedCells.length > 0) {
-      const points = clearedCells.length * 10;
-      setScore(score + points);
+    const { newBoard, clearedCells } = applyColorBomb(engine.board, color);
+    const points = clearedCells.length * 10;
+    setEngine((prev) => ({ ...prev, board: newBoard, score: prev.score + points }));
+    if (points > 0) {
       setRecentPoints(points);
       setShowCombo({ points, multiplier: 1 });
     }
@@ -297,123 +368,11 @@ export default function GameScreen() {
     setPowerUps(next);
     setShowColorSelector(false);
     setActivePowerUp(null);
-  };
-
-  const handleCellPress = (row: number, col: number): void => {
-    if (activePowerUp && activePowerUp.type === 'blast') {
-      const { newBoard, clearedCells } = applyBlast(board, row, col);
-      setBoard(newBoard);
-      if (clearedCells.length > 0) {
-        const points = clearedCells.length * 10;
-        setScore(score + points);
-        setRecentPoints(points);
-        setShowCombo({ points, multiplier: 1 });
-      }
-      const next = [...powerUps];
-      next[activePowerUp.index] = consumePowerUp(powerUps[activePowerUp.index]);
-      setPowerUps(next);
-      setActivePowerUp(null);
-      return;
-    }
-
-    if (selectedPieceIndex === undefined || gameOver) return;
-    const selectedPiece = pieces[selectedPieceIndex];
-
-    if (activePowerUp && activePowerUp.type === 'target') {
-      const best = applyTarget(board, selectedPiece);
-      if (best) {
-        row = best.row;
-        col = best.col;
-      }
-      const next = [...powerUps];
-      next[activePowerUp.index] = consumePowerUp(powerUps[activePowerUp.index]);
-      setPowerUps(next);
-      setActivePowerUp(null);
-    }
-
-    if (!canPlacePiece(board, selectedPiece, row, col)) return;
-
-    let newBoard = placePiece(board, selectedPiece, row, col);
-    const { newBoard: clearedBoard, clearedCells } = clearLines(newBoard);
-
-    let newMultiplier = multiplier;
-    if (clearedCells.length > 0) {
-      newBoard = clearedBoard;
-      const linesCleared = clearedCells.length / 8;
-      setShowLineClear(Math.ceil(linesCleared));
-      setComboCount(Math.ceil(linesCleared));
-
-      const newDroppedGems = generateGemsFromClearedCells(clearedCells);
-      newBoard = placeGemsOnBoard(newBoard, newDroppedGems);
-      const allGems = getGemsFromBoard(newBoard);
-      const mergedGems = mergeGems(allGems);
-
-      const largeGems = mergedGems.filter((g) => g.size !== 'small');
-      if (largeGems.length > 0) {
-        const sizeOrder = { small: 0, medium: 1, large: 2, mega: 3 };
-        const bestGem = largeGems.reduce((best, current) =>
-          sizeOrder[current.size] > sizeOrder[best.size] ? current : best,
-        largeGems[0]);
-        const cell = { row: bestGem.position.row, col: bestGem.position.col };
-        const origin = boardLayout
-          ? computeCascadeOrigin(cell, boardLayout)
-          : { x: 0, y: 200 };
-        setActiveCascade({
-          id: Date.now(),
-          multiplier: bestGem.multiplier,
-          color: resolveBlockColor(bestGem.color),
-          origin,
-        });
-      }
-
-      newMultiplier = calculateTotalMultiplier(mergedGems);
-      const points = clearedCells.length * 10 * multiplier;
-      setScore(score + points);
-      setRecentPoints(points);
-      setShowCombo({ points, multiplier });
-      setMultiplier(newMultiplier);
-      setGems(mergedGems);
-      newBoard = placeGemsOnBoard(newBoard, mergedGems);
-    } else {
-      setComboCount(0);
-    }
-
-    setBoard(newBoard);
-
-    const newPieces = pieces.filter((_, i) => i !== selectedPieceIndex);
-    if (newPieces.length === 0) newPieces.push(...generatePieces(3));
-    setPieces(newPieces);
-    setSelectedPieceIndex(undefined);
-
-    if (!hasValidMoves(newBoard, newPieces)) {
-      setGameOver(true);
-      if (score > highScore) setHighScore(score);
-      saveScore({
-        id: `game-${Date.now()}`,
-        score,
-        mode: 'endless',
-        date: new Date().toISOString(),
-        maxMultiplier: multiplier,
-        durationMs: Date.now() - runStartTimestampRef.current,
-      });
-      void checkAchievements({
-        runMode: 'endless',
-        score,
-        maxMultiplier: multiplier,
-        durationMs: Date.now() - runStartTimestampRef.current,
-        didMerge: multiplier > 1,
-        didDailyComplete: false,
-        dailyStreakDays: 0,
-        dailiesPlayedTotal: 0,
-      }).then((granted) => {
-        if (granted.length > 0) showAchievementsToasts(granted);
-      });
-    }
-  };
+  }, [activePowerUp, engine, powerUps]);
 
   return (
     <SafeAreaView testID="game-screen" style={{ flex: 1, backgroundColor: palette.paper }}>
-      {/* Ambient blobs */}
+      {/* Ambient blob */}
       <View
         pointerEvents="none"
         style={{
@@ -428,7 +387,7 @@ export default function GameScreen() {
         }}
       />
 
-      {/* Animations overlay */}
+      {/* Animation overlays */}
       {showCombo && (
         <ComboAnimation
           points={showCombo.points}
@@ -438,15 +397,6 @@ export default function GameScreen() {
       )}
       {showLineClear && (
         <LineClearEffect linesCleared={showLineClear} onComplete={() => setShowLineClear(null)} />
-      )}
-      {activeCascade && (
-        <MergeAnimation
-          key={activeCascade.id}
-          multiplier={activeCascade.multiplier}
-          color={activeCascade.color}
-          origin={activeCascade.origin}
-          onComplete={() => setActiveCascade(null)}
-        />
       )}
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 24 }}>
@@ -467,61 +417,50 @@ export default function GameScreen() {
           >
             <Text style={{ fontSize: 16, fontWeight: fontWeight.heavy, color: colors.ink }}>⏸</Text>
           </Pressable>
+          <Pill variant="ink">ENDLESS</Pill>
           <View style={{ flex: 1 }}>
-            <ScoreDisplay score={score} highScore={highScore} multiplier={multiplier} />
+            <ScoreDisplay score={engine.score} highScore={highScore} multiplier={engine.multiplier} />
           </View>
+          {engine.multiplier > 1 && (
+            <View
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                backgroundColor: colors.ember,
+                borderRadius: 999,
+                borderWidth: 1.5,
+                borderColor: 'white',
+                shadowColor: colors.ember,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.5,
+                shadowRadius: 10,
+                elevation: 6,
+              }}
+            >
+              <Text style={{ color: 'white', fontWeight: fontWeight.black, fontSize: 13 }}>×{engine.multiplier}</Text>
+            </View>
+          )}
         </View>
 
         {/* Combo theater */}
         <View style={{ paddingHorizontal: 14, paddingTop: 4 }}>
-          <ComboTheater multiplier={multiplier} recentPoints={recentPoints} comboCount={comboCount} />
+          <ComboTheater multiplier={engine.multiplier} recentPoints={recentPoints} comboCount={comboCount} />
         </View>
 
-        {/* Board */}
-        <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 8, paddingHorizontal: 16 }}>
-          <View style={{ position: 'relative' }}>
-            <View
-              onLayout={(e: LayoutChangeEvent) => {
-                const { x, y, width } = e.nativeEvent.layout;
-                const cellSize = (width - BOARD_INNER_PADDING * 2 - CELL_GAP * 7) / 8;
-                setBoardLayout({
-                  boardX: x,
-                  boardY: y,
-                  boardSize: width,
-                  cellSize,
-                  boardPadding: BOARD_INNER_PADDING,
-                  cellGap: CELL_GAP,
-                });
-              }}
-            >
-              <GameBoard board={board} onCellPress={handleCellPress} />
-            </View>
-            {multiplier > 1 && (
-              <View
-                style={{
-                  position: 'absolute',
-                  top: -12,
-                  right: -12,
-                  paddingHorizontal: 12,
-                  paddingVertical: 5,
-                  backgroundColor: colors.ember,
-                  borderRadius: 999,
-                  borderWidth: 1.5,
-                  borderColor: 'white',
-                  shadowColor: colors.ember,
-                  shadowOffset: { width: 0, height: 6 },
-                  shadowOpacity: 0.6,
-                  shadowRadius: 16,
-                  elevation: 8,
-                }}
-              >
-                <Text style={{ color: 'white', fontWeight: fontWeight.black, fontSize: 14 }}>×{multiplier}</Text>
-              </View>
-            )}
-          </View>
+        {/* Board + pieces tray (GameSurface owns both) */}
+        <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 8 }}>
+          <GameSurface
+            board={engine.board}
+            pieces={engine.pieces}
+            selectedPieceIndex={selectedPieceIndex}
+            onSelectPiece={(_piece, i) => setSelectedPieceIndex(i)}
+            onPlace={handlePlace}
+            onCellTap={handlePowerUpCellTap}
+          />
         </View>
 
-        {gameOver && (
+        {/* Game-over result card */}
+        {engine.gameOver && (
           <View style={{ paddingHorizontal: 14 }}>
             <View
               testID="game-over-banner"
@@ -536,7 +475,7 @@ export default function GameScreen() {
                 Game Over
               </Text>
               <Text style={{ color: 'rgba(243,239,231,0.7)', fontSize: 13, marginTop: 4 }}>
-                No more valid moves. Final score {score.toLocaleString()}.
+                No more valid moves. Final score {engine.score.toLocaleString()}.
               </Text>
             </View>
             <TactileButton testID="new-game-button" onPress={startNewGame} variant="primary">
@@ -545,46 +484,44 @@ export default function GameScreen() {
           </View>
         )}
 
-        {!gameOver && (
-          <>
-            {/* Pieces tray */}
-            <View style={{ paddingHorizontal: 14, marginTop: 6 }}>
-              {pieces.length > 0 && (
-                <PiecesTray pieces={pieces} selectedIndex={selectedPieceIndex} onSelect={handlePieceSelect} />
-              )}
-            </View>
-
-            {/* Hint */}
-            <Text
-              style={{
-                color: selectedPieceIndex !== undefined ? colors.ember : colors.inkSoft,
-                textAlign: 'center',
-                fontSize: 12,
-                fontWeight: fontWeight.semibold,
-                marginTop: 8,
-                paddingHorizontal: 14,
-              }}
-            >
-              {selectedPieceIndex !== undefined
-                ? 'Tap the board to place your piece'
-                : 'Select a piece, then tap the board'}
-            </Text>
-
-            {/* Power-ups */}
-            <View style={{ paddingHorizontal: 14, marginTop: 12 }}>
-              <PowerUpCards
-                powerUps={powerUps}
-                selectedIndex={activePowerUp?.index}
-                onPress={handlePowerUpPress}
-                disabled={gameOver}
-              />
-            </View>
-          </>
+        {/* Hint */}
+        {!engine.gameOver && (
+          <Text
+            style={{
+              color: selectedPieceIndex !== undefined ? colors.ember : colors.inkSoft,
+              textAlign: 'center',
+              fontSize: 12,
+              fontWeight: fontWeight.semibold,
+              marginTop: 8,
+              paddingHorizontal: 14,
+            }}
+          >
+            {selectedPieceIndex !== undefined
+              ? activePowerUp
+                ? activePowerUp.type === 'target'
+                  ? 'Tap the board to use Target'
+                  : 'Tap the board to use Blast'
+                : 'Tap the board to place your piece'
+              : 'Select a piece, then tap the board'}
+          </Text>
         )}
 
+        {/* Power-up rail */}
+        {!engine.gameOver && (
+          <View style={{ paddingHorizontal: 14, marginTop: 12 }}>
+            <PowerUpCards
+              powerUps={powerUps}
+              selectedIndex={activePowerUp?.index}
+              onPress={handlePowerUpPress}
+              disabled={engine.gameOver}
+            />
+          </View>
+        )}
+
+        {/* Color bomb selector */}
         {showColorSelector && (
           <ColorSelector
-            colors={getColorsOnBoard(board)}
+            colors={getColorsOnBoard(engine.board)}
             onColorSelect={(color: string) => handleColorSelect(color as BlockColor)}
             onCancel={() => {
               setShowColorSelector(false);

@@ -92,12 +92,15 @@ export function GameSurface({
   selectedPieceIndex,
   onSelectPiece,
   onPlace,
+  onCellTap,
 }: {
   board: GameBoard;
   pieces: GamePiece[];
   selectedPieceIndex: number | undefined;
   onSelectPiece: (piece: GamePiece, index: number) => void;
   onPlace: (pieceIndex: number, row: number, col: number) => void;
+  /** Optional interceptor: return true to suppress normal tap-to-place (e.g. power-ups). */
+  onCellTap?: (row: number, col: number) => boolean;
 }) {
   const geometry = useMemo(
     () =>
@@ -174,9 +177,10 @@ export function GameSurface({
 
   const handleTap = useCallback(
     (row: number, col: number) => {
+      if (onCellTap && onCellTap(row, col)) return; // power-up consumed the tap
       if (selectedPieceIndex !== undefined) onPlace(selectedPieceIndex, row, col);
     },
-    [selectedPieceIndex, onPlace],
+    [onCellTap, selectedPieceIndex, onPlace],
   );
 
   const heldPiece = heldPieceIndex >= 0 ? pieces[heldPieceIndex] : undefined;

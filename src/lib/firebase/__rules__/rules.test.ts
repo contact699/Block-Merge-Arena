@@ -107,6 +107,23 @@ describe('scores collection', () => {
     );
   });
 
+  it('sub-10M score that exceeds per-move cap (OR-bug case) → fails', async () => {
+    const alice = testEnv.authenticatedContext('alice');
+    // moveCount 1 → per-move ceiling 5000; 9,999,999 is under 10M but must still be rejected
+    await assertFails(
+      setDoc(doc(alice.firestore(), 'scores', 'alice_005'), {
+        userId: 'alice',
+        score: 9_999_999,
+        mode: 'tournament',
+        maxMultiplier: 3,
+        moveCount: 1,
+        date: Date.now(),
+        dateString: '2026-06-10',
+        verified: false,
+      })
+    );
+  });
+
   it('unauthenticated public read → succeeds', async () => {
     // First seed a doc as admin
     await testEnv.withSecurityRulesDisabled(async (ctx) => {

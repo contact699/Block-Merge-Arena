@@ -31,9 +31,11 @@ export function validateScoreSubmission(payload: unknown): ValidationResult {
     return { valid: false, reason: parsed.error.issues[0]?.message ?? 'invalid payload' };
   }
   const { score, moveCount } = parsed.data;
-  const ceiling = moveCount && moveCount > 0 ? moveCount * MAX_SCORE_PER_MOVE : HARD_SCORE_CEILING;
-  if (score > ceiling) {
-    return { valid: false, reason: `score ${score} exceeds ceiling ${ceiling}` };
+  if (score > HARD_SCORE_CEILING) {
+    return { valid: false, reason: `score ${score} exceeds hard ceiling ${HARD_SCORE_CEILING}` };
+  }
+  if (moveCount && moveCount > 0 && score > moveCount * MAX_SCORE_PER_MOVE) {
+    return { valid: false, reason: `score ${score} exceeds per-move ceiling ${moveCount * MAX_SCORE_PER_MOVE}` };
   }
   return { valid: true };
 }

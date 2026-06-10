@@ -33,4 +33,12 @@ describe('validateScoreSubmission', () => {
   it('when moveCount is missing, accepts a normal score', () => {
     expect(validateScoreSubmission({ score: 5000, mode: 'endless', maxMultiplier: 2 }).valid).toBe(true);
   });
+  it('rejects a sub-10M score that still exceeds the per-move cap (the OR-bug case)', () => {
+    // moveCount 1 → per-move ceiling 5000; 9,999,999 is under 10M but must still be rejected
+    expect(validateScoreSubmission({ score: 9_999_999, mode: 'tournament', maxMultiplier: 3, moveCount: 1 }).valid).toBe(false);
+  });
+  it('rejects an inflated moveCount used to lift the ceiling past the hard cap', () => {
+    // moveCount 1,000,000 would imply a 5e9 per-move ceiling, but the hard cap (10M) still binds
+    expect(validateScoreSubmission({ score: 20_000_000, mode: 'endless', maxMultiplier: 5, moveCount: 1_000_000 }).valid).toBe(false);
+  });
 });

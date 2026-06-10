@@ -7,10 +7,13 @@ service cloud.firestore {
 
     // Mirror MAX_SCORE_PER_MOVE (5000) and HARD_SCORE_CEILING (10,000,000)
     // from src/lib/firebase/validation.ts — keep in sync (see ADR 0002).
+    // Bound: hard ceiling AND (moveCount <= 0 OR score <= moveCount * 5000).
+    // The hard ceiling always applies (closes the inflated-moveCount attack).
+    // The per-move cap applies whenever moveCount > 0 (closes the OR-bug).
     function scoreInBounds(score, moveCount) {
-      return score is int && score >= 0 &&
-        ( (moveCount is int && moveCount > 0 && score <= moveCount * 5000)
-          || score <= 10000000 );
+      return score is int && score >= 0
+        && score <= 10000000
+        && (moveCount <= 0 || score <= moveCount * 5000);
     }
     function multOk(m) { return m is int && (m == 1 || m == 2 || m == 3 || m == 5); }
 

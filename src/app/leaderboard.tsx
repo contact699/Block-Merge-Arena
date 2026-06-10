@@ -1,8 +1,7 @@
 // Leaderboard Screen - Local & Global high scores
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import {
   getTopScores,
   getTopScoresByMode,
@@ -20,6 +19,9 @@ import { colors, fontWeight } from '@/lib/design/tokens';
 import { useThemePalette } from '@/lib/themes/provider';
 import { Pill } from '@/components/design/Pill';
 import { GlassCard } from '@/components/design/GlassCard';
+import { ScreenHeader } from '@/components/design/ScreenHeader';
+import { AsyncStateView } from '@/components/design/AsyncStateView';
+import { ModeIcon } from '@/components/design/ModeIcon';
 
 type TabType = 'all' | 'endless' | 'tournament' | 'recent';
 type LeaderboardMode = 'local' | 'global';
@@ -81,9 +83,11 @@ function TabStrip({
 function LeaderboardRow({
   row,
   isPlayer,
+  modeIcon,
 }: {
   row: { rank: number; name: string; score: number; multiplier?: number; userId: string };
   isPlayer: boolean;
+  modeIcon?: React.ReactNode;
 }) {
   return (
     <GlassCard
@@ -108,16 +112,18 @@ function LeaderboardRow({
       >
         {row.rank}
       </Text>
-      <Text
-        style={{
-          flex: 1,
-          fontSize: 14,
-          fontWeight: fontWeight.semibold,
-          color: colors.ink,
-        }}
-      >
-        {row.name}
-      </Text>
+      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        {modeIcon}
+        <Text
+          style={{
+            fontSize: 14,
+            fontWeight: fontWeight.semibold,
+            color: colors.ink,
+          }}
+        >
+          {row.name}
+        </Text>
+      </View>
       {row.multiplier != null && row.multiplier > 1 && (
         <Text
           style={{
@@ -147,7 +153,6 @@ function LeaderboardRow({
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function LeaderboardScreen() {
-  const router = useRouter();
   const palette = useThemePalette();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [leaderboardMode, setLeaderboardMode] = useState<LeaderboardMode>('local');
@@ -160,6 +165,7 @@ export default function LeaderboardScreen() {
     gamesThisWeek: 0
   });
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const isFirebaseAvailable = isFirebaseConfigured();
 
   useEffect(() => {
@@ -169,6 +175,7 @@ export default function LeaderboardScreen() {
 
   const loadData = async (): Promise<void> => {
     setLoading(true);
+    setError(null);
     try {
       // Always load local stats
       const gameStats = await getGameStats();
@@ -193,14 +200,11 @@ export default function LeaderboardScreen() {
         }
         setScores(loadedScores);
       }
-    } catch (error) {
-      console.error('Error loading leaderboard:', error);
+    } catch (err) {
+      console.error('Error loading leaderboard:', err);
+      setError("Couldn't load the leaderboard.");
     }
     setLoading(false);
-  };
-
-  const getModeIcon = (mode: string): string => {
-    return mode === 'tournament' ? '🏆' : '🎮';
   };
 
   const TABS: { id: TabType; label: string }[] = [
@@ -228,27 +232,13 @@ export default function LeaderboardScreen() {
       />
 
       {/* Header */}
-      <View style={{ paddingHorizontal: 18, paddingTop: 12 }}>
-        <Pressable testID="back-button" onPress={() => router.back()}>
-          <Text style={{ fontSize: 14, fontWeight: fontWeight.semibold, color: colors.ember }}>
-            ← Back
-          </Text>
-        </Pressable>
+      <ScreenHeader title="Leaderboard" />
 
-        <Pill variant="ember" style={{ marginTop: 14 }}>
+      {/* Mode pill + subtitle */}
+      <View style={{ paddingHorizontal: 18 }}>
+        <Pill variant="ember">
           {leaderboardMode === 'global' ? 'GLOBAL · LIVE' : 'MY SCORES · LOCAL'}
         </Pill>
-        <Text
-          style={{
-            fontSize: 32,
-            fontWeight: fontWeight.black,
-            color: colors.ink,
-            marginTop: 12,
-            letterSpacing: -1,
-          }}
-        >
-          Leaderboard
-        </Text>
         <Text style={{ fontSize: 13, color: colors.inkSoft, marginTop: 4 }}>
           {leaderboardMode === 'global' ? 'Compete with players worldwide' : "Today's standings"}
         </Text>
@@ -421,71 +411,42 @@ export default function LeaderboardScreen() {
 
       {/* Scrollable list */}
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 14, paddingTop: 12 }}>
-        {loading ? (
-          <View style={{ alignItems: 'center', paddingVertical: 48 }}>
-            <Text style={{ color: colors.inkSoft, fontSize: 14 }}>Loading...</Text>
-          </View>
-        ) : leaderboardMode === 'global' ? (
-          globalScores.length === 0 ? (
-            <GlassCard style={{ alignItems: 'center', paddingVertical: 48, paddingHorizontal: 20 }}>
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: fontWeight.semibold,
-                  color: colors.inkSoft,
-                }}
-              >
-                No global scores yet
-              </Text>
-              <Text style={{ fontSize: 13, color: colors.inkDim, marginTop: 6 }}>
-                Be the first to compete!
-              </Text>
-            </GlassCard>
-          ) : (
-            globalScores.map((entry: LeaderboardEntry, index: number) => (
-              <LeaderboardRow
-                key={`${entry.userId}-${index}`}
-                row={{
-                  rank: entry.rank,
-                  name: entry.displayName,
-                  score: entry.score,
-                  multiplier: entry.maxMultiplier,
-                  userId: entry.userId,
-                }}
-                isPlayer={!!entry.isCurrentUser}
-              />
-            ))
-          )
-        ) : scores.length === 0 ? (
-          <GlassCard style={{ alignItems: 'center', paddingVertical: 48, paddingHorizontal: 20 }}>
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: fontWeight.semibold,
-                color: colors.inkSoft,
-              }}
-            >
-              No scores yet
-            </Text>
-            <Text style={{ fontSize: 13, color: colors.inkDim, marginTop: 6 }}>
-              Play a game to get started!
-            </Text>
-          </GlassCard>
-        ) : (
-          scores.map((scoreEntry: GameScore, index: number) => (
-            <LeaderboardRow
-              key={scoreEntry.id}
-              row={{
-                rank: index + 1,
-                name: `${getModeIcon(scoreEntry.mode)} ${formatDate(scoreEntry.date)}`,
-                score: scoreEntry.score,
-                multiplier: scoreEntry.maxMultiplier,
-                userId: '',
-              }}
-              isPlayer={false}
-            />
-          ))
-        )}
+        <AsyncStateView
+          loading={loading}
+          error={error}
+          isEmpty={(leaderboardMode === 'global' ? globalScores : scores).length === 0}
+          emptyMessage="No scores yet — be the first."
+          onRetry={loadData}
+        >
+          {leaderboardMode === 'global'
+            ? globalScores.map((entry: LeaderboardEntry, index: number) => (
+                <LeaderboardRow
+                  key={`${entry.userId}-${index}`}
+                  row={{
+                    rank: entry.rank,
+                    name: entry.displayName,
+                    score: entry.score,
+                    multiplier: entry.maxMultiplier,
+                    userId: entry.userId,
+                  }}
+                  isPlayer={!!entry.isCurrentUser}
+                />
+              ))
+            : scores.map((scoreEntry: GameScore, index: number) => (
+                <LeaderboardRow
+                  key={scoreEntry.id}
+                  row={{
+                    rank: index + 1,
+                    name: formatDate(scoreEntry.date),
+                    score: scoreEntry.score,
+                    multiplier: scoreEntry.maxMultiplier,
+                    userId: '',
+                  }}
+                  isPlayer={false}
+                  modeIcon={<ModeIcon mode={scoreEntry.mode} size={14} />}
+                />
+              ))}
+        </AsyncStateView>
       </ScrollView>
     </SafeAreaView>
   );

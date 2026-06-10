@@ -4,6 +4,13 @@ const expoConfig = require("eslint-config-expo/flat");
 const pluginQuery = require("@tanstack/eslint-plugin-query");
 
 module.exports = defineConfig([
+  // Global ignores (standalone object with only `ignores` — applies to all configs).
+  {
+    ignores: [
+      // Emulator-only rules test — @firebase/rules-unit-testing not installed as a dep
+      "src/lib/firebase/__rules__/**",
+    ],
+  },
   expoConfig,
   {
     ignores: [
@@ -26,6 +33,8 @@ module.exports = defineConfig([
       "eslint.config.js",
       "nativewind-env.d.ts",
       "rootStore.example.ts",
+      // Emulator-only rules test — @firebase/rules-unit-testing not installed as a dep
+      "src/lib/firebase/__rules__/**",
     ],
     settings: {
       "import/resolver": {

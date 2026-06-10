@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function authed() { return request.auth != null; }
+    function isOwner(uid) { return authed() && request.auth.uid == uid; }
+
+    // Mirror MAX_SCORE_PER_MOVE (5000) and HARD_SCORE_CEILING (10,000,000)
+    // from src/lib/firebase/validation.ts — keep in sync (see ADR 0002).
+    function scoreInBounds(score, moveCount) {
+      return score is int && score >= 0 &&
+        ( (moveCount is int && moveCount > 0 && score <= moveCount * 5000)
+          || score <= 10000000 );
+    }
+    function multOk(m) { return m is int && (m == 1 || m == 2 || m == 3 || m == 5); }
+
+    match /scores/{scoreId} {
+      allow read: if true;
+      allow create: if isOwner(request.resource.data.userId)
+        && scoreInBounds(request.resource.data.score, request.resource.data.get('moveCount', 0))
+        && multOk(request.resource.data.maxMultiplier);
+      allow update, delete: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if isOwner(userId);
+      match /archive/{puzzleId} {
+        allow read: if true;
+        allow write: if isOwner(userId);
+      }
+    }
+
+    match /tournaments/{date} {
+      allow read: if true;
+      allow create, update: if authed();
+
+      match /entries/{userId} {
+        allow read: if true;
+        // ONE run per day: create-once, no overwrite (audit M1.4).
+        allow create: if isOwner(userId)
+          && request.resource.data.userId == userId
+          && scoreInBounds(request.resource.data.score, request.resource.data.get('moveCount', 0))
+          && multOk(request.resource.data.maxMultiplier);
+        allow update, delete: if false;
+      }
+    }
+
+    match /puzzles/{puzzleId} {
+      allow read: if true;
+      allow create, update: if authed();
+    }
+
+    match /replays/{replayId} {
+      allow read: if true;
+      allow create: if isOwner(request.resource.data.userId);
+      allow update, delete: if false;
+    }
+  }
+}

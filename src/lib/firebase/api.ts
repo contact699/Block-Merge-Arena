@@ -226,16 +226,10 @@ async function submitTournamentEntry(
     };
 
     if (entryDoc.exists()) {
-      const existingEntry = entryDoc.data() as TournamentEntry;
-      // Only update if new score is higher
-      if (score > existingEntry.score) {
-        await updateDoc(entryRef, {
-          score,
-          maxMultiplier,
-          submittedAt: Date.now(),
-          duration,
-        });
-      }
+      // Daily is one-run-per-day: the first create is the only write.
+      // The server rules deny `update` on tournament entries (audit M1.4),
+      // so we skip any updateDoc attempt and return early.
+      return;
     } else {
       // First entry for this tournament
       await setDoc(entryRef, entry);

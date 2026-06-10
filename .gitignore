@@ -52,3 +52,6 @@ expo-start.log
 
 # Maestro E2E test reports
 .maestro/reports/
+
+# Superpowers brainstorm/session artifacts
+.superpowers/
